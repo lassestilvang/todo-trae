@@ -1,20 +1,20 @@
 'use client';
 
 import { useTaskStore } from '@/stores/taskStore';
-import { ActivityLog, Task } from '@/types';
+import type { ActivityLog as ActivityLogType, Task as TaskType } from '@/types';
 import { format, formatDistanceToNow } from 'date-fns';
 import { History, Plus, Edit3, CheckCircle, Trash2, Move } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
 interface ActivityLogProps {
-  task: Task;
+  task: TaskType;
 }
 
 export function ActivityLog({ task }: ActivityLogProps) {
   const { activityLogs } = useTaskStore();
   const taskLogs = activityLogs.filter(log => log.taskId === task.id);
 
-  const getActionIcon = (action: ActivityLog['action']) => {
+  const getActionIcon = (action: ActivityLogType['action']) => {
     switch (action) {
       case 'created': return <Plus className="w-4 h-4 text-green-500" />;
       case 'updated': return <Edit3 className="w-4 h-4 text-blue-500" />;
@@ -25,7 +25,7 @@ export function ActivityLog({ task }: ActivityLogProps) {
     }
   };
 
-  const getActionDescription = (log: ActivityLog) => {
+  const getActionDescription = (log: ActivityLogType) => {
     switch (log.action) {
       case 'created':
         return 'Task created';

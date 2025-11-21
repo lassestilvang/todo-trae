@@ -97,23 +97,42 @@ export function getAllTasks(): Task[] {
   `);
 
   const results = stmt.all() as Record<string, string | number | null>[];
-  return results.map(row => ({
-    ...row,
-    date: row.date ? new Date(String(row.date)) : undefined,
-    deadline: row.deadline ? new Date(String(row.deadline)) : undefined,
-    completedAt: row.completed_at ? new Date(String(row.completed_at)) : null,
-    recurringEndDate: row.recurring_end_date ? new Date(String(row.recurring_end_date)) : undefined,
-    createdAt: new Date(String(row.created_at)),
-    updatedAt: new Date(String(row.updated_at)),
-    labels: row.label_ids ? String(row.label_ids).split(',').map((id: string, index: number) => ({
-      id,
-      name: String(row.label_names).split(',')[index],
-      color: String(row.label_colors).split(',')[index],
-      icon: String(row.label_icons).split(',')[index],
-      createdAt: new Date(),
-      updatedAt: new Date()
-    })) : []
-  }));
+  return results.map((row) => {
+    const labels = row.label_ids
+      ? String(row.label_ids).split(',').map((id: string, index: number) => ({
+          id,
+          name: String(row.label_names).split(',')[index],
+          color: String(row.label_colors).split(',')[index],
+          icon: String(row.label_icons).split(',')[index],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }))
+      : [];
+
+    const task: Task = {
+      id: String(row.id),
+      listId: String(row.list_id),
+      name: String(row.name),
+      description: row.description ? String(row.description) : undefined,
+      date: row.date ? new Date(String(row.date)) : undefined,
+      deadline: row.deadline ? new Date(String(row.deadline)) : undefined,
+      reminders: [],
+      estimate: row.estimate ? String(row.estimate) : undefined,
+      actualTime: row.actual_time ? String(row.actual_time) : undefined,
+      priority: String(row.priority) as Task['priority'],
+      completed: Boolean(row.completed),
+      completedAt: row.completed_at ? new Date(String(row.completed_at)) : undefined,
+      recurring: row.recurring ? (String(row.recurring) as Task['recurring']) : undefined,
+      recurringEndDate: row.recurring_end_date ? new Date(String(row.recurring_end_date)) : undefined,
+      parentTaskId: row.parent_task_id ? String(row.parent_task_id) : undefined,
+      order: Number(row.order),
+      createdAt: new Date(String(row.created_at)),
+      updatedAt: new Date(String(row.updated_at)),
+      labels,
+    };
+
+    return task;
+  });
 }
 
 export function getTasksByListId(listId: string): Task[] {
@@ -130,23 +149,42 @@ export function getTasksByListId(listId: string): Task[] {
   `);
 
   const results = stmt.all(listId) as Record<string, string | number | null>[];
-  return results.map(row => ({
-    ...row,
-    date: row.date ? new Date(String(row.date)) : undefined,
-    deadline: row.deadline ? new Date(String(row.deadline)) : undefined,
-    completedAt: row.completed_at ? new Date(String(row.completed_at)) : null,
-    recurringEndDate: row.recurring_end_date ? new Date(String(row.recurring_end_date)) : undefined,
-    createdAt: new Date(String(row.created_at)),
-    updatedAt: new Date(String(row.updated_at)),
-    labels: row.label_ids ? String(row.label_ids).split(',').map((id: string, index: number) => ({
-      id,
-      name: String(row.label_names).split(',')[index],
-      color: String(row.label_colors).split(',')[index],
-      icon: String(row.label_icons).split(',')[index],
-      createdAt: new Date(),
-      updatedAt: new Date()
-    })) : []
-  }));
+  return results.map((row) => {
+    const labels = row.label_ids
+      ? String(row.label_ids).split(',').map((id: string, index: number) => ({
+          id,
+          name: String(row.label_names).split(',')[index],
+          color: String(row.label_colors).split(',')[index],
+          icon: String(row.label_icons).split(',')[index],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }))
+      : [];
+
+    const task: Task = {
+      id: String(row.id),
+      listId: String(row.list_id),
+      name: String(row.name),
+      description: row.description ? String(row.description) : undefined,
+      date: row.date ? new Date(String(row.date)) : undefined,
+      deadline: row.deadline ? new Date(String(row.deadline)) : undefined,
+      reminders: [],
+      estimate: row.estimate ? String(row.estimate) : undefined,
+      actualTime: row.actual_time ? String(row.actual_time) : undefined,
+      priority: String(row.priority) as Task['priority'],
+      completed: Boolean(row.completed),
+      completedAt: row.completed_at ? new Date(String(row.completed_at)) : undefined,
+      recurring: row.recurring ? (String(row.recurring) as Task['recurring']) : undefined,
+      recurringEndDate: row.recurring_end_date ? new Date(String(row.recurring_end_date)) : undefined,
+      parentTaskId: row.parent_task_id ? String(row.parent_task_id) : undefined,
+      order: Number(row.order),
+      createdAt: new Date(String(row.created_at)),
+      updatedAt: new Date(String(row.updated_at)),
+      labels,
+    };
+
+    return task;
+  });
 }
 
 export function getTaskById(id: string): Task | null {
@@ -164,23 +202,40 @@ export function getTaskById(id: string): Task | null {
   const row = stmt.get(id) as Record<string, string | number | null> | undefined;
   if (!row) return null;
 
-  return {
-    ...row,
+  const labels = row.label_ids
+    ? String(row.label_ids).split(',').map((id: string, index: number) => ({
+        id,
+        name: String(row.label_names).split(',')[index],
+        color: String(row.label_colors).split(',')[index],
+        icon: String(row.label_icons).split(',')[index],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }))
+    : [];
+
+  const task: Task = {
+    id: String(row.id),
+    listId: String(row.list_id),
+    name: String(row.name),
+    description: row.description ? String(row.description) : undefined,
     date: row.date ? new Date(String(row.date)) : undefined,
     deadline: row.deadline ? new Date(String(row.deadline)) : undefined,
-    completedAt: row.completed_at ? new Date(String(row.completed_at)) : null,
+    reminders: [],
+    estimate: row.estimate ? String(row.estimate) : undefined,
+    actualTime: row.actual_time ? String(row.actual_time) : undefined,
+    priority: String(row.priority) as Task['priority'],
+    completed: Boolean(row.completed),
+    completedAt: row.completed_at ? new Date(String(row.completed_at)) : undefined,
+    recurring: row.recurring ? (String(row.recurring) as Task['recurring']) : undefined,
     recurringEndDate: row.recurring_end_date ? new Date(String(row.recurring_end_date)) : undefined,
+    parentTaskId: row.parent_task_id ? String(row.parent_task_id) : undefined,
+    order: Number(row.order),
     createdAt: new Date(String(row.created_at)),
     updatedAt: new Date(String(row.updated_at)),
-    labels: row.label_ids ? String(row.label_ids).split(',').map((id: string, index: number) => ({
-      id,
-      name: String(row.label_names).split(',')[index],
-      color: String(row.label_colors).split(',')[index],
-      icon: String(row.label_icons).split(',')[index],
-      createdAt: new Date(),
-      updatedAt: new Date()
-    })) : []
+    labels,
   };
+
+  return task;
 }
 
 export function createTask(task: Omit<Task, 'createdAt' | 'updatedAt' | 'subtasks' | 'attachments'>): Task {
@@ -268,7 +323,7 @@ export function toggleTaskComplete(id: string): Task {
 
   const updates = {
     completed: !task.completed,
-    completedAt: !task.completed ? new Date() : null,
+    completedAt: !task.completed ? new Date() : undefined,
   };
 
   return updateTask(id, updates);

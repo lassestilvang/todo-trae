@@ -45,16 +45,17 @@ export function logTaskUpdate(
   updates: Partial<Task>,
   oldTask: Task
 ): void {
-  Object.entries(updates).forEach(([field, newValue]) => {
+  for (const field of Object.keys(updates) as Array<keyof Task>) {
+    const newValue = updates[field];
     const oldValue = oldTask[field];
     if (oldValue !== newValue) {
       logTaskActivity(
         taskId,
         'updated',
-        field,
+        String(field),
         String(oldValue),
         String(newValue)
       );
     }
-  });
+  }
 }
