@@ -5,13 +5,32 @@ import { Task, TaskList, Label, Subtask, Attachment, ActivityLog } from '@/types
 export function getAllLists(): TaskList[] {
   const db = getDatabase();
   const stmt = db.prepare('SELECT * FROM task_lists ORDER BY is_default DESC, name ASC');
-  return stmt.all() as TaskList[];
+  const results = stmt.all() as any[];
+  return results.map(row => ({
+    id: row.id,
+    name: row.name,
+    color: row.color,
+    emoji: row.emoji,
+    isDefault: Boolean(row.is_default),
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  }));
 }
 
 export function getListById(id: string): TaskList | null {
   const db = getDatabase();
   const stmt = db.prepare('SELECT * FROM task_lists WHERE id = ?');
-  return stmt.get(id) as TaskList | null;
+  const row = stmt.get(id) as any;
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    color: row.color,
+    emoji: row.emoji,
+    isDefault: Boolean(row.is_default),
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  };
 }
 
 export function createList(list: Omit<TaskList, 'createdAt' | 'updatedAt'>): TaskList {
@@ -20,16 +39,24 @@ export function createList(list: Omit<TaskList, 'createdAt' | 'updatedAt'>): Tas
     INSERT INTO task_lists (id, name, color, emoji, is_default)
     VALUES (?, ?, ?, ?, ?)
   `);
-  stmt.run(list.id, list.name, list.color, list.emoji, list.isDefault);
+  stmt.run(list.id, list.name, list.color, list.emoji, list.isDefault ? 1 : 0);
   return getListById(list.id)!;
 }
 
 export function updateList(id: string, updates: Partial<TaskList>): TaskList {
   const db = getDatabase();
-  const setClause = Object.keys(updates)
-    .map(key => `${key} = ?`)
-    .join(', ');
-  const values = [...Object.values(updates), new Date().toISOString(), id];
+  
+  const mappedUpdates: Record<string, any> = {};
+  if (updates.name !== undefined) mappedUpdates.name = updates.name;
+  if (updates.color !== undefined) mappedUpdates.color = updates.color;
+  if (updates.emoji !== undefined) mappedUpdates.emoji = updates.emoji;
+  if (updates.isDefault !== undefined) mappedUpdates.is_default = updates.isDefault ? 1 : 0;
+
+  const keys = Object.keys(mappedUpdates);
+  if (keys.length === 0) return getListById(id)!;
+
+  const setClause = keys.map(key => `"${key}" = ?`).join(', ');
+  const values = [...Object.values(mappedUpdates), new Date().toISOString(), id];
 
   const stmt = db.prepare(`UPDATE task_lists SET ${setClause}, updated_at = ? WHERE id = ?`);
   stmt.run(...values);
@@ -46,13 +73,30 @@ export function deleteList(id: string): void {
 export function getAllLabels(): Label[] {
   const db = getDatabase();
   const stmt = db.prepare('SELECT * FROM labels ORDER BY name ASC');
-  return stmt.all() as Label[];
+  const results = stmt.all() as any[];
+  return results.map(row => ({
+    id: row.id,
+    name: row.name,
+    color: row.color,
+    icon: row.icon,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  }));
 }
 
 export function getLabelById(id: string): Label | null {
   const db = getDatabase();
   const stmt = db.prepare('SELECT * FROM labels WHERE id = ?');
-  return stmt.get(id) as Label | null;
+  const row = stmt.get(id) as any;
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    color: row.color,
+    icon: row.icon,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  };
 }
 
 export function createLabel(label: Omit<Label, 'createdAt' | 'updatedAt'>): Label {
@@ -84,18 +128,26 @@ export function deleteLabel(id: string): void {
 }
 
 // Task operations
-export function getAllTasks(): Task[] {
+export function getAllTasks(limit?: number, offset?: number): Task[] {
   const db = getDatabase();
-  const stmt = db.prepare(`
+  let query = `
     SELECT t.*, GROUP_CONCAT(l.id) as label_ids, GROUP_CONCAT(l.name) as label_names,
            GROUP_CONCAT(l.color) as label_colors, GROUP_CONCAT(l.icon) as label_icons
     FROM tasks t
     LEFT JOIN task_labels tl ON t.id = tl.task_id
     LEFT JOIN labels l ON tl.label_id = l.id
     GROUP BY t.id
-    ORDER BY t."order" ASC, t.created_at ASC
-  `);
+    ORDER BY t.completed ASC, t."order" ASC, t.created_at DESC
+  `;
 
+  if (limit !== undefined) {
+    query += ` LIMIT ${limit}`;
+    if (offset !== undefined) {
+      query += ` OFFSET ${offset}`;
+    }
+  }
+
+  const stmt = db.prepare(query);
   const results = stmt.all() as Record<string, string | number | null>[];
   return results.map((row) => {
     const labels = row.label_ids
@@ -135,9 +187,9 @@ export function getAllTasks(): Task[] {
   });
 }
 
-export function getTasksByListId(listId: string): Task[] {
+export function getTasksByListId(listId: string, limit?: number, offset?: number): Task[] {
   const db = getDatabase();
-  const stmt = db.prepare(`
+  let query = `
     SELECT t.*, GROUP_CONCAT(l.id) as label_ids, GROUP_CONCAT(l.name) as label_names,
            GROUP_CONCAT(l.color) as label_colors, GROUP_CONCAT(l.icon) as label_icons
     FROM tasks t
@@ -145,9 +197,17 @@ export function getTasksByListId(listId: string): Task[] {
     LEFT JOIN labels l ON tl.label_id = l.id
     WHERE t.list_id = ? AND t.parent_task_id IS NULL
     GROUP BY t.id
-    ORDER BY t."order" ASC, t.created_at ASC
-  `);
+    ORDER BY t.completed ASC, t."order" ASC, t.created_at DESC
+  `;
 
+  if (limit !== undefined) {
+    query += ` LIMIT ${limit}`;
+    if (offset !== undefined) {
+      query += ` OFFSET ${offset}`;
+    }
+  }
+
+  const stmt = db.prepare(query);
   const results = stmt.all(listId) as Record<string, string | number | null>[];
   return results.map((row) => {
     const labels = row.label_ids
@@ -238,7 +298,7 @@ export function getTaskById(id: string): Task | null {
   return task;
 }
 
-export function createTask(task: Omit<Task, 'createdAt' | 'updatedAt' | 'subtasks' | 'attachments'>): Task {
+export function createTask(task: Omit<Task, 'createdAt' | 'updatedAt' | 'subtasks' | 'attachments'> & { labelIds?: string[] }): Task {
   const db = getDatabase();
   const stmt = db.prepare(`
     INSERT INTO tasks (id, list_id, name, description, date, deadline, estimate, actual_time, priority, completed, recurring, recurring_end_date, parent_task_id, "order")
@@ -250,29 +310,30 @@ export function createTask(task: Omit<Task, 'createdAt' | 'updatedAt' | 'subtask
     task.listId,
     task.name,
     task.description || null,
-    task.date?.toISOString() || null,
-    task.deadline?.toISOString() || null,
+    task.date instanceof Date ? task.date.toISOString() : (task.date || null),
+    task.deadline instanceof Date ? task.deadline.toISOString() : (task.deadline || null),
     task.estimate || null,
     task.actualTime || null,
     task.priority,
-    task.completed,
+    task.completed ? 1 : 0,
     task.recurring || null,
-    task.recurringEndDate?.toISOString() || null,
+    task.recurringEndDate instanceof Date ? task.recurringEndDate.toISOString() : (task.recurringEndDate || null),
     task.parentTaskId || null,
-    task.order
+    task.order || 0
   );
 
-  if (task.labels && task.labels.length > 0) {
+  const labelIds = task.labelIds || (task.labels as any as Label[])?.map(l => l.id) || [];
+  if (labelIds.length > 0) {
     const labelStmt = db.prepare('INSERT INTO task_labels (task_id, label_id) VALUES (?, ?)');
-    for (const label of task.labels) {
-      labelStmt.run(task.id, label.id);
+    for (const labelId of labelIds) {
+      labelStmt.run(task.id, labelId);
     }
   }
 
   return getTaskById(task.id)!;
 }
 
-export function updateTask(id: string, updates: Partial<Task>): Task {
+export function updateTask(id: string, updates: Partial<Task> & { labelIds?: string[] }): Task {
   const db = getDatabase();
 
   const fieldMapping: Record<string, string> = {
@@ -280,30 +341,37 @@ export function updateTask(id: string, updates: Partial<Task>): Task {
     completedAt: 'completed_at',
     recurringEndDate: 'recurring_end_date',
     parentTaskId: 'parent_task_id',
+    actualTime: 'actual_time',
+    order: '"order"',
   };
 
   const setClause = Object.keys(updates)
-    .filter(key => key !== 'labels' && key !== 'id')
+    .filter(key => !['labels', 'labelIds', 'id', 'reminders', 'createdAt', 'updatedAt'].includes(key))
     .map(key => `${fieldMapping[key] || key} = ?`)
     .join(', ');
 
   const values = Object.entries(updates)
-    .filter(([key]) => key !== 'labels' && key !== 'id')
-    .map(([_, value]) => (value instanceof Date ? value.toISOString() : value));
+    .filter(([key]) => !['labels', 'labelIds', 'id', 'reminders', 'createdAt', 'updatedAt'].includes(key))
+    .map(([_, value]) => {
+      if (value instanceof Date) return value.toISOString();
+      if (typeof value === 'boolean') return value ? 1 : 0;
+      return value ?? null;
+    });
 
   if (setClause) {
     const stmt = db.prepare(`UPDATE tasks SET ${setClause}, updated_at = ? WHERE id = ?`);
     stmt.run(...values, new Date().toISOString(), id);
   }
 
-  if (updates.labels) {
+  const labelIds = updates.labelIds || updates.labels?.map(l => l.id);
+  if (labelIds) {
     const deleteStmt = db.prepare('DELETE FROM task_labels WHERE task_id = ?');
     deleteStmt.run(id);
 
-    if (updates.labels.length > 0) {
+    if (labelIds.length > 0) {
       const labelStmt = db.prepare('INSERT INTO task_labels (task_id, label_id) VALUES (?, ?)');
-      for (const label of updates.labels) {
-        labelStmt.run(id, label.id);
+      for (const labelId of labelIds) {
+        labelStmt.run(id, labelId);
       }
     }
   }
@@ -371,18 +439,52 @@ export function deleteSubtask(id: string): void {
 }
 
 // Activity log operations
-export function getActivityLogByTaskId(taskId: string): ActivityLog[] {
+export function getAllActivityLogs(limit?: number, offset?: number): ActivityLog[] {
   const db = getDatabase();
-  const stmt = db.prepare('SELECT * FROM activity_log WHERE task_id = ? ORDER BY created_at DESC');
+  let query = 'SELECT * FROM activity_log ORDER BY created_at DESC';
+  
+  if (limit !== undefined) {
+    query += ` LIMIT ${limit}`;
+    if (offset !== undefined) {
+      query += ` OFFSET ${offset}`;
+    }
+  }
+
+  const stmt = db.prepare(query);
+  return stmt.all() as ActivityLog[];
+}
+
+export function getActivityLogByTaskId(taskId: string, limit?: number, offset?: number): ActivityLog[] {
+  const db = getDatabase();
+  let query = 'SELECT * FROM activity_log WHERE task_id = ? ORDER BY created_at DESC';
+  
+  if (limit !== undefined) {
+    query += ` LIMIT ${limit}`;
+    if (offset !== undefined) {
+      query += ` OFFSET ${offset}`;
+    }
+  }
+
+  const stmt = db.prepare(query);
   return stmt.all(taskId) as ActivityLog[];
 }
 
 export function createActivityLog(log: Omit<ActivityLog, 'createdAt'>): ActivityLog {
   const db = getDatabase();
   const stmt = db.prepare(`
-    INSERT INTO activity_log (id, task_id, action, field, old_value, new_value, user_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO activity_log (id, task_id, list_id, label_id, action, field, old_value, new_value, user_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
-  stmt.run(log.id, log.taskId, log.action, log.field || null, log.oldValue || null, log.newValue || null, log.userId || null);
+  stmt.run(
+    log.id, 
+    log.taskId || null, 
+    log.listId || null, 
+    log.labelId || null, 
+    log.action, 
+    log.field || null, 
+    log.oldValue || null, 
+    log.newValue || null, 
+    log.userId || null
+  );
   return { ...log, createdAt: new Date() };
 }

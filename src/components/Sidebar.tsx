@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTaskStore } from '@/stores/taskStore';
 import { useThemeStore } from '@/stores/themeStore';
-import { TaskList as TaskListType, ViewType } from '@/types';
+import { TaskList as TaskListType, ViewType, Label } from '@/types';
 import { 
   Plus, 
   Search, 
@@ -14,22 +14,48 @@ import {
   CheckCircle2,
   Hash,
   Home,
-  Star
+  Star,
+  Tag
 } from 'lucide-react';
+import { isToday } from 'date-fns';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { TaskForm } from './TaskForm';
+import { ListForm } from './ListForm';
+import { LabelForm } from './LabelForm';
 
 export function Sidebar() {
-  const { lists, selectedListId, selectedView, setSelectedListId, setSelectedView, setSearchQuery } = useTaskStore();
+  const { 
+    tasks,
+    lists, 
+    labels,
+    selectedListId, 
+    selectedView, 
+    setSelectedListId, 
+    setSelectedView, 
+    setSearchQuery 
+  } = useTaskStore();
   const { isDarkMode, toggleDarkMode } = useThemeStore();
   const [searchOpen, setSearchOpen] = useState(false);
   const [showProjects, setShowProjects] = useState(true);
+  const [taskFormOpen, setTaskFormOpen] = useState(false);
+  const [listFormOpen, setListFormOpen] = useState(false);
+  const [labelFormOpen, setLabelFormOpen] = useState(false);
 
   const views: Array<{ id: ViewType; name: string; icon: React.ReactNode; badge?: number }> = [
-    { id: 'today', name: 'Today', icon: <Calendar className="w-4 h-4" />, badge: 2 },
+    { 
+      id: 'today', 
+      name: 'Today', 
+      icon: <Calendar className="w-4 h-4" />, 
+      badge: tasks.filter(t => {
+        if (!t.date || t.completed) return false;
+        const date = new Date(t.date);
+        return !isNaN(date.getTime()) && isToday(date);
+      }).length || undefined 
+    },
     { id: 'next7days', name: 'Next 7 Days', icon: <Clock className="w-4 h-4" /> },
     { id: 'upcoming', name: 'Upcoming', icon: <Calendar className="w-4 h-4" /> },
-    { id: 'all', name: 'All', icon: <CheckCircle2 className="w-4 h-4" />, badge: 12 },
+    { id: 'all', name: 'All', icon: <CheckCircle2 className="w-4 h-4" />, badge: tasks.filter(t => !t.completed).length || undefined },
   ];
 
   const handleSearch = (query: string) => {
@@ -68,10 +94,16 @@ export function Sidebar() {
             </Button>
           </div>
         </div>
-        <Button className="w-full justify-start gap-2 mb-3 rounded-xl shadow-sm">
+        <Button 
+          className="w-full justify-start gap-2 mb-3 rounded-xl shadow-sm"
+          onClick={() => setTaskFormOpen(true)}
+        >
           <Plus className="w-4 h-4" />
           Add task
         </Button>
+        <TaskForm open={taskFormOpen} onOpenChange={setTaskFormOpen} />
+        <ListForm open={listFormOpen} onOpenChange={setListFormOpen} />
+        <LabelForm open={labelFormOpen} onOpenChange={setLabelFormOpen} />
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -115,7 +147,18 @@ export function Sidebar() {
 
         {/* Lists */}
         <div className="p-4 border-t border-border">
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Lists</h3>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase">Lists</h3>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-5 w-5 p-0"
+              onClick={() => setListFormOpen(true)}
+              aria-label="Add List"
+            >
+              <Plus className="w-3 h-3" />
+            </Button>
+          </div>
           {lists.map((list) => (
             <button
               key={list.id}
@@ -131,10 +174,40 @@ export function Sidebar() {
                 <span>{list.name}</span>
               </div>
               {list.isDefault && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-red-500 text-white">5</span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-red-500 text-white">
+                  {tasks.filter(t => t.listId === list.id && !t.completed).length || ''}
+                </span>
               )}
             </button>
           ))}
+        </div>
+
+        {/* Labels */}
+        <div className="p-4 border-t border-border">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase">Labels</h3>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-5 w-5 p-0"
+              onClick={() => setLabelFormOpen(true)}
+              aria-label="Add Label"
+            >
+              <Plus className="w-3 h-3" />
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {labels.map((label) => (
+              <button
+                key={label.id}
+                className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium border border-border hover:bg-accent/50 transition-colors"
+                style={{ color: label.color, borderColor: `${label.color}40` }}
+              >
+                <Tag className="w-3 h-3" />
+                {label.name}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Projects */}

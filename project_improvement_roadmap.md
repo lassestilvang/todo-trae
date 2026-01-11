@@ -10,12 +10,12 @@ This roadmap outlines the strategic plan to transform the Daily Task Planner fro
 
 | ID | Task Description | Priority | Effort | Dependency | Status | Timestamp |
 |:---|:---|:---:|:---:|:---|:---:|:---|
-| CQ-01 | **Implement Zod Validation**: Add schema validation for all API inputs to prevent SQL injection and malformed data. | P0 | Medium | None | ⭕ | 2026-01-11 |
-| CQ-02 | **Complete CRUD API**: Implement missing `PUT` and `DELETE` endpoints for tasks, lists, and labels. | P0 | Medium | CQ-01 | ⭕ | 2026-01-11 |
-| CQ-03 | **Centralized Error Handling**: Implement a global error boundary and user-facing toast notifications for API failures. | P1 | Low | None | ⭕ | 2026-01-11 |
-| CQ-04 | **Activity Log Refactor**: Move activity logging to the server-side to ensure persistence and data integrity. | P1 | Medium | CQ-02 | ⭕ | 2026-01-11 |
-| CQ-05 | **List Virtualization**: Implement `react-window` or similar for large task lists to maintain 60fps. | P2 | Medium | None | ⭕ | 2026-01-11 |
-| CQ-06 | **API Pagination**: Add limit/offset support to task and activity log endpoints. | P2 | Low | CQ-02 | ⭕ | 2026-01-11 |
+| CQ-01 | **Implement Zod Validation**: Add schema validation for all API inputs to prevent SQL injection and malformed data. | P0 | Medium | None | ✅ | 2026-01-11 |
+| CQ-02 | **Complete CRUD API**: Implement missing `PUT` and `DELETE` endpoints for tasks, lists, and labels. | P0 | Medium | CQ-01 | ✅ | 2026-01-11 |
+| CQ-03 | **Centralized Error Handling**: Implement a global error boundary and user-facing toast notifications for API failures. | P1 | Low | None | ✅ | 2026-01-11 |
+| CQ-04 | **Activity Log Refactor**: Move activity logging to the server-side to ensure persistence and data integrity. | P1 | Medium | CQ-02 | ✅ | 2026-01-11 |
+| CQ-05 | **List Virtualization**: Implement `react-virtuoso` for large task lists to maintain 60fps. | P2 | Medium | None | ✅ | 2026-01-11 |
+| CQ-06 | **API Pagination**: Add limit/offset support to task and activity log endpoints. | P2 | Low | CQ-02 | ✅ | 2026-01-11 |
 
 ---
 
@@ -70,8 +70,8 @@ This roadmap outlines the strategic plan to transform the Daily Task Planner fro
 
 | ID | Task Description | Priority | Effort | Dependency | Status | Timestamp |
 |:---|:---|:---:|:---:|:---|:---:|:---|
-| INF-01 | **CI/CD Pipeline**: Set up GitHub Actions for automated linting, testing, and deployment. | P0 | Medium | None | ⭕ | 2026-01-11 |
-| INF-02 | **E2E Testing Suite**: Implement Playwright for critical path testing (Task CRUD, Auth). | P1 | High | CQ-02 | ⭕ | 2026-01-11 |
+| INF-01 | **CI/CD Pipeline**: Set up GitHub Actions for automated linting, testing, and deployment. | P0 | Medium | None | ✅ | 2026-01-11 |
+| INF-02 | **E2E Testing Suite**: Implement Playwright for critical path testing (Task CRUD, Auth). | P1 | High | CQ-02 | ✅ | 2026-01-12 |
 | INF-03 | **Monitoring & Logging**: Integrate Sentry for error tracking and Axiom for structured logging. | P2 | Low | None | ⭕ | 2026-01-11 |
 | INF-04 | **Database Migration**: Transition from SQLite to PostgreSQL for multi-user/production scalability. | P2 | Medium | INF-01 | ⭕ | 2026-01-11 |
 
@@ -90,7 +90,7 @@ This roadmap outlines the strategic plan to transform the Daily Task Planner fro
 
 ## 📊 Progress Summary
 - **Total Tasks**: 23
-- **Completed**: 0 (0%)
+- **Completed**: 9 (39.1%)
 - **In Progress**: 0 (0%)
 - **Blocked**: 0 (0%)
 

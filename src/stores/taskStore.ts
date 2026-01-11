@@ -86,44 +86,18 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     set((state) => ({ 
       tasks: [...state.tasks, task] 
     }));
-    // Activity logging - only on server side
-    if (typeof window === 'undefined') {
-      import('@/lib/activityLog').then(({ logTaskActivity }) => {
-        logTaskActivity(task.id, 'created');
-      }).catch(() => {
-        // Silently fail in client environment
-      });
-    }
   },
   
   updateTask: (taskId, updates) => set((state) => {
-    const oldTask = state.tasks.find(task => task.id === taskId);
     const updatedTasks = state.tasks.map(task => 
       task.id === taskId ? { ...task, ...updates, updatedAt: new Date() } : task
     );
-    
-    // Log the update - only on server side
-    if (oldTask && typeof window === 'undefined') {
-      import('@/lib/activityLog').then(({ logTaskUpdate }) => {
-        logTaskUpdate(taskId, updates, oldTask);
-      }).catch(() => {
-        // Silently fail in client environment
-      });
-    }
     
     return { tasks: updatedTasks };
   }),
   
   deleteTask: (taskId) => {
     set((state) => {
-      // Activity logging - only on server side
-      if (typeof window === 'undefined') {
-        import('@/lib/activityLog').then(({ logTaskActivity }) => {
-          logTaskActivity(taskId, 'deleted');
-        }).catch(() => {
-          // Silently fail in client environment
-        });
-      }
       return {
         tasks: state.tasks.filter(task => task.id !== taskId),
         subtasks: state.subtasks.filter(subtask => subtask.taskId !== taskId),
@@ -135,15 +109,6 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   toggleTaskComplete: (taskId) => set((state) => {
     const task = state.tasks.find(task => task.id === taskId);
     const newCompleted = !task?.completed;
-    
-    // Activity logging - only on server side
-    if (typeof window === 'undefined') {
-      import('@/lib/activityLog').then(({ logTaskActivity }) => {
-        logTaskActivity(taskId, 'updated', 'completed', String(task?.completed), String(newCompleted));
-      }).catch(() => {
-        // Silently fail in client environment
-      });
-    }
     
     return {
       tasks: state.tasks.map(task => 

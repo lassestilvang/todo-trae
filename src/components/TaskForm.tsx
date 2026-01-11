@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useTaskStore } from '@/stores/taskStore';
 import { TaskList, Label, Priority, Subtask, Attachment, Task } from '@/types';
 import { format } from 'date-fns';
-import { Plus, Calendar, Clock, Flag, Hash, Repeat, Paperclip } from 'lucide-react';
+import { Plus, Calendar, Clock, Flag, Hash, Repeat, Paperclip, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
@@ -14,6 +14,7 @@ import { SubtaskManager } from '@/components/SubtaskManager';
 import { AttachmentManager } from '@/components/AttachmentManager';
 import { RecurringTaskSelector } from '@/components/RecurringTaskSelector';
 import { TimeTracker } from '@/components/TimeTracker';
+import { toast } from 'sonner';
 
 interface TaskFormProps {
   open: boolean;
@@ -23,7 +24,7 @@ interface TaskFormProps {
 }
 
 export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
-  const { lists, labels, subtasks, attachments, addTask, updateTask } = useTaskStore();
+  const { lists, labels, subtasks, attachments, addTask, updateTask, deleteTask } = useTaskStore();
   const [activeTab, setActiveTab] = useState<'basic' | 'advanced'>('basic');
   const [formData, setFormData] = useState({
     name: task?.name || '',
@@ -40,14 +41,54 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
     recurringEndDate: task?.recurringEndDate ? format(new Date(task.recurringEndDate), 'yyyy-MM-dd') : '',
   });
 
+  // Reset form when task changes or lists load
+  useEffect(() => {
+    if (task) {
+      setFormData({
+        name: task.name,
+        description: task.description || '',
+        listId: task.listId,
+        date: task.date ? format(new Date(task.date), 'yyyy-MM-dd') : '',
+        time: task.date ? format(new Date(task.date), 'HH:mm') : '',
+        deadline: task.deadline ? format(new Date(task.deadline), 'HH:mm') : '',
+        priority: task.priority,
+        estimate: task.estimate || '',
+        actualTime: task.actualTime || '',
+        labels: task.labels?.map((l: Label) => l.id) || [],
+        recurring: task.recurring,
+        recurringEndDate: task.recurringEndDate ? format(new Date(task.recurringEndDate), 'yyyy-MM-dd') : '',
+      });
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        name: '',
+        description: '',
+        listId: prev.listId || listId || lists.find(l => l.isDefault)?.id || (lists.length > 0 ? lists[0].id : ''),
+        date: '',
+        time: '',
+        deadline: '',
+        priority: 'none',
+        estimate: '',
+        actualTime: '',
+        labels: [],
+        recurring: undefined,
+        recurringEndDate: '',
+      }));
+    }
+  }, [task, listId, lists]);
+
   // Get current task's subtasks and attachments
   const currentSubtasks = task ? subtasks.filter(s => s.taskId === task.id) : [];
   const currentAttachments = task ? attachments.filter(a => a.taskId === task.id) : [];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.name.trim()) return;
+    if (!formData.listId) {
+      toast.error('Please select a list for the task');
+      return;
+    }
 
     const taskData = {
       name: formData.name,
@@ -58,32 +99,81 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
       priority: formData.priority,
       estimate: formData.estimate || undefined,
       actualTime: formData.actualTime || undefined,
-      labels: labels.filter(l => formData.labels.includes(l.id)),
-      completed: false,
-      order: 0,
+      labelIds: formData.labels,
+      completed: task?.completed || false,
+      order: task?.order || 0,
       id: task?.id || crypto.randomUUID(),
-      reminders: [],
+      reminders: task?.reminders || [],
       recurring: formData.recurring,
       recurringEndDate: formData.recurringEndDate ? new Date(formData.recurringEndDate) : undefined,
-      parentTaskId: undefined,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      parentTaskId: task?.parentTaskId,
     };
 
-    if (task) {
-      updateTask(task.id, taskData);
-    } else {
-      addTask(taskData);
+    try {
+      if (task) {
+        // API call
+        const response = await fetch(`/api/tasks/${task.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(taskData),
+        });
+        if (!response.ok) throw new Error('Failed to update task');
+        const updatedTask = await response.json();
+        updateTask(task.id, updatedTask);
+        toast.success('Task updated');
+      } else {
+        // API call
+        const response = await fetch('/api/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(taskData),
+        });
+        if (!response.ok) throw new Error('Failed to create task');
+        const newTask = await response.json();
+        addTask(newTask);
+        toast.success('Task created');
+      }
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error saving task:', error);
+      toast.error('Failed to save task');
     }
+  };
 
-    onOpenChange(false);
+  const handleDelete = async () => {
+    if (!task) return;
+    if (!confirm('Are you sure you want to delete this task?')) return;
+
+    try {
+      const response = await fetch(`/api/tasks/${task.id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete task');
+      deleteTask(task.id);
+      toast.success('Task deleted');
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      toast.error('Failed to delete task');
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
+        <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle>{task ? 'Edit Task' : 'Add New Task'}</DialogTitle>
+          {task && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground hover:text-destructive"
+              onClick={handleDelete}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          )}
         </DialogHeader>
         
         {/* Tabs */}

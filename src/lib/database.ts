@@ -138,14 +138,15 @@ function initializeDatabase() {
     -- Activity Log
     CREATE TABLE IF NOT EXISTS activity_log (
       id TEXT PRIMARY KEY,
-      task_id TEXT NOT NULL,
+      task_id TEXT,
+      list_id TEXT,
+      label_id TEXT,
       action TEXT NOT NULL,
       field TEXT,
       old_value TEXT,
       new_value TEXT,
       user_id TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
     -- Create indexes for better performance
@@ -161,6 +162,8 @@ function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_reminders_time ON reminders(reminder_time);
     CREATE INDEX IF NOT EXISTS idx_attachments_task_id ON attachments(task_id);
     CREATE INDEX IF NOT EXISTS idx_activity_log_task_id ON activity_log(task_id);
+    CREATE INDEX IF NOT EXISTS idx_activity_log_list_id ON activity_log(list_id);
+    CREATE INDEX IF NOT EXISTS idx_activity_log_label_id ON activity_log(label_id);
     CREATE INDEX IF NOT EXISTS idx_activity_log_created_at ON activity_log(created_at);
   `);
 
@@ -171,15 +174,15 @@ function initializeDatabase() {
     db.prepare(`
       INSERT INTO task_lists (id, name, color, emoji, is_default)
       VALUES (?, 'Inbox', '#EF4444', '📥', TRUE)
-    `).run('default-inbox');
+    `).run('00000000-0000-0000-0000-000000000000');
 
     // Insert some default labels
     const defaultLabels = [
-      { id: 'label-urgent', name: 'Urgent', color: '#DC2626', icon: '🔥' },
-      { id: 'label-important', name: 'Important', color: '#F59E0B', icon: '⭐' },
-      { id: 'label-personal', name: 'Personal', color: '#10B981', icon: '🏠' },
-      { id: 'label-work', name: 'Work', color: '#3B82F6', icon: '💼' },
-      { id: 'label-learning', name: 'Learning', color: '#8B5CF6', icon: '📚' },
+      { id: '11111111-1111-1111-1111-111111111111', name: 'Urgent', color: '#DC2626', icon: '🔥' },
+      { id: '22222222-2222-2222-2222-222222222222', name: 'Important', color: '#F59E0B', icon: '⭐' },
+      { id: '33333333-3333-3333-3333-333333333333', name: 'Personal', color: '#10B981', icon: '🏠' },
+      { id: '44444444-4444-4444-4444-444444444444', name: 'Work', color: '#3B82F6', icon: '💼' },
+      { id: '55555555-5555-5555-5555-555555555555', name: 'Learning', color: '#8B5CF6', icon: '📚' },
     ];
 
     const insertLabel = db.prepare('INSERT INTO labels (id, name, color, icon) VALUES (?, ?, ?, ?)');

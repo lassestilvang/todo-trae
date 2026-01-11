@@ -69,7 +69,9 @@ export interface Task {
 
 export interface ActivityLog {
   id: string;
-  taskId: string;
+  taskId?: string;
+  listId?: string;
+  labelId?: string;
   action: 'created' | 'updated' | 'completed' | 'deleted' | 'moved';
   field?: string;
   oldValue?: string;
