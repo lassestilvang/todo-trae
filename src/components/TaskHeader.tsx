@@ -3,6 +3,8 @@
 import { useTaskStore } from '@/stores/taskStore';
 import { MoreHorizontal, MessageCircle, Grid3X3 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { SmartPrioritization } from '@/components/SmartPrioritization';
+import { FocusMode } from '@/components/FocusMode';
 
 interface TaskHeaderProps {
   title: string;
@@ -26,6 +28,9 @@ export function TaskHeader({ title, taskCount }: TaskHeaderProps) {
         </div>
         
         <div className="flex items-center gap-3">
+          <FocusMode />
+          <SmartPrioritization />
+          
           <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl hover:bg-accent/50 transition-all" aria-label="Messages">
             <MessageCircle className="w-4 h-4" />
           </Button>
