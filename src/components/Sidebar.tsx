@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useTaskStore } from '@/stores/taskStore';
 import { useThemeStore } from '@/stores/themeStore';
+import { useUIStore } from '@/stores/uiStore';
+import { useTemplateStore } from '@/stores/templateStore';
 import { ViewType } from '@/types';
 import { 
   Plus, 
@@ -12,17 +14,24 @@ import {
   ChevronDown, 
   Calendar,
   Clock,
- CheckCircle2,
+  CheckCircle2,
   Hash,
   Home,
   Tag,
   Sun,
   Moon,
-  Monitor
+  Monitor,
+  Share2,
+  LayoutTemplate,
+  Trash2,
+  LogOut,
+  User,
+  Settings
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { isToday } from 'date-fns';
 import { Button } from '@/components/ui/Button';
+import { toast } from 'sonner';
 import { Input } from '@/components/ui/Input';
 import {
   DropdownMenu,
@@ -33,8 +42,11 @@ import {
 import { TaskForm } from './TaskForm';
 import { ListForm } from './ListForm';
 import { LabelForm } from './LabelForm';
+import { useRef, useEffect } from 'react';
+import { useSession, signOut } from 'next-auth/react';
 
 export function Sidebar() {
+  const { data: session } = useSession();
   const { 
     tasks,
     lists, 
@@ -46,10 +58,19 @@ export function Sidebar() {
     setSearchQuery 
   } = useTaskStore();
   const { theme, setTheme } = useThemeStore();
+  const { isSearchFocused, setSearchFocused, isTaskFormOpen, setTaskFormOpen } = useUIStore();
+  const { templates, deleteTemplate } = useTemplateStore();
   const [showProjects, setShowProjects] = useState(true);
-  const [taskFormOpen, setTaskFormOpen] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
   const [listFormOpen, setListFormOpen] = useState(false);
   const [labelFormOpen, setLabelFormOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isSearchFocused && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isSearchFocused]);
 
   const getThemeIcon = () => {
     if (theme === 'system') return <Monitor className="w-4 h-4" />;
@@ -97,6 +118,15 @@ export function Sidebar() {
     setSearchQuery('');
   };
 
+  const handleShareList = (e: React.MouseEvent, listId: string) => {
+    e.stopPropagation();
+    const shareUrl = `${window.location.origin}?listId=${listId}`;
+    navigator.clipboard.writeText(shareUrl);
+    toast.success('Squad link copied to clipboard!', {
+      description: 'Share this link with your squad to collaborate in real-time.',
+    });
+  };
+
   return (
     <nav 
       className="w-72 border-r border-border/30 flex flex-col bg-background/20 backdrop-blur-md"
@@ -105,28 +135,63 @@ export function Sidebar() {
       {/* Header */}
       <div className="p-5 border-b border-border/30">
         <div className="flex items-center justify-between mb-6">
-          <div 
-            className="flex items-center gap-2 group cursor-pointer"
-            role="button"
-            data-cursor="hover"
-            tabIndex={0}
-            aria-label="Account Settings"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                // Account settings logic would go here
-              }
-            }}
-          >
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform" aria-hidden="true">
-              N
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-bold text-foreground leading-tight">n0rd Planner</span>
-              <span className="text-[10px] text-muted-foreground">Personal Workspace</span>
-            </div>
-            <ChevronDown className="w-3 h-3 text-muted-foreground ml-1" aria-hidden="true" />
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div 
+                className="flex items-center gap-2 group cursor-pointer"
+                role="button"
+                data-cursor="hover"
+                tabIndex={0}
+                aria-label="Account Settings"
+              >
+                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform overflow-hidden" aria-hidden="true">
+                  {session?.user?.image ? (
+                    <img src={session.user.image} alt={session.user.name || ''} className="w-full h-full object-cover" />
+                  ) : (
+                    (session?.user?.name?.[0] || 'U').toUpperCase()
+                  )}
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold text-foreground leading-tight truncate max-w-[120px]">
+                    {session?.user?.name || 'User'}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">Personal Workspace</span>
+                </div>
+                <ChevronDown className="w-3 h-3 text-muted-foreground ml-1" aria-hidden="true" />
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56 rounded-xl shadow-xl border-border/40">
+              <div className="px-2 py-2 border-b border-border/30 mb-1">
+                <p className="text-xs font-semibold text-muted-foreground px-2 pb-1">Account</p>
+                <div className="flex items-center gap-2 px-2 py-1">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
+                    {(session?.user?.name?.[0] || 'U').toUpperCase()}
+                  </div>
+                  <div className="flex flex-col overflow-hidden">
+                    <p className="text-sm font-medium truncate">{session?.user?.name}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{session?.user?.email}</p>
+                  </div>
+                </div>
+              </div>
+              <DropdownMenuItem className="gap-2 rounded-lg py-2 cursor-pointer">
+                <User className="w-4 h-4 text-muted-foreground" />
+                <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="gap-2 rounded-lg py-2 cursor-pointer">
+                <Settings className="w-4 h-4 text-muted-foreground" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <div className="h-px bg-border/30 my-1" />
+              <DropdownMenuItem 
+                className="gap-2 rounded-lg py-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+                onClick={() => signOut()}
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-xl hover:bg-accent/50" aria-label="Notifications">
               <Bell className="w-4 h-4" />
@@ -175,17 +240,20 @@ export function Sidebar() {
           Add new task
         </Button>
 
-        <TaskForm open={taskFormOpen} onOpenChange={setTaskFormOpen} />
+        <TaskForm open={isTaskFormOpen} onOpenChange={setTaskFormOpen} />
         <ListForm open={listFormOpen} onOpenChange={setListFormOpen} />
         <LabelForm open={labelFormOpen} onOpenChange={setLabelFormOpen} />
 
         <div className="relative group">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" aria-hidden="true" />
           <Input
+            ref={searchInputRef}
             type="text"
             placeholder="Search tasks..."
             className="pl-9 rounded-xl bg-background/40 border-border/50 focus:bg-background/80 transition-all h-10 text-sm"
             onChange={(e) => handleSearch(e.target.value)}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
             aria-label="Search tasks"
           />
         </div>
@@ -255,15 +323,26 @@ export function Sidebar() {
                 <div className="flex items-center gap-3">
                   <span className="text-base" aria-hidden="true">{list.emoji}</span>
                   <span>{list.name}</span>
-                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 rounded-lg hover:bg-primary/20 text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => handleShareList(e, list.id)}
+                  aria-label="Share list"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                </Button>
                 {(list.isDefault || tasks.filter(t => t.listId === list.id && !t.completed).length > 0) && (
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/20 text-primary" aria-label={`${tasks.filter(t => t.listId === list.id && !t.completed).length} tasks`}>
                     {tasks.filter(t => t.listId === list.id && !t.completed).length || '0'}
                   </span>
                 )}
-              </button>
-            ))}
-          </div>
+              </div>
+            </button>
+          ))}
+        </div>
         </div>
 
         {/* Labels */}
@@ -343,6 +422,66 @@ export function Sidebar() {
             )}
           </AnimatePresence>
         </div>
+      </div>
+
+      {/* Templates Section */}
+      <div className="px-4 py-4 border-t border-border/10">
+        <div 
+          className="flex items-center justify-between px-2 mb-3 cursor-pointer group"
+          onClick={() => setShowTemplates(!showTemplates)}
+        >
+          <h2 className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
+            <LayoutTemplate className="w-3 h-3" />
+            Templates
+          </h2>
+          <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform duration-300 ${showTemplates ? '' : '-rotate-90'}`} />
+        </div>
+        
+        <AnimatePresence initial={false}>
+          {showTemplates && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+              className="overflow-hidden space-y-1"
+            >
+              {templates.map((template) => (
+                <div
+                  key={template.id}
+                  className="group flex items-center justify-between px-3 py-2 rounded-xl text-sm transition-all hover:bg-muted/40 text-muted-foreground hover:text-foreground"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-primary/40 group-hover:bg-primary transition-colors" />
+                    <span className="font-medium truncate max-w-[120px]">{template.name}</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (confirm('Are you sure you want to delete this template?')) {
+                        try {
+                          await fetch(`/api/templates/${template.id}`, { method: 'DELETE' });
+                          deleteTemplate(template.id);
+                          toast.success('Template deleted');
+                        } catch {
+                          toast.error('Failed to delete template');
+                        }
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                  </Button>
+                </div>
+              ))}
+              {templates.length === 0 && (
+                <p className="px-3 py-2 text-xs text-muted-foreground italic">No templates yet. Save a task as a template to see it here.</p>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </nav>
   );

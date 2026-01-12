@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { TaskForm } from './TaskForm';
+import { emitTaskUpdate } from '@/lib/socket-client';
 
 interface TaskProps {
   task: TaskType;
@@ -59,7 +60,9 @@ export function Task({ task }: TaskProps) {
         body: JSON.stringify({ completed: !task.completed, completedAt: !task.completed ? new Date() : null }),
       });
       if (!response.ok) throw new Error('Failed to toggle completion');
+      const updatedTask = await response.json();
       toggleTaskComplete(task.id);
+      emitTaskUpdate(task.listId, 'update', updatedTask);
     } catch (error) {
       console.error('Error toggling completion:', error);
     }

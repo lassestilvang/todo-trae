@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { CustomCursor } from "@/components/CustomCursor";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { AuthProvider } from "@/components/AuthProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -47,10 +48,12 @@ export default function RootLayout({
           Skip to main content
         </a>
         <div className="min-h-screen bg-gradient-to-br from-sky-50 via-indigo-50 to-fuchsia-100 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950">
-          <ThemeProvider>
-            {children}
-            <CustomCursor />
-          </ThemeProvider>
+          <AuthProvider>
+            <ThemeProvider>
+              {children}
+              <CustomCursor />
+            </ThemeProvider>
+          </AuthProvider>
         </div>
       </body>
     </html>

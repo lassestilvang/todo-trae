@@ -4,6 +4,7 @@ import { UpdateTaskSchema } from '@/lib/validations';
 import { logTaskActivity, logTaskUpdate } from '@/lib/activityLog';
 import { ZodError } from 'zod';
 import { Task } from '@/types';
+import { auth } from '@/lib/auth';
 
 /**
  * @swagger
@@ -62,8 +63,13 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
-    const task = await getTaskById(id);
+    const task = await getTaskById(id, session.user.id);
     if (!task) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
@@ -79,19 +85,24 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
     const body = await request.json();
     const validatedData = UpdateTaskSchema.parse(body);
     
-    const existingTask = await getTaskById(id);
+    const existingTask = await getTaskById(id, session.user.id);
     if (!existingTask) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
 
-    const updatedTask = await updateTask(id, validatedData as Partial<Task>);
+    const updatedTask = await updateTask(id, session.user.id, validatedData as Partial<Task>);
     
     // Log activity
-    await logTaskUpdate(id, validatedData, existingTask);
+    await logTaskUpdate(id, validatedData, existingTask, session.user.id);
     
     return NextResponse.json(updatedTask);
   } catch (error) {
@@ -108,16 +119,21 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
-    const existingTask = await getTaskById(id);
+    const existingTask = await getTaskById(id, session.user.id);
     if (!existingTask) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
 
-    await deleteTask(id);
+    await deleteTask(id, session.user.id);
     
     // Log activity
-    await logTaskActivity(id, 'deleted');
+    await logTaskActivity(id, 'deleted', session.user.id);
     
     return new NextResponse(null, { status: 204 });
   } catch (error) {

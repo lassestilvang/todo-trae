@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllActivityLogs, getActivityLogByTaskId } from '@/lib/api';
+import { auth } from '@/lib/auth';
 
 /**
  * @swagger
@@ -35,14 +36,19 @@ import { getAllActivityLogs, getActivityLogByTaskId } from '@/lib/api';
 
 export async function GET(request: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined;
     const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : undefined;
     const taskId = searchParams.get('taskId');
     
     const logs = taskId 
-      ? await getActivityLogByTaskId(taskId, limit, offset)
-      : await getAllActivityLogs(limit, offset);
+      ? await getActivityLogByTaskId(taskId, session.user.id, limit, offset)
+      : await getAllActivityLogs(session.user.id, limit, offset);
       
     return NextResponse.json(logs);
   } catch (error) {

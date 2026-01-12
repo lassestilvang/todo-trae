@@ -4,6 +4,7 @@ import { TaskListSchema } from '@/lib/validations';
 import { logListActivity } from '@/lib/activityLog';
 import { ZodError } from 'zod';
 import { TaskList } from '@/types';
+import { auth } from '@/lib/auth';
 
 /**
  * @swagger
@@ -36,7 +37,12 @@ import { TaskList } from '@/types';
 
 export async function GET() {
   try {
-    const lists = await getAllLists();
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const lists = await getAllLists(session.user.id);
     return NextResponse.json(lists);
   } catch (error) {
     console.error('Error fetching lists:', error);
@@ -46,12 +52,17 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const validatedData = TaskListSchema.parse(body);
-    const list = await createList(validatedData as Omit<TaskList, 'createdAt' | 'updatedAt'>);
+    const list = await createList(validatedData as Omit<TaskList, 'createdAt' | 'updatedAt'>, session.user.id);
     
     // Log activity
-    await logListActivity(list.id, 'created');
+    await logListActivity(list.id, 'created', session.user.id);
     
     return NextResponse.json(list, { status: 201 });
   } catch (error) {

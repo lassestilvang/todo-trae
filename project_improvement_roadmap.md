@@ -27,7 +27,7 @@ This roadmap outlines the strategic plan to transform the Daily Task Planner fro
 | F-01 | **AI Smart Prioritization**: Uses a heuristic model to suggest the "Top 3" tasks based on deadlines and priority. | P1 | Medium | None | ✅ | 2026-01-12 |
 | F-02 | **Immersive Focus Mode**: A full-screen mode with generative ambient backgrounds and a Pomodoro timer. | P2 | Medium | None | ✅ | 2026-01-12 |
 | F-03 | **Offline-First PWA**: Full Service Worker implementation with Zustand persistence for offline use. | P1 | High | None | ✅ | 2026-01-12 |
-| F-04 | **Collaborative "Squad" Boards**: Real-time shared lists using WebSockets (Socket.io). | P2 | High | None | ⭕ | 2026-01-11 |
+| F-04 | **Collaborative "Squad" Boards**: Real-time shared lists using WebSockets (Socket.io). | P2 | High | None | ✅ | 2026-01-12 |
 
 ---
 
@@ -68,9 +68,21 @@ This roadmap outlines the strategic plan to transform the Daily Task Planner fro
 
 ---
 
+## ⚡ 6. Phase 2: Power User & Ecosystem
+*Focus: Speed, productivity, and multi-user scaling.*
+
+| ID | Task Description | Priority | Effort | Dependency | Status | Timestamp |
+|:---|:---|:---:|:---:|:---|:---:|:---|
+| PU-01 | **Global Keyboard Shortcuts**: Implement hotkeys (`N` for new task, `/` for search, `F` for focus mode) to minimize mouse usage. | P1 | Low | None | ✅ | 2026-01-12 |
+| PU-02 | **Task Templates**: Create reusable task blueprints for recurring complex workflows. | P2 | Medium | None | ✅ | 2026-01-12 |
+| PU-03 | **Multi-user Auth Foundation**: Implement NextAuth.js (Auth.js) for personal accounts and data isolation. | P1 | High | INF-04 | ✅ | 2026-01-12 |
+| PU-04 | **Data Analytics Dashboard**: Visualize productivity trends, completion rates, and time allocation. | P2 | Medium | CQ-04 | ⭕ | 2026-01-12 |
+
+---
+
 ## 📊 Progress Summary
-- **Total Tasks**: 23
-- **Completed**: 22 (95.6%)
+- **Total Tasks**: 27
+- **Completed**: 26 (96.3%)
 - **In Progress**: 0 (0%)
 - **Blocked**: 0 (0%)
 

@@ -4,6 +4,7 @@ import { UpdateTaskListSchema } from '@/lib/validations';
 import { logListActivity, logListUpdate } from '@/lib/activityLog';
 import { ZodError } from 'zod';
 import { TaskList } from '@/types';
+import { auth } from '@/lib/auth';
 
 /**
  * @swagger
@@ -62,8 +63,13 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
-    const list = await getListById(id);
+    const list = await getListById(id, session.user.id);
     if (!list) {
       return NextResponse.json({ error: 'List not found' }, { status: 404 });
     }
@@ -79,19 +85,24 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
     const body = await request.json();
     const validatedData = UpdateTaskListSchema.parse(body);
     
-    const existingList = await getListById(id);
+    const existingList = await getListById(id, session.user.id);
     if (!existingList) {
       return NextResponse.json({ error: 'List not found' }, { status: 404 });
     }
 
-    const updatedList = await updateList(id, validatedData as Partial<TaskList>);
+    const updatedList = await updateList(id, session.user.id, validatedData as Partial<TaskList>);
     
     // Log activity
-    await logListUpdate(id, validatedData, existingList);
+    await logListUpdate(id, validatedData, existingList, session.user.id);
     
     return NextResponse.json(updatedList);
   } catch (error) {
@@ -108,16 +119,21 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
-    const existingList = await getListById(id);
+    const existingList = await getListById(id, session.user.id);
     if (!existingList) {
       return NextResponse.json({ error: 'List not found' }, { status: 404 });
     }
 
-    await deleteList(id);
+    await deleteList(id, session.user.id);
     
     // Log activity
-    await logListActivity(id, 'deleted');
+    await logListActivity(id, 'deleted', session.user.id);
     
     return new NextResponse(null, { status: 204 });
   } catch (error) {

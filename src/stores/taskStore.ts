@@ -205,6 +205,11 @@ export const useTaskStore = create<TaskStore>()(
     {
       name: 'daily-task-planner-storage',
       storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({ 
+        selectedListId: state.selectedListId,
+        selectedView: state.selectedView,
+        showCompleted: state.showCompleted,
+      }),
     }
   )
 );

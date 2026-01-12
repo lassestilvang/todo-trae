@@ -30,18 +30,26 @@ function mapLabel(row: typeof labels.$inferSelect): Label {
 }
 
 // Task List operations
-export async function getAllLists(): Promise<TaskList[]> {
-  const results = await db.select().from(taskLists).orderBy(desc(taskLists.isDefault), asc(taskLists.name));
+export async function getAllLists(userId: string): Promise<TaskList[]> {
+  const results = await db
+    .select()
+    .from(taskLists)
+    .where(eq(taskLists.userId, userId))
+    .orderBy(desc(taskLists.isDefault), asc(taskLists.name));
   return results.map(mapTaskList);
 }
 
-export async function getListById(id: string): Promise<TaskList | null> {
-  const results = await db.select().from(taskLists).where(eq(taskLists.id, id)).limit(1);
+export async function getListById(id: string, userId: string): Promise<TaskList | null> {
+  const results = await db
+    .select()
+    .from(taskLists)
+    .where(and(eq(taskLists.id, id), eq(taskLists.userId, userId)))
+    .limit(1);
   if (results.length === 0) return null;
   return mapTaskList(results[0]);
 }
 
-export async function createList(list: Omit<TaskList, 'createdAt' | 'updatedAt'>): Promise<TaskList> {
+export async function createList(list: Omit<TaskList, 'createdAt' | 'updatedAt'>, userId: string): Promise<TaskList> {
   try {
     await db.insert(taskLists).values({
       id: list.id,
@@ -49,16 +57,17 @@ export async function createList(list: Omit<TaskList, 'createdAt' | 'updatedAt'>
       color: list.color,
       emoji: list.emoji,
       isDefault: list.isDefault,
+      userId,
     });
-    logger.info('Task list created', { listId: list.id, name: list.name });
-    return (await getListById(list.id))!;
+    logger.info('Task list created', { listId: list.id, name: list.name, userId });
+    return (await getListById(list.id, userId))!;
   } catch (error) {
-    logger.error('Failed to create task list', { error, list });
+    logger.error('Failed to create task list', { error, list, userId });
     throw error;
   }
 }
 
-export async function updateList(id: string, updates: Partial<TaskList>): Promise<TaskList> {
+export async function updateList(id: string, userId: string, updates: Partial<TaskList>): Promise<TaskList> {
   const dbUpdates: Partial<typeof taskLists.$inferInsert> = {};
   if (updates.name !== undefined) dbUpdates.name = updates.name;
   if (updates.color !== undefined) dbUpdates.color = updates.color;
@@ -66,58 +75,69 @@ export async function updateList(id: string, updates: Partial<TaskList>): Promis
   if (updates.isDefault !== undefined) dbUpdates.isDefault = updates.isDefault;
   dbUpdates.updatedAt = new Date();
 
-  await db.update(taskLists).set(dbUpdates).where(eq(taskLists.id, id));
-  return (await getListById(id))!;
+  await db
+    .update(taskLists)
+    .set(dbUpdates)
+    .where(and(eq(taskLists.id, id), eq(taskLists.userId, userId)));
+  return (await getListById(id, userId))!;
 }
 
-export async function deleteList(id: string): Promise<void> {
+export async function deleteList(id: string, userId: string): Promise<void> {
   try {
-    await db.delete(taskLists).where(eq(taskLists.id, id));
-    logger.info('Task list deleted', { listId: id });
+    await db
+      .delete(taskLists)
+      .where(and(eq(taskLists.id, id), eq(taskLists.userId, userId)));
+    logger.info('Task list deleted', { listId: id, userId });
   } catch (error) {
-    logger.error('Failed to delete task list', { error, listId: id });
+    logger.error('Failed to delete task list', { error, listId: id, userId });
     throw error;
   }
 }
 
 // Label operations
-export async function getAllLabels(): Promise<Label[]> {
-  const results = await db.select().from(labels).orderBy(asc(labels.name));
+export async function getAllLabels(userId: string): Promise<Label[]> {
+  const results = await db
+    .select()
+    .from(labels)
+    .where(eq(labels.userId, userId))
+    .orderBy(asc(labels.name));
   return results.map(mapLabel);
 }
 
-export async function getLabelById(id: string): Promise<Label | null> {
-  const results = await db.select().from(labels).where(eq(labels.id, id)).limit(1);
+export async function getLabelById(id: string, userId: string): Promise<Label | null> {
+  const results = await db.select().from(labels).where(and(eq(labels.id, id), eq(labels.userId, userId))).limit(1);
   if (results.length === 0) return null;
   return mapLabel(results[0]);
 }
 
-export async function createLabel(label: Omit<Label, 'createdAt' | 'updatedAt'>): Promise<Label> {
+export async function createLabel(label: Omit<Label, 'createdAt' | 'updatedAt'>, userId: string): Promise<Label> {
   await db.insert(labels).values({
     id: label.id,
+    userId,
     name: label.name,
     color: label.color,
     icon: label.icon,
   });
-  return (await getLabelById(label.id))!;
+  return (await getLabelById(label.id, userId))!;
 }
 
-export async function updateLabel(id: string, updates: Partial<Label>): Promise<Label> {
+export async function updateLabel(id: string, userId: string, updates: Partial<Label>): Promise<Label> {
   const dbUpdates: Partial<typeof labels.$inferInsert> = {
     ...updates,
     updatedAt: new Date(),
   };
-  await db.update(labels).set(dbUpdates).where(eq(labels.id, id));
-  return (await getLabelById(id))!;
+  await db.update(labels).set(dbUpdates).where(and(eq(labels.id, id), eq(labels.userId, userId)));
+  return (await getLabelById(id, userId))!;
 }
 
-export async function deleteLabel(id: string): Promise<void> {
-  await db.delete(labels).where(eq(labels.id, id));
+export async function deleteLabel(id: string, userId: string): Promise<void> {
+  await db.delete(labels).where(and(eq(labels.id, id), eq(labels.userId, userId)));
 }
 
 // Task operations
-export async function getAllTasks(limit?: number, offset?: number): Promise<Task[]> {
+export async function getAllTasks(userId: string, limit?: number, offset?: number): Promise<Task[]> {
   const results = await db.query.tasks.findMany({
+    where: eq(tasks.userId, userId),
     with: {
       taskLabels: {
         with: {
@@ -143,6 +163,7 @@ export async function getAllTasks(limit?: number, offset?: number): Promise<Task
     estimate: row.estimate || undefined,
     actualTime: row.actualTime || undefined,
     parentTaskId: row.parentTaskId || undefined,
+    userId: row.userId || undefined,
     order: row.order || 0,
     priority: (row.priority || 'none') as Priority,
     recurring: (row.recurring || undefined) as RecurringType | undefined,
@@ -151,9 +172,9 @@ export async function getAllTasks(limit?: number, offset?: number): Promise<Task
   }));
 }
 
-export async function getTasksByListId(listId: string, limit?: number, offset?: number): Promise<Task[]> {
+export async function getTasksByListId(listId: string, userId: string, limit?: number, offset?: number): Promise<Task[]> {
   const results = await db.query.tasks.findMany({
-    where: and(eq(tasks.listId, listId), isNull(tasks.parentTaskId)),
+    where: and(eq(tasks.listId, listId), eq(tasks.userId, userId), isNull(tasks.parentTaskId)),
     with: {
       taskLabels: {
         with: {
@@ -179,6 +200,7 @@ export async function getTasksByListId(listId: string, limit?: number, offset?: 
     estimate: row.estimate || undefined,
     actualTime: row.actualTime || undefined,
     parentTaskId: row.parentTaskId || undefined,
+    userId: row.userId || undefined,
     order: row.order || 0,
     priority: (row.priority || 'none') as Priority,
     recurring: (row.recurring || undefined) as RecurringType | undefined,
@@ -187,9 +209,9 @@ export async function getTasksByListId(listId: string, limit?: number, offset?: 
   }));
 }
 
-export async function getTaskById(id: string): Promise<Task | null> {
+export async function getTaskById(id: string, userId: string): Promise<Task | null> {
   const row = await db.query.tasks.findFirst({
-    where: eq(tasks.id, id),
+    where: and(eq(tasks.id, id), eq(tasks.userId, userId)),
     with: {
       taskLabels: {
         with: {
@@ -214,6 +236,7 @@ export async function getTaskById(id: string): Promise<Task | null> {
     estimate: row.estimate || undefined,
     actualTime: row.actualTime || undefined,
     parentTaskId: row.parentTaskId || undefined,
+    userId: row.userId || undefined,
     order: row.order || 0,
     priority: (row.priority || 'none') as Priority,
     recurring: (row.recurring || undefined) as RecurringType | undefined,
@@ -223,9 +246,12 @@ export async function getTaskById(id: string): Promise<Task | null> {
 }
 
 export async function createTask(task: Omit<Task, 'createdAt' | 'updatedAt' | 'subtasks' | 'attachments'> & { labelIds?: string[] }): Promise<Task> {
+  if (!task.userId) throw new Error('userId is required to create a task');
+
   await db.insert(tasks).values({
     id: task.id,
     listId: task.listId,
+    userId: task.userId,
     name: task.name,
     description: task.description,
     date: task.date,
@@ -250,10 +276,10 @@ export async function createTask(task: Omit<Task, 'createdAt' | 'updatedAt' | 's
     );
   }
 
-  return (await getTaskById(task.id))!;
+  return (await getTaskById(task.id, task.userId))!;
 }
 
-export async function updateTask(id: string, updates: Partial<Task> & { labelIds?: string[] }): Promise<Task> {
+export async function updateTask(id: string, userId: string, updates: Partial<Task> & { labelIds?: string[] }): Promise<Task> {
   const dbUpdates: Partial<typeof tasks.$inferInsert> = {};
   
   if (updates.listId !== undefined) dbUpdates.listId = updates.listId;
@@ -276,7 +302,7 @@ export async function updateTask(id: string, updates: Partial<Task> & { labelIds
   dbUpdates.updatedAt = new Date();
 
   if (Object.keys(dbUpdates).length > 0) {
-    await db.update(tasks).set(dbUpdates).where(eq(tasks.id, id));
+    await db.update(tasks).set(dbUpdates).where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
   }
 
   const labelIds = updates.labelIds || updates.labels?.map(l => l.id);
@@ -292,15 +318,15 @@ export async function updateTask(id: string, updates: Partial<Task> & { labelIds
     }
   }
 
-  return (await getTaskById(id))!;
+  return (await getTaskById(id, userId))!;
 }
 
-export async function deleteTask(id: string): Promise<void> {
-  await db.delete(tasks).where(eq(tasks.id, id));
+export async function deleteTask(id: string, userId: string): Promise<void> {
+  await db.delete(tasks).where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
 }
 
-export async function toggleTaskComplete(id: string): Promise<Task> {
-  const task = await getTaskById(id);
+export async function toggleTaskComplete(id: string, userId: string): Promise<Task> {
+  const task = await getTaskById(id, userId);
   if (!task) throw new Error('Task not found');
 
   const updates = {
@@ -308,7 +334,7 @@ export async function toggleTaskComplete(id: string): Promise<Task> {
     completedAt: !task.completed ? new Date() : null,
   };
 
-  return updateTask(id, updates as Partial<Task>);
+  return updateTask(id, userId, updates as Partial<Task>);
 }
 
 // Subtask operations
@@ -361,8 +387,14 @@ export async function deleteSubtask(id: string): Promise<void> {
 }
 
 // Activity log operations
-export async function getAllActivityLogs(limit?: number, offset?: number): Promise<ActivityLog[]> {
-  const results = await db.select().from(activityLog).orderBy(desc(activityLog.createdAt)).limit(limit || 100).offset(offset || 0);
+export async function getAllActivityLogs(userId: string, limit?: number, offset?: number): Promise<ActivityLog[]> {
+  const results = await db
+    .select()
+    .from(activityLog)
+    .where(eq(activityLog.userId, userId))
+    .orderBy(desc(activityLog.createdAt))
+    .limit(limit || 100)
+    .offset(offset || 0);
   return results.map(row => ({
     ...row,
     action: row.action as ActivityLog['action'],
@@ -377,8 +409,14 @@ export async function getAllActivityLogs(limit?: number, offset?: number): Promi
   }));
 }
 
-export async function getActivityLogByTaskId(taskId: string, limit?: number, offset?: number): Promise<ActivityLog[]> {
-  const results = await db.select().from(activityLog).where(eq(activityLog.taskId, taskId)).orderBy(desc(activityLog.createdAt)).limit(limit || 100).offset(offset || 0);
+export async function getActivityLogByTaskId(taskId: string, userId: string, limit?: number, offset?: number): Promise<ActivityLog[]> {
+  const results = await db
+    .select()
+    .from(activityLog)
+    .where(and(eq(activityLog.taskId, taskId), eq(activityLog.userId, userId)))
+    .orderBy(desc(activityLog.createdAt))
+    .limit(limit || 100)
+    .offset(offset || 0);
   return results.map(row => ({
     ...row,
     action: row.action as ActivityLog['action'],

@@ -5,6 +5,7 @@ import { logTaskActivity } from '@/lib/activityLog';
 import { ZodError } from 'zod';
 import { Task } from '@/types';
 import { logger } from '@/lib/logger';
+import { auth } from '@/lib/auth';
 
 /**
  * @swagger
@@ -50,11 +51,16 @@ import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined;
     const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : undefined;
     
-    const tasks = await getAllTasks(limit, offset);
+    const tasks = await getAllTasks(session.user.id, limit, offset);
     return NextResponse.json(tasks);
   } catch (error) {
     logger.error('Error fetching tasks', { error });
@@ -64,13 +70,21 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const validatedData = CreateTaskSchema.parse(body);
-    const task = await createTask(validatedData as unknown as Omit<Task, 'createdAt' | 'updatedAt' | 'subtasks' | 'attachments'> & { labelIds?: string[] });
+    const task = await createTask({
+      ...(validatedData as unknown as Omit<Task, 'createdAt' | 'updatedAt' | 'subtasks' | 'attachments'> & { labelIds?: string[] }),
+      userId: session.user.id
+    });
     
     // Log activity
-    await logTaskActivity(task.id, 'created');
-    logger.info('Task created successfully', { taskId: task.id, name: task.name });
+    await logTaskActivity(task.id, 'created', session.user.id);
+    logger.info('Task created successfully', { taskId: task.id, name: task.name, userId: session.user.id });
     
     return NextResponse.json(task, { status: 201 });
   } catch (error) {

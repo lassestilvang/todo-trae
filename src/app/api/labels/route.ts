@@ -4,6 +4,7 @@ import { LabelSchema } from '@/lib/validations';
 import { logLabelActivity } from '@/lib/activityLog';
 import { ZodError } from 'zod';
 import { Label } from '@/types';
+import { auth } from '@/lib/auth';
 
 /**
  * @swagger
@@ -36,7 +37,12 @@ import { Label } from '@/types';
 
 export async function GET() {
   try {
-    const labels = await getAllLabels();
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const labels = await getAllLabels(session.user.id);
     return NextResponse.json(labels);
   } catch (error) {
     console.error('Error fetching labels:', error);
@@ -46,12 +52,17 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const validatedData = LabelSchema.parse(body);
-    const label = await createLabel(validatedData as Omit<Label, 'createdAt' | 'updatedAt'>);
+    const label = await createLabel(validatedData as Omit<Label, 'createdAt' | 'updatedAt'>, session.user.id);
     
     // Log activity
-    await logLabelActivity(label.id, 'created');
+    await logLabelActivity(label.id, 'created', session.user.id);
     
     return NextResponse.json(label, { status: 201 });
   } catch (error) {

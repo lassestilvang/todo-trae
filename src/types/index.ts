@@ -17,6 +17,7 @@ export interface TaskList {
   color: string;
   emoji: string;
   isDefault: boolean;
+  userId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,9 +42,22 @@ export interface Attachment {
   createdAt: Date;
 }
 
+export interface TaskTemplate {
+  id: string;
+  name: string;
+  description?: string | null;
+  priority: 'high' | 'medium' | 'low' | 'none';
+  estimate?: string | null;
+  listId?: string | null;
+  userId?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface Task {
   id: string;
   listId: string;
+  userId?: string;
   name: string;
   description?: string;
   date?: Date;

@@ -4,19 +4,76 @@ import { relations } from 'drizzle-orm';
 export const priorityEnum = pgEnum('priority', ['high', 'medium', 'low', 'none']);
 export const recurringEnum = pgEnum('recurring', ['daily', 'weekly', 'weekday', 'monthly', 'yearly', 'custom']);
 
+export const users = pgTable('users', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text('name'),
+  email: text('email').notNull().unique(),
+  emailVerified: timestamp('email_verified', { mode: 'date', withTimezone: true }),
+  image: text('image'),
+  password: text('password'), // Optional for Credentials provider
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
+
+export const accounts = pgTable(
+  'accounts',
+  {
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    type: text('type').notNull(),
+    provider: text('provider').notNull(),
+    providerAccountId: text('provider_account_id').notNull(),
+    refresh_token: text('refresh_token'),
+    access_token: text('access_token'),
+    expires_at: integer('expires_at'),
+    token_type: text('token_type'),
+    scope: text('scope'),
+    id_token: text('id_token'),
+    session_state: text('session_state'),
+  },
+  (account) => ({
+    compoundKey: primaryKey({
+      columns: [account.provider, account.providerAccountId],
+    }),
+  })
+);
+
+export const sessions = pgTable('sessions', {
+  sessionToken: text('session_token').primaryKey(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  expires: timestamp('expires', { mode: 'date', withTimezone: true }).notNull(),
+});
+
+export const verificationTokens = pgTable(
+  'verification_tokens',
+  {
+    identifier: text('identifier').notNull(),
+    token: text('token').notNull(),
+    expires: timestamp('expires', { mode: 'date', withTimezone: true }).notNull(),
+  },
+  (vt) => ({
+    compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
+  })
+);
+
 export const taskLists = pgTable('task_lists', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   color: text('color').default('#3B82F6').notNull(),
   emoji: text('emoji').default('📋').notNull(),
   isDefault: boolean('is_default').default(false),
+  userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
 export const labels = pgTable('labels', {
   id: text('id').primaryKey(),
-  name: text('name').notNull().unique(),
+  userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
   color: text('color').default('#6B7280').notNull(),
   icon: text('icon').default('🏷️').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
@@ -26,6 +83,7 @@ export const labels = pgTable('labels', {
 export const tasks = pgTable('tasks', {
   id: text('id').primaryKey(),
   listId: text('list_id').notNull().references(() => taskLists.id, { onDelete: 'cascade' }),
+  userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   description: text('description'),
   date: timestamp('date', { withTimezone: true }),
@@ -65,6 +123,18 @@ export const subtasks = pgTable('subtasks', {
 }, (table) => ({
   idxSubtasksTaskId: index('idx_subtasks_task_id').on(table.taskId),
 }));
+
+export const taskTemplates = pgTable('task_templates', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  priority: priorityEnum('priority').default('none'),
+  estimate: text('estimate'),
+  listId: text('list_id').references(() => taskLists.id, { onDelete: 'set null' }),
+  userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
 
 export const taskLabels = pgTable('task_labels', {
   taskId: text('task_id').notNull().references(() => tasks.id, { onDelete: 'cascade' }),
@@ -117,18 +187,37 @@ export const activityLog = pgTable('activity_log', {
 }));
 
 // Relations
-export const taskListsRelations = relations(taskLists, ({ many }) => ({
+export const usersRelations = relations(users, ({ many }) => ({
+  taskLists: many(taskLists),
   tasks: many(tasks),
+  templates: many(taskTemplates),
+  labels: many(labels),
 }));
 
-export const labelsRelations = relations(labels, ({ many }) => ({
+export const taskListsRelations = relations(taskLists, ({ one, many }) => ({
+  tasks: many(tasks),
+  user: one(users, {
+    fields: [taskLists.userId],
+    references: [users.id],
+  }),
+}));
+
+export const labelsRelations = relations(labels, ({ one, many }) => ({
   taskLabels: many(taskLabels),
+  user: one(users, {
+    fields: [labels.userId],
+    references: [users.id],
+  }),
 }));
 
 export const tasksRelations = relations(tasks, ({ one, many }) => ({
   list: one(taskLists, {
     fields: [tasks.listId],
     references: [taskLists.id],
+  }),
+  user: one(users, {
+    fields: [tasks.userId],
+    references: [users.id],
   }),
   subtasks: many(subtasks),
   attachments: many(attachments),
@@ -173,5 +262,16 @@ export const attachmentsRelations = relations(attachments, ({ one }) => ({
   task: one(tasks, {
     fields: [attachments.taskId],
     references: [tasks.id],
+  }),
+}));
+
+export const taskTemplatesRelations = relations(taskTemplates, ({ one }) => ({
+  user: one(users, {
+    fields: [taskTemplates.userId],
+    references: [users.id],
+  }),
+  list: one(taskLists, {
+    fields: [taskTemplates.listId],
+    references: [taskLists.id],
   }),
 }));

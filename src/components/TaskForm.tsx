@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useTaskStore } from '@/stores/taskStore';
-import { Label, Priority, Task } from '@/types';
+import { useTemplateStore } from '@/stores/templateStore';
+import { Label, Priority, Task, TaskTemplate } from '@/types';
 import { format } from 'date-fns';
-import { Calendar, Clock, Flag, Hash, Trash2 } from 'lucide-react';
+import { Calendar, Clock, Flag, Hash, Trash2, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
@@ -16,6 +17,7 @@ import { RecurringTaskSelector } from '@/components/RecurringTaskSelector';
 import { TimeTracker } from '@/components/TimeTracker';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { emitTaskUpdate } from '@/lib/socket-client';
 
 interface TaskFormProps {
   open: boolean;
@@ -26,6 +28,7 @@ interface TaskFormProps {
 
 export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
   const { lists, labels, subtasks, attachments, addTask, updateTask, deleteTask } = useTaskStore();
+  const { templates, fetchTemplates, addTemplate } = useTemplateStore();
   const [activeTab, setActiveTab] = useState<'basic' | 'advanced'>('basic');
   const [formData, setFormData] = useState({
     name: task?.name || '',
@@ -41,6 +44,51 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
     recurring: task?.recurring,
     recurringEndDate: task?.recurringEndDate ? format(new Date(task.recurringEndDate), 'yyyy-MM-dd') : '',
   });
+
+  useEffect(() => {
+    fetchTemplates();
+  }, [fetchTemplates]);
+
+  const handleApplyTemplate = (template: TaskTemplate) => {
+    setFormData(prev => ({
+      ...prev,
+      name: template.name,
+      description: template.description || '',
+      priority: template.priority,
+      estimate: template.estimate || '',
+      listId: template.listId || prev.listId,
+    }));
+    toast.success('Template applied!');
+  };
+
+  const handleSaveAsTemplate = async () => {
+    if (!formData.name) {
+      toast.error('Task name is required to save as template');
+      return;
+    }
+    
+    try {
+      const response = await fetch('/api/templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          description: formData.description,
+          priority: formData.priority,
+          estimate: formData.estimate,
+          listId: formData.listId,
+        }),
+      });
+      
+      if (response.ok) {
+        const newTemplate = await response.json();
+        addTemplate(newTemplate);
+        toast.success('Template saved!');
+      }
+    } catch {
+      toast.error('Failed to save template');
+    }
+  };
 
   const priorityColors: Record<Priority, string> = {
     none: 'bg-muted/50 text-muted-foreground',
@@ -135,6 +183,7 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
         if (!response.ok) throw new Error('Failed to update task');
         const updatedTask = await response.json();
         updateTask(task.id, updatedTask);
+        emitTaskUpdate(updatedTask.listId, 'update', updatedTask);
         toast.success('Task updated');
       } else {
         // API call
@@ -146,6 +195,7 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
         if (!response.ok) throw new Error('Failed to create task');
         const newTask = await response.json();
         addTask(newTask);
+        emitTaskUpdate(newTask.listId, 'add', newTask);
         toast.success('Task created');
       }
       onOpenChange(false);
@@ -165,6 +215,7 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
       });
       if (!response.ok) throw new Error('Failed to delete task');
       deleteTask(task.id);
+      emitTaskUpdate(task.listId, 'delete', task);
       toast.success('Task deleted');
       onOpenChange(false);
     } catch (error) {
@@ -179,8 +230,23 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
         <div className="flex flex-col h-full max-h-[90vh]">
           <DialogHeader className="px-6 py-4 border-b border-border/20 flex flex-row items-center justify-between space-y-0">
             <DialogTitle className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70">
-              {task ? 'Edit Task' : 'Create Task'}
+              {task ? 'Edit Task' : 'Create New Task'}
             </DialogTitle>
+            {!task && templates.length > 0 && (
+              <Select
+                  value=""
+                  onChange={(e) => {
+                    const template = templates.find(t => t.id === e.target.value);
+                    if (template) handleApplyTemplate(template);
+                  }}
+                  className="w-48 h-8 text-xs bg-background/40 backdrop-blur-md border-border/30 rounded-xl cursor-pointer"
+                >
+                  <option value="" disabled>Apply template...</option>
+                  {templates.map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </Select>
+            )}
             {task && (
               <Button
                 type="button"
@@ -424,26 +490,37 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
             </form>
           </div>
 
-          <div className="px-6 py-4 border-t border-border/20 bg-muted/5 flex justify-end gap-3">
-            <Button 
-              type="button" 
-              variant="ghost" 
-              onClick={() => onOpenChange(false)}
-              className="px-6 rounded-xl hover:bg-muted/40 font-semibold"
+          <div className="px-6 py-4 border-t border-border/20 bg-muted/5 flex justify-between gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              className="px-4 rounded-xl hover:bg-muted/40 font-semibold border-border/30"
+              onClick={handleSaveAsTemplate}
             >
-              Cancel
+              <Copy className="w-4 h-4 mr-2" />
+              Save as Template
             </Button>
-            <Button 
-              type="button" 
-              onClick={(e) => {
-                const form = (e.currentTarget as HTMLButtonElement).form;
-                if (form) form.requestSubmit();
-                else handleSubmit(e as unknown as React.FormEvent);
-              }}
-              className="px-8 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
-            >
-              {task ? 'Save Changes' : 'Create Task'}
-            </Button>
+            <div className="flex gap-3">
+              <Button 
+                type="button" 
+                variant="ghost" 
+                onClick={() => onOpenChange(false)}
+                className="px-6 rounded-xl hover:bg-muted/40 font-semibold"
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="button" 
+                onClick={(e) => {
+                  const form = (e.currentTarget as HTMLButtonElement).form;
+                  if (form) form.requestSubmit();
+                  else handleSubmit(e as unknown as React.FormEvent);
+                }}
+                className="px-8 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                {task ? 'Save Changes' : 'Create Task'}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>

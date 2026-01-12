@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTaskStore } from '@/stores/taskStore';
+import { useUIStore } from '@/stores/uiStore';
 import { TaskForm } from '@/components/TaskForm';
 import { Task } from '@/components/Task';
 import { TaskHeader } from '@/components/TaskHeader';
@@ -14,7 +15,7 @@ import { AnimatePresence } from 'framer-motion';
 
 export function TaskList() {
   const { tasks, selectedListId, selectedView, searchQuery, showCompleted } = useTaskStore();
-  const [taskFormOpen, setTaskFormOpen] = useState(false);
+  const { isTaskFormOpen: taskFormOpen, setTaskFormOpen: setTaskFormOpen } = useUIStore();
 
   const filteredTasks = useMemo(() => {
     console.log(`Filtering tasks: ${tasks.length} total, view: ${selectedView}, query: "${searchQuery}"`);

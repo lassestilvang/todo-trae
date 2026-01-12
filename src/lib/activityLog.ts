@@ -4,6 +4,7 @@ import { createActivityLog } from '@/lib/api';
 export async function logTaskActivity(
   taskId: string,
   action: ActivityLog['action'],
+  userId: string,
   field?: string,
   oldValue?: string,
   newValue?: string
@@ -16,7 +17,7 @@ export async function logTaskActivity(
       field,
       oldValue,
       newValue,
-      userId: 'current-user', // In a real app, this would come from auth
+      userId,
     };
 
     await createActivityLog(log);
@@ -31,6 +32,7 @@ export async function logTaskActivity(
 export async function logListActivity(
   listId: string,
   action: ActivityLog['action'],
+  userId: string,
   field?: string,
   oldValue?: string,
   newValue?: string
@@ -43,7 +45,7 @@ export async function logListActivity(
       field,
       oldValue,
       newValue,
-      userId: 'current-user',
+      userId,
     };
 
     await createActivityLog(log);
@@ -57,6 +59,7 @@ export async function logListActivity(
 export async function logLabelActivity(
   labelId: string,
   action: ActivityLog['action'],
+  userId: string,
   field?: string,
   oldValue?: string,
   newValue?: string
@@ -69,7 +72,7 @@ export async function logLabelActivity(
       field,
       oldValue,
       newValue,
-      userId: 'current-user',
+      userId,
     };
 
     await createActivityLog(log);
@@ -83,7 +86,8 @@ export async function logLabelActivity(
 export async function logTaskUpdate(
   taskId: string,
   updates: Partial<Task>,
-  oldTask: Task
+  oldTask: Task,
+  userId: string
 ): Promise<void> {
   for (const field of Object.keys(updates) as Array<keyof Task>) {
     const newValue = updates[field];
@@ -94,6 +98,7 @@ export async function logTaskUpdate(
       await logTaskActivity(
         taskId,
         'updated',
+        userId,
         String(field),
         oldValue !== undefined ? String(oldValue) : undefined,
         newValue !== undefined ? String(newValue) : undefined
@@ -105,7 +110,8 @@ export async function logTaskUpdate(
 export async function logListUpdate(
   listId: string,
   updates: Partial<TaskList>,
-  oldList: TaskList
+  oldList: TaskList,
+  userId: string
 ): Promise<void> {
   for (const field of Object.keys(updates) as Array<keyof TaskList>) {
     const newValue = updates[field];
@@ -115,6 +121,7 @@ export async function logListUpdate(
       await logListActivity(
         listId,
         'updated',
+        userId,
         String(field),
         oldValue !== undefined ? String(oldValue) : undefined,
         newValue !== undefined ? String(newValue) : undefined
@@ -126,7 +133,8 @@ export async function logListUpdate(
 export async function logLabelUpdate(
   labelId: string,
   updates: Partial<Label>,
-  oldLabel: Label
+  oldLabel: Label,
+  userId: string
 ): Promise<void> {
   for (const field of Object.keys(updates) as Array<keyof Label>) {
     const newValue = updates[field];
@@ -136,6 +144,7 @@ export async function logLabelUpdate(
       await logLabelActivity(
         labelId,
         'updated',
+        userId,
         String(field),
         oldValue !== undefined ? String(oldValue) : undefined,
         newValue !== undefined ? String(newValue) : undefined

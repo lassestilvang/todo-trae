@@ -4,9 +4,10 @@ import { useState, useEffect, useRef } from 'react';
 import { Maximize2, Play, Pause, RotateCcw, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
+import { useUIStore } from '@/stores/uiStore';
 
 export function FocusMode() {
-  const [isActive, setIsActive] = useState(false);
+  const { isFocusModeOpen: isActive, setFocusModeOpen: setIsActive } = useUIStore();
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [mode, setMode] = useState<'work' | 'break'>('work');

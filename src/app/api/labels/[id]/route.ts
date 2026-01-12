@@ -4,6 +4,7 @@ import { UpdateLabelSchema } from '@/lib/validations';
 import { logLabelActivity, logLabelUpdate } from '@/lib/activityLog';
 import { ZodError } from 'zod';
 import { Label } from '@/types';
+import { auth } from '@/lib/auth';
 
 /**
  * @swagger
@@ -62,8 +63,13 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
-    const label = await getLabelById(id);
+    const label = await getLabelById(id, session.user.id);
     if (!label) {
       return NextResponse.json({ error: 'Label not found' }, { status: 404 });
     }
@@ -79,19 +85,24 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
     const body = await request.json();
     const validatedData = UpdateLabelSchema.parse(body);
     
-    const existingLabel = await getLabelById(id);
+    const existingLabel = await getLabelById(id, session.user.id);
     if (!existingLabel) {
       return NextResponse.json({ error: 'Label not found' }, { status: 404 });
     }
 
-    const updatedLabel = await updateLabel(id, validatedData as Partial<Label>);
+    const updatedLabel = await updateLabel(id, session.user.id, validatedData as Partial<Label>);
     
     // Log activity
-    await logLabelUpdate(id, validatedData, existingLabel);
+    await logLabelUpdate(id, validatedData, existingLabel, session.user.id);
     
     return NextResponse.json(updatedLabel);
   } catch (error) {
@@ -108,16 +119,21 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
-    const existingLabel = await getLabelById(id);
+    const existingLabel = await getLabelById(id, session.user.id);
     if (!existingLabel) {
       return NextResponse.json({ error: 'Label not found' }, { status: 404 });
     }
 
-    await deleteLabel(id);
+    await deleteLabel(id, session.user.id);
     
     // Log activity
-    await logLabelActivity(id, 'deleted');
+    await logLabelActivity(id, 'deleted', session.user.id);
     
     return new NextResponse(null, { status: 204 });
   } catch (error) {
