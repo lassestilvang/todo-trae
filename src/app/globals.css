@@ -21,6 +21,14 @@
   --color-input: hsl(214.3 31.8% 91.4%);
   --color-ring: hsl(221.2 83.2% 53.3%);
   --radius: 0.5rem;
+  --primary-rgb: 37, 99, 235;
+}
+
+/* Hide default cursor globally */
+@media (pointer: fine) {
+  body, button, a, [role="button"], .cursor-pointer {
+    cursor: none !important;
+  }
 }
 
 /* Map Tailwind token variables without the color- prefix for compatibility */
@@ -66,6 +74,7 @@
   --color-border: hsl(217.2 32.6% 17.5%);
   --color-input: hsl(217.2 32.6% 17.5%);
   --color-ring: hsl(224.3 76.3% 94.1%);
+  --primary-rgb: 59, 130, 246;
 }
 
 .dark {
@@ -92,5 +101,27 @@
 
 @layer base {
   * { border-color: var(--color-border); }
-  body { background-color: var(--color-background); color: var(--color-foreground); }
+  body { 
+    background-color: var(--color-background); 
+    color: var(--color-foreground);
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+      radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+      radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+    background-attachment: fixed;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-background/60 backdrop-blur-md border border-border/50 shadow-xl;
+  }
+  
+  .glass-dark {
+    @apply bg-background/40 backdrop-blur-lg border border-white/10 shadow-2xl;
+  }
+
+  .glass-card {
+    @apply bg-card/40 backdrop-blur-sm border border-border/30 hover:bg-card/60 transition-all duration-300;
+  }
 }

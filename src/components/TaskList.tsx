@@ -11,6 +11,7 @@ import Fuse from 'fuse.js';
 import { Plus } from 'lucide-react';
 
 import { Virtuoso } from 'react-virtuoso';
+import { AnimatePresence } from 'framer-motion';
 
 export function TaskList() {
   const { tasks, selectedListId, selectedView, searchQuery, showCompleted } = useTaskStore();
@@ -124,20 +125,28 @@ export function TaskList() {
             style={{ height: '100%' }}
             data={filteredTasks}
             totalCount={filteredTasks.length}
+            increaseViewportBy={200}
             itemContent={(index, task) => (
-              <div className="px-6 py-1">
-                <Task task={task} />
+              <div className="px-6 py-1" role="listitem">
+                <AnimatePresence mode="popLayout">
+                  <Task key={task.id} task={task} />
+                </AnimatePresence>
               </div>
             )}
             components={{
+              List: ({ children, ...props }) => (
+                <div {...props} role="list" aria-label="Tasks">
+                  {children}
+                </div>
+              ),
               Header: () => (
-                <div className="px-6 pt-6 pb-2">
+                <div className="px-6 pt-6 pb-2" role="complementary" aria-label="Tips">
                   {/* Quick tips */}
                   {filteredTasks.length === 0 && (
                     <div className="space-y-4 mb-6">
-                      <div className="bg-gradient-to-br from-indigo-100 to-fuchsia-100 dark:from-slate-800 dark:to-indigo-900 border border-border rounded-xl p-5 shadow-sm">
+                      <div className="glass-card rounded-xl p-5" role="note">
                         <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
+                          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold" aria-hidden="true">
                             💡
                           </div>
                           <div>
@@ -151,9 +160,9 @@ export function TaskList() {
                         </div>
                       </div>
                       
-                      <div className="bg-gradient-to-br from-indigo-100 to-fuchsia-100 dark:from-slate-800 dark:to-indigo-900 border border-border rounded-xl p-5 shadow-sm">
+                      <div className="glass-card rounded-xl p-5" role="note">
                         <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
+                          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold" aria-hidden="true">
                             💡
                           </div>
                           <div>
@@ -175,12 +184,13 @@ export function TaskList() {
                   {/* Add task button */}
                   <button
                     onClick={() => setTaskFormOpen(true)}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-border hover:border-primary/50 hover:bg-accent/50 transition-colors mt-4"
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-border hover:border-primary/50 hover:bg-accent/50 transition-colors mt-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                    aria-label="Add new task"
                   >
-                    <div className="w-5 h-5 rounded-full border-2 border-border flex items-center justify-center">
+                    <div className="w-5 h-5 rounded-full border-2 border-border flex items-center justify-center" aria-hidden="true">
                       <Plus className="w-3 h-3 text-muted-foreground" />
                     </div>
-                    <span className="text-muted-foreground">Add task</span>
+                    <span className="text-muted-foreground font-medium">Add task</span>
                   </button>
                 </div>
               ),

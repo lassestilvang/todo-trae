@@ -6,6 +6,7 @@ import { Subtask } from '@/types';
 import { Circle, CheckCircle2, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface SubtaskManagerProps {
   taskId: string;
@@ -61,40 +62,51 @@ export function SubtaskManager({ taskId, subtasks }: SubtaskManagerProps) {
       </div>
 
       {subtasks.length > 0 && (
-        <div className="space-y-1">
-          {subtasks.map((subtask) => (
-            <div key={subtask.id} className="flex items-center gap-2 group">
-              <button
-                onClick={() => toggleSubtaskComplete(subtask.id)}
-                className="flex-shrink-0"
+        <ul className="space-y-1" role="list" aria-label="Subtasks list">
+          <AnimatePresence mode="popLayout">
+            {subtasks.map((subtask) => (
+              <motion.li
+                key={subtask.id}
+                layout
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                className="flex items-center gap-2 group p-2 rounded-lg hover:bg-muted/30 transition-colors"
               >
-                {subtask.completed ? (
-                  <CheckCircle2 className="w-4 h-4 text-green-500" />
-                ) : (
-                  <Circle className="w-4 h-4 text-muted-foreground hover:text-primary" />
-                )}
-              </button>
-              
-              <span className={`flex-1 text-sm ${subtask.completed ? 'line-through text-muted-foreground' : ''}`}>
-                {subtask.name}
-              </span>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => deleteSubtask(subtask.id)}
-                className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100"
-              >
-                <X className="w-3 h-3" />
-              </Button>
-            </div>
-          ))}
-        </div>
+                <button
+                  onClick={() => toggleSubtaskComplete(subtask.id)}
+                  className="flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-full"
+                  aria-label={subtask.completed ? `Mark subtask "${subtask.name}" as incomplete` : `Mark subtask "${subtask.name}" as complete`}
+                >
+                  {subtask.completed ? (
+                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  ) : (
+                    <Circle className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                  )}
+                </button>
+                
+                <span className={`flex-1 text-sm ${subtask.completed ? 'line-through text-muted-foreground' : ''}`}>
+                  {subtask.name}
+                </span>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => deleteSubtask(subtask.id)}
+                  className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label={`Delete subtask "${subtask.name}"`}
+                >
+                  <X className="w-3 h-3" />
+                </Button>
+              </motion.li>
+            ))}
+          </AnimatePresence>
+        </ul>
       )}
 
       {isAdding && (
         <div className="flex items-center gap-2">
-          <Circle className="w-4 h-4 text-muted-foreground" />
+          <Circle className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
           <Input
             value={newSubtaskName}
             onChange={(e) => setNewSubtaskName(e.target.value)}
@@ -102,6 +114,7 @@ export function SubtaskManager({ taskId, subtasks }: SubtaskManagerProps) {
             placeholder="Enter subtask name"
             className="flex-1 h-8 text-sm"
             autoFocus
+            aria-label="New subtask name"
           />
           <Button
             variant="ghost"
@@ -111,6 +124,7 @@ export function SubtaskManager({ taskId, subtasks }: SubtaskManagerProps) {
               setNewSubtaskName('');
             }}
             className="h-8 w-8 p-0"
+            aria-label="Cancel adding subtask"
           >
             <X className="w-3 h-3" />
           </Button>

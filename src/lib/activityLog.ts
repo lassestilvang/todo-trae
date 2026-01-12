@@ -1,4 +1,4 @@
-import { ActivityLog, Task } from '@/types';
+import { ActivityLog, Task, TaskList, Label } from '@/types';
 import { createActivityLog } from '@/lib/api';
 
 export function logTaskActivity(

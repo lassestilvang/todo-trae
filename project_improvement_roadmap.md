@@ -57,10 +57,10 @@ This roadmap outlines the strategic plan to transform the Daily Task Planner fro
 
 | ID | Task Description | Priority | Effort | Dependency | Status | Timestamp |
 |:---|:---|:---:|:---:|:---|:---:|:---|
-| UX-01 | **Glassmorphism UI Refresh**: Apply translucent backgrounds and backdrop filters for a premium feel. | P1 | Medium | None | ⭕ | 2026-01-11 |
-| UX-02 | **Micro-interactions**: Add Framer Motion spring animations for task completion and drag-and-drop. | P1 | Low | None | ⭕ | 2026-01-11 |
-| UX-03 | **WCAG 2.1 AA Audit**: Ensure proper ARIA labels, keyboard navigation, and 4.5:1 color contrast. | P1 | Medium | None | ⭕ | 2026-01-11 |
-| UX-04 | **Custom Cursor & Hover States**: Implement interactive cursor effects for primary actions. | P2 | Low | None | ⭕ | 2026-01-11 |
+| UX-01 | **Glassmorphism UI Refresh**: Apply translucent backgrounds and backdrop filters for a premium feel. | P1 | Medium | None | ✅ | 2026-01-12 |
+| UX-02 | **Micro-interactions**: Add Framer Motion spring animations for task completion and drag-and-drop. | P1 | Low | None | ✅ | 2026-01-12 |
+| UX-03 | **WCAG 2.1 AA Audit**: Ensure proper ARIA labels, keyboard navigation, and 4.5:1 color contrast. | P1 | Medium | None | ✅ | 2026-01-12 |
+| UX-04 | **Custom Cursor & Hover States**: Implement interactive cursor effects for primary actions. | P2 | Low | None | ✅ | 2026-01-12 |
 | UX-05 | **Dark Mode System Sync**: Improve the toggle to detect and follow OS-level preference automatically. | P2 | Low | None | ⭕ | 2026-01-11 |
 
 ---
@@ -90,7 +90,7 @@ This roadmap outlines the strategic plan to transform the Daily Task Planner fro
 
 ## 📊 Progress Summary
 - **Total Tasks**: 23
-- **Completed**: 9 (39.1%)
+- **Completed**: 13 (56.5%)
 - **In Progress**: 0 (0%)
 - **Blocked**: 0 (0%)
 

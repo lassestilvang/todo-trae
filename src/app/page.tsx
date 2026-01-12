@@ -52,9 +52,9 @@ export default function Home() {
   return (
     <ErrorBoundary>
       <div className="mx-auto max-w-7xl p-6 h-screen">
-        <div className="flex h-full rounded-2xl border border-border bg-background/60 backdrop-blur-md shadow-xl">
+        <div className="flex h-full rounded-2xl glass overflow-hidden">
           <Sidebar />
-          <main className="flex-1 flex flex-col">
+          <main id="main-content" className="flex-1 flex flex-col bg-transparent outline-none" tabIndex={-1}>
             <TaskList />
           </main>
         </div>

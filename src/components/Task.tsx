@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTaskStore } from '@/stores/taskStore';
 import { Task as TaskType } from '@/types';
 import { format, isToday, isTomorrow, isPast } from 'date-fns';
@@ -66,11 +67,27 @@ export function Task({ task }: TaskProps) {
   };
 
   return (
-    <>
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.2 }}
+    >
       <div
         onClick={() => setEditFormOpen(true)}
-        className={`group border rounded-xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer ${
-          task.completed ? 'bg-muted/50 border-border' : 'bg-card/80 border-border hover:border-primary/50'
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setEditFormOpen(true);
+          }
+        }}
+        tabIndex={0}
+        role="button"
+        data-cursor="hover"
+        aria-label={`Task: ${task.name}`}
+        className={`group glass-card rounded-xl p-5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-all ${
+          task.completed ? 'opacity-60' : ''
         } ${isOverdue ? 'border-red-500/50' : ''}`}
       >
         <div className="flex items-start gap-3">
@@ -138,7 +155,7 @@ export function Task({ task }: TaskProps) {
               </div>
 
               <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full">
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full" aria-label="Task options">
                   <MoreHorizontal className="w-4 h-4" />
                 </Button>
               </div>
@@ -151,23 +168,25 @@ export function Task({ task }: TaskProps) {
                     e.stopPropagation();
                     setExpanded(!expanded);
                   }}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+                  aria-expanded={expanded}
+                  aria-controls={`subtasks-${task.id}`}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50 rounded-sm"
                 >
-                  {expanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                  {expanded ? <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" /> : <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />}
                   <span>Subtasks ({taskSubtasks.filter(s => s.completed).length}/{taskSubtasks.length})</span>
                 </button>
                 
                 {expanded && (
-                  <div className="mt-3 space-y-2 ml-1">
+                  <ul id={`subtasks-${task.id}`} className="mt-3 space-y-2 ml-1" role="list">
                     {taskSubtasks.map((subtask) => (
-                      <div key={subtask.id} className="flex items-center gap-3 group/subtask">
-                        <div className={`w-1 h-1 rounded-full ${subtask.completed ? 'bg-muted' : 'bg-primary/40'}`} />
+                      <li key={subtask.id} className="flex items-center gap-3 group/subtask" role="listitem">
+                        <div className={`w-1 h-1 rounded-full ${subtask.completed ? 'bg-muted' : 'bg-primary/40'}`} aria-hidden="true" />
                         <span className={`text-sm ${subtask.completed ? 'line-through text-muted-foreground' : 'text-foreground/80'}`}>
                           {subtask.name}
                         </span>
-                      </div>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 )}
               </div>
             )}
@@ -180,6 +199,6 @@ export function Task({ task }: TaskProps) {
         onOpenChange={setEditFormOpen} 
         task={task} 
       />
-    </>
+    </motion.div>
   );
 }

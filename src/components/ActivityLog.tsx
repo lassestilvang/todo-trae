@@ -74,10 +74,10 @@ export function ActivityLog({ task }: ActivityLogProps) {
   }
 
   return (
-    <div className="space-y-3 max-h-64 overflow-y-auto">
+    <ul className="space-y-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar" role="log" aria-label="Task activity log">
       {taskLogs.map((log) => (
-        <div key={log.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
-          <div className="flex-shrink-0 mt-0.5">
+        <li key={log.id} className="flex items-start gap-3 p-3 rounded-xl glass-card border-none">
+          <div className="flex-shrink-0 mt-0.5 bg-background/50 p-1.5 rounded-lg">
             {getActionIcon(log.action)}
           </div>
           
@@ -98,13 +98,13 @@ export function ActivityLog({ task }: ActivityLogProps) {
                 )}
                 {log.oldValue && log.newValue && ' → '}
                 {log.newValue && (
-                  <span className="text-foreground">{formatFieldValue(log.field, log.newValue)}</span>
+                  <span className="text-foreground font-medium">{formatFieldValue(log.field, log.newValue)}</span>
                 )}
               </div>
             )}
           </div>
-        </div>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
