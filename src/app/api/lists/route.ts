@@ -5,6 +5,35 @@ import { logListActivity } from '@/lib/activityLog';
 import { ZodError } from 'zod';
 import { TaskList } from '@/types';
 
+/**
+ * @swagger
+ * /api/lists:
+ *   get:
+ *     summary: Retrieve all task lists
+ *     responses:
+ *       200:
+ *         description: A list of task lists.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/TaskList'
+ *   post:
+ *     summary: Create a new task list
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateList'
+ *     responses:
+ *       201:
+ *         description: Created list object.
+ *       400:
+ *         description: Validation error.
+ */
+
 export async function GET() {
   try {
     const lists = getAllLists();

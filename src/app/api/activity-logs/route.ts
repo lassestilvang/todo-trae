@@ -1,6 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllActivityLogs, getActivityLogByTaskId } from '@/lib/api';
 
+/**
+ * @swagger
+ * /api/activity-logs:
+ *   get:
+ *     summary: Retrieve activity logs
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Number of logs to return
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *         description: Number of logs to skip
+ *       - in: query
+ *         name: taskId
+ *         schema:
+ *           type: string
+ *         description: Filter logs by task ID
+ *     responses:
+ *       200:
+ *         description: A list of activity logs.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/ActivityLog'
+ */
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);

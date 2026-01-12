@@ -5,6 +5,35 @@ import { logLabelActivity } from '@/lib/activityLog';
 import { ZodError } from 'zod';
 import { Label } from '@/types';
 
+/**
+ * @swagger
+ * /api/labels:
+ *   get:
+ *     summary: Retrieve all labels
+ *     responses:
+ *       200:
+ *         description: A list of labels.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Label'
+ *   post:
+ *     summary: Create a new label
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateLabel'
+ *     responses:
+ *       201:
+ *         description: Created label object.
+ *       400:
+ *         description: Validation error.
+ */
+
 export async function GET() {
   try {
     const labels = getAllLabels();

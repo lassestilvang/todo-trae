@@ -5,6 +5,58 @@ import { logTaskActivity, logTaskUpdate } from '@/lib/activityLog';
 import { ZodError } from 'zod';
 import { Task } from '@/types';
 
+/**
+ * @swagger
+ * /api/tasks/{id}:
+ *   get:
+ *     summary: Get a task by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Task object.
+ *       404:
+ *         description: Task not found.
+ *   put:
+ *     summary: Update a task
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateTask'
+ *     responses:
+ *       200:
+ *         description: Updated task object.
+ *       400:
+ *         description: Validation error.
+ *       404:
+ *         description: Task not found.
+ *   delete:
+ *     summary: Delete a task
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: Task deleted.
+ *       404:
+ *         description: Task not found.
+ */
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

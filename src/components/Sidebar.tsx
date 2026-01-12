@@ -8,18 +8,29 @@ import {
   Plus, 
   Search, 
   Bell, 
+  Check,
   ChevronDown, 
   Calendar,
   Clock,
-  CheckCircle2,
+ CheckCircle2,
   Hash,
   Home,
-  Tag
+  Star,
+  Tag,
+  Sun,
+  Moon,
+  Monitor
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { isToday } from 'date-fns';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/DropdownMenu';
 import { TaskForm } from './TaskForm';
 import { ListForm } from './ListForm';
 import { LabelForm } from './LabelForm';
@@ -35,11 +46,24 @@ export function Sidebar() {
     setSelectedView, 
     setSearchQuery 
   } = useTaskStore();
-  const { isDarkMode, toggleDarkMode } = useThemeStore();
+  const { theme, setTheme } = useThemeStore();
+  const [searchOpen, setSearchOpen] = useState(false);
   const [showProjects, setShowProjects] = useState(true);
   const [taskFormOpen, setTaskFormOpen] = useState(false);
   const [listFormOpen, setListFormOpen] = useState(false);
   const [labelFormOpen, setLabelFormOpen] = useState(false);
+
+  const getThemeIcon = () => {
+    if (theme === 'system') return <Monitor className="w-4 h-4" />;
+    if (theme === 'light') return <Sun className="w-4 h-4" />;
+    return <Moon className="w-4 h-4" />;
+  };
+
+  const getThemeLabel = () => {
+    if (theme === 'system') return 'System Theme';
+    if (theme === 'light') return 'Light Theme';
+    return 'Dark Theme';
+  };
 
   const views: Array<{ id: ViewType; name: string; icon: React.ReactNode; badge?: number }> = [
     { 
@@ -109,9 +133,36 @@ export function Sidebar() {
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-xl hover:bg-accent/50" aria-label="Notifications">
               <Bell className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-xl hover:bg-accent/50" onClick={toggleDarkMode} aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}>
-              {isDarkMode ? '🌙' : '☀️'}
-            </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-8 w-8 p-0 rounded-xl hover:bg-accent/50" 
+                  aria-label={`Current theme: ${getThemeLabel()}. Click to change.`}
+                >
+                  {getThemeIcon()}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem onClick={() => setTheme('light')} className="gap-2">
+                  <Sun className="w-4 h-4" />
+                  <span>Light</span>
+                  {theme === 'light' && <Check className="w-3.5 h-3.5 ml-auto text-primary" />}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme('dark')} className="gap-2">
+                  <Moon className="w-4 h-4" />
+                  <span>Dark</span>
+                  {theme === 'dark' && <Check className="w-3.5 h-3.5 ml-auto text-primary" />}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme('system')} className="gap-2">
+                  <Monitor className="w-4 h-4" />
+                  <span>System</span>
+                  {theme === 'system' && <Check className="w-3.5 h-3.5 ml-auto text-primary" />}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
         

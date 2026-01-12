@@ -1,5 +1,6 @@
 import { getDatabase } from './database';
 import { Task, TaskList, Label, Subtask, ActivityLog } from '@/types';
+import { logger } from './logger';
 
 // Task List operations
 interface TaskListRow {
@@ -45,12 +46,18 @@ export function getListById(id: string): TaskList | null {
 
 export function createList(list: Omit<TaskList, 'createdAt' | 'updatedAt'>): TaskList {
   const db = getDatabase();
-  const stmt = db.prepare(`
-    INSERT INTO task_lists (id, name, color, emoji, is_default)
-    VALUES (?, ?, ?, ?, ?)
-  `);
-  stmt.run(list.id, list.name, list.color, list.emoji, list.isDefault ? 1 : 0);
-  return getListById(list.id)!;
+  try {
+    const stmt = db.prepare(`
+      INSERT INTO task_lists (id, name, color, emoji, is_default)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+    stmt.run(list.id, list.name, list.color, list.emoji, list.isDefault ? 1 : 0);
+    logger.info('Task list created', { listId: list.id, name: list.name });
+    return getListById(list.id)!;
+  } catch (error) {
+    logger.error('Failed to create task list', { error, list });
+    throw error;
+  }
 }
 
 export function updateList(id: string, updates: Partial<TaskList>): TaskList {
@@ -75,8 +82,14 @@ export function updateList(id: string, updates: Partial<TaskList>): TaskList {
 
 export function deleteList(id: string): void {
   const db = getDatabase();
-  const stmt = db.prepare('DELETE FROM task_lists WHERE id = ?');
-  stmt.run(id);
+  try {
+    const stmt = db.prepare('DELETE FROM task_lists WHERE id = ?');
+    stmt.run(id);
+    logger.info('Task list deleted', { listId: id });
+  } catch (error) {
+    logger.error('Failed to delete task list', { error, listId: id });
+    throw error;
+  }
 }
 
 // Label operations

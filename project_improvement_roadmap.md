@@ -61,7 +61,7 @@ This roadmap outlines the strategic plan to transform the Daily Task Planner fro
 | UX-02 | **Micro-interactions**: Add Framer Motion spring animations for task completion and drag-and-drop. | P1 | Low | None | ✅ | 2026-01-12 |
 | UX-03 | **WCAG 2.1 AA Audit**: Ensure proper ARIA labels, keyboard navigation, and 4.5:1 color contrast. | P1 | Medium | None | ✅ | 2026-01-12 |
 | UX-04 | **Custom Cursor & Hover States**: Implement interactive cursor effects for primary actions. | P2 | Low | None | ✅ | 2026-01-12 |
-| UX-05 | **Dark Mode System Sync**: Improve the toggle to detect and follow OS-level preference automatically. | P2 | Low | None | ⭕ | 2026-01-11 |
+| UX-05 | **Dark Mode System Sync**: Improve the toggle to detect and follow OS-level preference automatically. | P2 | Low | None | ✅ | 2026-01-12 |
 
 ---
 
@@ -72,7 +72,7 @@ This roadmap outlines the strategic plan to transform the Daily Task Planner fro
 |:---|:---|:---:|:---:|:---|:---:|:---|
 | INF-01 | **CI/CD Pipeline**: Set up GitHub Actions for automated linting, testing, and deployment. | P0 | Medium | None | ✅ | 2026-01-11 |
 | INF-02 | **E2E Testing Suite**: Implement Playwright for critical path testing (Task CRUD, Auth). | P1 | High | CQ-02 | ✅ | 2026-01-12 |
-| INF-03 | **Monitoring & Logging**: Integrate Sentry for error tracking and Axiom for structured logging. | P2 | Low | None | ⭕ | 2026-01-11 |
+| INF-03 | **Monitoring & Logging**: Integrate Sentry for error tracking and a structured logger. | P2 | Low | None | ✅ | 2026-01-12 |
 | INF-04 | **Database Migration**: Transition from SQLite to PostgreSQL for multi-user/production scalability. | P2 | Medium | INF-01 | ⭕ | 2026-01-11 |
 
 ---
@@ -82,15 +82,15 @@ This roadmap outlines the strategic plan to transform the Daily Task Planner fro
 
 | ID | Task Description | Priority | Effort | Status | Timestamp |
 |:---|:---|:---:|:---:|:---:|:---|
-| DOC-01 | **Interactive API Docs**: Generate Swagger/OpenAPI documentation for all routes. | P1 | Low | ⭕ | 2026-01-11 |
-| DOC-02 | **Architecture Guide**: Document the data flow between Zustand, API routes, and SQLite. | P2 | Low | ⭕ | 2026-01-11 |
-| DOC-03 | **Contributor Guide**: Setup instructions, coding standards, and PR templates. | P2 | Low | ⭕ | 2026-01-11 |
+| DOC-01 | **Interactive API Docs**: Generate Swagger/OpenAPI documentation for all routes. | P1 | Low | ✅ | 2026-01-12 |
+| DOC-02 | **Architecture Guide**: Document the data flow between Zustand, API routes, and SQLite. | P2 | Low | ✅ | 2026-01-12 |
+| DOC-03 | **Contributor Guide**: Setup instructions, coding standards, and PR templates. | P2 | Low | ✅ | 2026-01-12 |
 
 ---
 
 ## 📊 Progress Summary
 - **Total Tasks**: 23
-- **Completed**: 13 (56.5%)
+- **Completed**: 18 (78.3%)
 - **In Progress**: 0 (0%)
 - **Blocked**: 0 (0%)
 

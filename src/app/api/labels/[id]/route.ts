@@ -5,6 +5,58 @@ import { logLabelActivity, logLabelUpdate } from '@/lib/activityLog';
 import { ZodError } from 'zod';
 import { Label } from '@/types';
 
+/**
+ * @swagger
+ * /api/labels/{id}:
+ *   get:
+ *     summary: Get a label by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Label object.
+ *       404:
+ *         description: Label not found.
+ *   put:
+ *     summary: Update a label
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateLabel'
+ *     responses:
+ *       200:
+ *         description: Updated label object.
+ *       400:
+ *         description: Validation error.
+ *       404:
+ *         description: Label not found.
+ *   delete:
+ *     summary: Delete a label
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: Label deleted.
+ *       404:
+ *         description: Label not found.
+ */
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

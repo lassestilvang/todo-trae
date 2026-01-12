@@ -5,6 +5,58 @@ import { logListActivity, logListUpdate } from '@/lib/activityLog';
 import { ZodError } from 'zod';
 import { TaskList } from '@/types';
 
+/**
+ * @swagger
+ * /api/lists/{id}:
+ *   get:
+ *     summary: Get a list by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List object.
+ *       404:
+ *         description: List not found.
+ *   put:
+ *     summary: Update a list
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateList'
+ *     responses:
+ *       200:
+ *         description: Updated list object.
+ *       400:
+ *         description: Validation error.
+ *       404:
+ *         description: List not found.
+ *   delete:
+ *     summary: Delete a list
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: List deleted.
+ *       404:
+ *         description: List not found.
+ */
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
