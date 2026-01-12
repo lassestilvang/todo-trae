@@ -22,6 +22,7 @@ import {
   Moon,
   Monitor,
   Share2,
+  TrendingUp,
   LayoutTemplate,
   Trash2,
   LogOut,
@@ -44,9 +45,13 @@ import { ListForm } from './ListForm';
 import { LabelForm } from './LabelForm';
 import { useRef, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
+import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
 
 export function Sidebar() {
   const { data: session } = useSession();
+  const router = useRouter();
+  const pathname = usePathname();
   const { 
     tasks,
     lists, 
@@ -104,18 +109,21 @@ export function Sidebar() {
     setSearchQuery(query);
     setSelectedListId(null);
     setSelectedView('all');
+    if (pathname !== '/') router.push('/');
   };
 
   const handleViewSelect = (view: ViewType) => {
     setSelectedView(view);
     setSelectedListId(null);
     setSearchQuery('');
+    if (pathname !== '/') router.push('/');
   };
 
   const handleListSelect = (listId: string) => {
     setSelectedListId(listId);
     setSelectedView('all');
     setSearchQuery('');
+    if (pathname !== '/') router.push('/');
   };
 
   const handleShareList = (e: React.MouseEvent, listId: string) => {
@@ -268,16 +276,16 @@ export function Sidebar() {
             <button
               key={view.id}
               onClick={() => handleViewSelect(view.id)}
-              aria-current={selectedView === view.id && !selectedListId ? 'page' : undefined}
+              aria-current={selectedView === view.id && !selectedListId && pathname === '/' ? 'page' : undefined}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                selectedView === view.id && !selectedListId
+                selectedView === view.id && !selectedListId && pathname === '/'
                   ? 'bg-primary/10 text-primary shadow-sm'
                   : 'hover:bg-accent/40 text-muted-foreground hover:text-foreground'
               }`}
             >
               <div className="flex items-center gap-3">
                 <div className={`p-1.5 rounded-lg transition-colors ${
-                  selectedView === view.id && !selectedListId ? 'bg-primary/20' : 'bg-transparent'
+                  selectedView === view.id && !selectedListId && pathname === '/' ? 'bg-primary/20' : 'bg-transparent'
                 }`} aria-hidden="true">
                   {view.icon}
                 </div>
@@ -292,6 +300,26 @@ export function Sidebar() {
               )}
             </button>
           ))}
+        </div>
+
+        {/* Analytics Link */}
+        <div className="px-4 py-2 space-y-1">
+          <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 px-3">Insights</h3>
+          <Link
+            href="/analytics"
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+              pathname === '/analytics'
+                ? 'bg-primary/10 text-primary shadow-sm'
+                : 'hover:bg-accent/40 text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <div className={`p-1.5 rounded-lg transition-colors ${
+              pathname === '/analytics' ? 'bg-primary/20' : 'bg-transparent'
+            }`}>
+              <TrendingUp className="w-4 h-4" />
+            </div>
+            <span>Analytics</span>
+          </Link>
         </div>
 
         {/* Lists */}
