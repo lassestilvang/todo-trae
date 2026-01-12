@@ -1,11 +1,21 @@
 import { getDatabase } from './database';
-import { Task, TaskList, Label, Subtask, Attachment, ActivityLog } from '@/types';
+import { Task, TaskList, Label, Subtask, ActivityLog } from '@/types';
 
 // Task List operations
+interface TaskListRow {
+  id: string;
+  name: string;
+  color: string;
+  emoji: string;
+  is_default: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export function getAllLists(): TaskList[] {
   const db = getDatabase();
   const stmt = db.prepare('SELECT * FROM task_lists ORDER BY is_default DESC, name ASC');
-  const results = stmt.all() as any[];
+  const results = stmt.all() as TaskListRow[];
   return results.map(row => ({
     id: row.id,
     name: row.name,
@@ -20,7 +30,7 @@ export function getAllLists(): TaskList[] {
 export function getListById(id: string): TaskList | null {
   const db = getDatabase();
   const stmt = db.prepare('SELECT * FROM task_lists WHERE id = ?');
-  const row = stmt.get(id) as any;
+  const row = stmt.get(id) as TaskListRow | undefined;
   if (!row) return null;
   return {
     id: row.id,
@@ -46,7 +56,7 @@ export function createList(list: Omit<TaskList, 'createdAt' | 'updatedAt'>): Tas
 export function updateList(id: string, updates: Partial<TaskList>): TaskList {
   const db = getDatabase();
   
-  const mappedUpdates: Record<string, any> = {};
+  const mappedUpdates: Record<string, string | number> = {};
   if (updates.name !== undefined) mappedUpdates.name = updates.name;
   if (updates.color !== undefined) mappedUpdates.color = updates.color;
   if (updates.emoji !== undefined) mappedUpdates.emoji = updates.emoji;
@@ -70,10 +80,19 @@ export function deleteList(id: string): void {
 }
 
 // Label operations
+interface LabelRow {
+  id: string;
+  name: string;
+  color: string;
+  icon: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export function getAllLabels(): Label[] {
   const db = getDatabase();
   const stmt = db.prepare('SELECT * FROM labels ORDER BY name ASC');
-  const results = stmt.all() as any[];
+  const results = stmt.all() as LabelRow[];
   return results.map(row => ({
     id: row.id,
     name: row.name,
@@ -87,7 +106,7 @@ export function getAllLabels(): Label[] {
 export function getLabelById(id: string): Label | null {
   const db = getDatabase();
   const stmt = db.prepare('SELECT * FROM labels WHERE id = ?');
-  const row = stmt.get(id) as any;
+  const row = stmt.get(id) as LabelRow | undefined;
   if (!row) return null;
   return {
     id: row.id,
@@ -322,7 +341,7 @@ export function createTask(task: Omit<Task, 'createdAt' | 'updatedAt' | 'subtask
     task.order || 0
   );
 
-  const labelIds = task.labelIds || (task.labels as any as Label[])?.map(l => l.id) || [];
+  const labelIds = task.labelIds || (task.labels as Label[])?.map(l => l.id) || [];
   if (labelIds.length > 0) {
     const labelStmt = db.prepare('INSERT INTO task_labels (task_id, label_id) VALUES (?, ?)');
     for (const labelId of labelIds) {
@@ -352,7 +371,7 @@ export function updateTask(id: string, updates: Partial<Task> & { labelIds?: str
 
   const values = Object.entries(updates)
     .filter(([key]) => !['labels', 'labelIds', 'id', 'reminders', 'createdAt', 'updatedAt'].includes(key))
-    .map(([_, value]) => {
+    .map(([, value]) => {
       if (value instanceof Date) return value.toISOString();
       if (typeof value === 'boolean') return value ? 1 : 0;
       return value ?? null;

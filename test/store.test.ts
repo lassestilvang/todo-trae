@@ -1,5 +1,4 @@
 import { describe, expect, test, beforeEach } from 'bun:test';
-import { act } from 'bun:test';
 import { useTaskStore } from '../src/stores/taskStore';
 import { useThemeStore } from '../src/stores/themeStore';
 

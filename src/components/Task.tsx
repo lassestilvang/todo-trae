@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useTaskStore } from '@/stores/taskStore';
 import { Task as TaskType } from '@/types';
 import { format, isToday, isTomorrow, isPast } from 'date-fns';
@@ -9,7 +9,6 @@ import {
   Circle, 
   CheckCircle2, 
   Calendar, 
-  Clock, 
   Flag,
   MoreHorizontal,
   ChevronRight,

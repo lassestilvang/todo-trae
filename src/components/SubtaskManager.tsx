@@ -14,7 +14,7 @@ interface SubtaskManagerProps {
 }
 
 export function SubtaskManager({ taskId, subtasks }: SubtaskManagerProps) {
-  const { addSubtask, updateSubtask, deleteSubtask, toggleSubtaskComplete } = useTaskStore();
+  const { addSubtask, deleteSubtask, toggleSubtaskComplete } = useTaskStore();
   const [newSubtaskName, setNewSubtaskName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
 

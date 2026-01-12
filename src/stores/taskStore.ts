@@ -57,7 +57,7 @@ interface TaskStore {
   deleteLabel: (labelId: string) => void;
 }
 
-export const useTaskStore = create<TaskStore>((set, get) => ({
+export const useTaskStore = create<TaskStore>((set) => ({
   tasks: [],
   lists: [],
   labels: [],

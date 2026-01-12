@@ -4,7 +4,6 @@ import { useTaskStore } from '@/stores/taskStore';
 import type { ActivityLog as ActivityLogType, Task as TaskType } from '@/types';
 import { format, formatDistanceToNow } from 'date-fns';
 import { History, Plus, Edit3, CheckCircle, Trash2, Move } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
 
 interface ActivityLogProps {
   task: TaskType;

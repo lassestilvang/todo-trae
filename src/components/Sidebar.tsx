@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTaskStore } from '@/stores/taskStore';
 import { useThemeStore } from '@/stores/themeStore';
-import { TaskList as TaskListType, ViewType, Label } from '@/types';
+import { ViewType } from '@/types';
 import { 
   Plus, 
   Search, 
@@ -14,7 +14,6 @@ import {
   CheckCircle2,
   Hash,
   Home,
-  Star,
   Tag
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -37,7 +36,6 @@ export function Sidebar() {
     setSearchQuery 
   } = useTaskStore();
   const { isDarkMode, toggleDarkMode } = useThemeStore();
-  const [searchOpen, setSearchOpen] = useState(false);
   const [showProjects, setShowProjects] = useState(true);
   const [taskFormOpen, setTaskFormOpen] = useState(false);
   const [listFormOpen, setListFormOpen] = useState(false);

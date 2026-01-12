@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getTaskById, updateTask, deleteTask } from '@/lib/api';
 import { UpdateTaskSchema } from '@/lib/validations';
 import { logTaskActivity, logTaskUpdate } from '@/lib/activityLog';
+import { ZodError } from 'zod';
+import { Task } from '@/types';
 
 export async function GET(
   request: NextRequest,
@@ -34,15 +36,15 @@ export async function PUT(
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
 
-    const updatedTask = updateTask(id, validatedData as any);
+    const updatedTask = updateTask(id, validatedData as Partial<Task>);
     
     // Log activity
-    logTaskUpdate(id, validatedData as any, existingTask);
+    logTaskUpdate(id, validatedData, existingTask);
     
     return NextResponse.json(updatedTask);
   } catch (error) {
-    if (error instanceof Error && error.name === 'ZodError') {
-      return NextResponse.json({ error: 'Validation failed', details: (error as any).errors }, { status: 400 });
+    if (error instanceof ZodError) {
+      return NextResponse.json({ error: 'Validation failed', details: error.issues }, { status: 400 });
     }
     console.error('Error updating task:', error);
     return NextResponse.json({ error: 'Failed to update task' }, { status: 500 });

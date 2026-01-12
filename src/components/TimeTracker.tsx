@@ -13,7 +13,7 @@ interface TimeTrackerProps {
   onTimeUpdate: (actualTime: string) => void;
 }
 
-export function TimeTracker({ taskId, estimate, actualTime, onTimeUpdate }: TimeTrackerProps) {
+export function TimeTracker({ estimate, actualTime, onTimeUpdate }: TimeTrackerProps) {
   const [isTracking, setIsTracking] = useState(false);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);

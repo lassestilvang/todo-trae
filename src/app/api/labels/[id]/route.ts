@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getLabelById, updateLabel, deleteLabel } from '@/lib/api';
 import { UpdateLabelSchema } from '@/lib/validations';
 import { logLabelActivity, logLabelUpdate } from '@/lib/activityLog';
+import { ZodError } from 'zod';
+import { Label } from '@/types';
 
 export async function GET(
   request: NextRequest,
@@ -34,15 +36,15 @@ export async function PUT(
       return NextResponse.json({ error: 'Label not found' }, { status: 404 });
     }
 
-    const updatedLabel = updateLabel(id, validatedData as any);
+    const updatedLabel = updateLabel(id, validatedData as Partial<Label>);
     
     // Log activity
-    logLabelUpdate(id, validatedData as any, existingLabel);
+    logLabelUpdate(id, validatedData, existingLabel);
     
     return NextResponse.json(updatedLabel);
   } catch (error) {
-    if (error instanceof Error && error.name === 'ZodError') {
-      return NextResponse.json({ error: 'Validation failed', details: (error as any).errors }, { status: 400 });
+    if (error instanceof ZodError) {
+      return NextResponse.json({ error: 'Validation failed', details: error.issues }, { status: 400 });
     }
     console.error('Error updating label:', error);
     return NextResponse.json({ error: 'Failed to update label' }, { status: 500 });

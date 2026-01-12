@@ -26,7 +26,7 @@ export const CustomCursor = () => {
       const cursorData = target.closest('[data-cursor]')?.getAttribute('data-cursor');
       
       if (cursorData) {
-        setCursorVariant(cursorData as any);
+        setCursorVariant(cursorData as 'default' | 'hover' | 'click' | 'text');
         return;
       }
 

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAllTasks, createTask } from '@/lib/api';
 import { CreateTaskSchema } from '@/lib/validations';
 import { logTaskActivity } from '@/lib/activityLog';
+import { ZodError } from 'zod';
+import { Task } from '@/types';
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,15 +23,15 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const validatedData = CreateTaskSchema.parse(body);
-    const task = createTask(validatedData as any);
+    const task = createTask(validatedData as unknown as Omit<Task, 'createdAt' | 'updatedAt' | 'subtasks' | 'attachments'> & { labelIds?: string[] });
     
     // Log activity
     logTaskActivity(task.id, 'created');
     
     return NextResponse.json(task, { status: 201 });
   } catch (error) {
-    if (error instanceof Error && error.name === 'ZodError') {
-      return NextResponse.json({ error: 'Validation failed', details: (error as any).errors }, { status: 400 });
+    if (error instanceof ZodError) {
+      return NextResponse.json({ error: 'Validation failed', details: error.issues }, { status: 400 });
     }
     console.error('Error creating task:', error);
     return NextResponse.json({ error: 'Failed to create task' }, { status: 500 });

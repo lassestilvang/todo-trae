@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useTaskStore } from '@/stores/taskStore';
-import { TaskList, Label, Priority, Subtask, Attachment, Task } from '@/types';
+import { Label, Priority, Task } from '@/types';
 import { format } from 'date-fns';
-import { Plus, Calendar, Clock, Flag, Hash, Repeat, Paperclip, Trash2 } from 'lucide-react';
+import { Calendar, Clock, Flag, Hash, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';

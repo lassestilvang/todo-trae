@@ -3,7 +3,6 @@
 import { useState, useMemo } from 'react';
 import { useTaskStore } from '@/stores/taskStore';
 import { TaskForm } from '@/components/TaskForm';
-import { Task as TaskType, ViewType } from '@/types';
 import { Task } from '@/components/Task';
 import { TaskHeader } from '@/components/TaskHeader';
 import { startOfDay, addDays, isToday, isWithinInterval } from 'date-fns';

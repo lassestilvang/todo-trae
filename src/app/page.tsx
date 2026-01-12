@@ -9,7 +9,7 @@ import { Toaster, toast } from 'sonner';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export default function Home() {
-  const { setTasks, setLists, setLabels, setSubtasks, setAttachments, setActivityLogs, isLoading, setIsLoading } = useTaskStore();
+  const { setTasks, setLists, setLabels, setSubtasks, setAttachments, setActivityLogs, setIsLoading } = useTaskStore();
   const { theme } = useThemeStore();
 
   useEffect(() => {
