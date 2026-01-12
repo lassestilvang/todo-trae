@@ -21,9 +21,7 @@ describe('Store Tests', () => {
   });
   describe('Task Store', () => {
     test('should add a new task', () => {
-      const store = useTaskStore.getState();
-      
-      const newTask = {
+      useTaskStore.getState().addTask({
         id: 'test-task-1',
         listId: 'default-inbox',
         name: 'Test Task',
@@ -33,18 +31,15 @@ describe('Store Tests', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         reminders: [],
-      };
+      });
 
-      store.addTask(newTask);
-
+      const store = useTaskStore.getState();
       expect(store.tasks).toHaveLength(1);
       expect(store.tasks[0].name).toBe('Test Task');
     });
 
     test('should update a task', () => {
-      const store = useTaskStore.getState();
-      
-      const newTask = {
+      useTaskStore.getState().addTask({
         id: 'test-task-2',
         listId: 'default-inbox',
         name: 'Original Task',
@@ -54,19 +49,17 @@ describe('Store Tests', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         reminders: [],
-      };
+      });
 
-      store.addTask(newTask);
-      store.updateTask('test-task-2', { name: 'Updated Task', priority: 'high' as const });
+      useTaskStore.getState().updateTask('test-task-2', { name: 'Updated Task', priority: 'high' as const });
 
+      const store = useTaskStore.getState();
       expect(store.tasks[0].name).toBe('Updated Task');
       expect(store.tasks[0].priority).toBe('high');
     });
 
     test('should toggle task completion', () => {
-      const store = useTaskStore.getState();
-      
-      const newTask = {
+      useTaskStore.getState().addTask({
         id: 'test-task-3',
         listId: 'default-inbox',
         name: 'Toggle Test Task',
@@ -76,24 +69,23 @@ describe('Store Tests', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         reminders: [],
-      };
+      });
 
-      store.addTask(newTask);
-      store.toggleTaskComplete('test-task-3');
+      useTaskStore.getState().toggleTaskComplete('test-task-3');
 
+      let store = useTaskStore.getState();
       expect(store.tasks[0].completed).toBe(true);
       expect(store.tasks[0].completedAt).toBeDefined();
 
-      store.toggleTaskComplete('test-task-3');
+      useTaskStore.getState().toggleTaskComplete('test-task-3');
 
+      store = useTaskStore.getState();
       expect(store.tasks[0].completed).toBe(false);
       expect(store.tasks[0].completedAt).toBeUndefined();
     });
 
     test('should delete a task', () => {
-      const store = useTaskStore.getState();
-      
-      const newTask = {
+      useTaskStore.getState().addTask({
         id: 'test-task-4',
         listId: 'default-inbox',
         name: 'Delete Test Task',
@@ -103,20 +95,18 @@ describe('Store Tests', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         reminders: [],
-      };
+      });
 
-      store.addTask(newTask);
-
+      let store = useTaskStore.getState();
       expect(store.tasks).toHaveLength(1);
 
-      store.deleteTask('test-task-4');
+      useTaskStore.getState().deleteTask('test-task-4');
 
+      store = useTaskStore.getState();
       expect(store.tasks).toHaveLength(0);
     });
 
     test('should filter tasks by search query', () => {
-      const store = useTaskStore.getState();
-      
       const tasks = [
         {
           id: 'task-1',
@@ -142,29 +132,32 @@ describe('Store Tests', () => {
         },
       ];
 
-      tasks.forEach(task => store.addTask(task));
+      tasks.forEach(task => useTaskStore.getState().addTask(task));
 
-      store.setSearchQuery('groceries');
+      useTaskStore.getState().setSearchQuery('groceries');
 
+      const store = useTaskStore.getState();
       expect(store.searchQuery).toBe('groceries');
     });
   });
 
   describe('Theme Store', () => {
     test('should toggle dark mode', () => {
+      const initialDarkMode = useThemeStore.getState().isDarkMode;
+      useThemeStore.getState().toggleDarkMode();
       const store = useThemeStore.getState();
-      const initialDarkMode = store.isDarkMode;
-      store.toggleDarkMode();
       expect(store.isDarkMode).toBe(!initialDarkMode);
       expect(store.theme).toBe(initialDarkMode ? 'light' : 'dark');
     });
 
     test('should set theme', () => {
-      const store = useThemeStore.getState();
-      store.setTheme('dark');
+      useThemeStore.getState().setTheme('dark');
+      let store = useThemeStore.getState();
       expect(store.theme).toBe('dark');
       expect(store.isDarkMode).toBe(true);
-      store.setTheme('light');
+
+      useThemeStore.getState().setTheme('light');
+      store = useThemeStore.getState();
       expect(store.theme).toBe('light');
       expect(store.isDarkMode).toBe(false);
     });

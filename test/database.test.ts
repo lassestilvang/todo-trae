@@ -1,23 +1,32 @@
-import { describe, expect, test, beforeEach, afterEach } from 'bun:test';
-import { getDatabase, closeDatabase } from '../src/lib/database';
+import { describe, expect, test, beforeEach } from 'bun:test';
+import { db } from '../src/db';
+import { taskLists, tasks, labels } from '../src/db/schema';
+import { ne } from 'drizzle-orm';
 import { createTask, getTaskById, updateTask, deleteTask, toggleTaskComplete } from '../src/lib/api';
 import { createList, getListById } from '../src/lib/api';
 
 describe('Database Operations', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     // Reset database before each test
-    const db = getDatabase();
-    db.run('DELETE FROM tasks');
-    db.run('DELETE FROM task_lists WHERE id != "default-inbox"'); // Keep default inbox
-    db.run('DELETE FROM labels');
-  });
+    await db.delete(tasks);
+    await db.delete(taskLists).where(ne(taskLists.id, 'default-inbox'));
+    await db.delete(labels);
 
-  afterEach(() => {
-    closeDatabase();
+    // Ensure default inbox exists
+    const inbox = await getListById('default-inbox');
+    if (!inbox) {
+      await createList({
+        id: 'default-inbox',
+        name: 'Inbox',
+        color: '#2196f3',
+        emoji: '📥',
+        isDefault: true,
+      });
+    }
   });
 
   describe('Task Operations', () => {
-    test('should create a new task', () => {
+    test('should create a new task', async () => {
       const taskData = {
         id: 'test-task-1',
         listId: 'default-inbox',
@@ -29,7 +38,7 @@ describe('Database Operations', () => {
         labels: [],
       };
 
-      const task = createTask(taskData);
+      const task = await createTask(taskData);
       
       expect(task).toBeDefined();
       expect(task.name).toBe('Test Task');
@@ -37,7 +46,7 @@ describe('Database Operations', () => {
       expect(task.priority).toBe('medium');
     });
 
-    test('should retrieve task by id', () => {
+    test('should retrieve task by id', async () => {
       const taskData = {
         id: 'test-task-2',
         listId: 'default-inbox',
@@ -48,15 +57,15 @@ describe('Database Operations', () => {
         labels: [],
       };
 
-      createTask(taskData);
-      const retrievedTask = getTaskById('test-task-2');
+      await createTask(taskData);
+      const retrievedTask = await getTaskById('test-task-2');
       
       expect(retrievedTask).toBeDefined();
       expect(retrievedTask?.name).toBe('Retrieve Test Task');
       expect(retrievedTask?.priority).toBe('high');
     });
 
-    test('should update task', () => {
+    test('should update task', async () => {
       const taskData = {
         id: 'test-task-3',
         listId: 'default-inbox',
@@ -67,8 +76,8 @@ describe('Database Operations', () => {
         labels: [],
       };
 
-      createTask(taskData);
-      const updatedTask = updateTask('test-task-3', {
+      await createTask(taskData);
+      const updatedTask = await updateTask('test-task-3', {
         name: 'Updated Task',
         priority: 'high' as const,
         completed: true,
@@ -77,11 +86,11 @@ describe('Database Operations', () => {
       
       expect(updatedTask.name).toBe('Updated Task');
       expect(updatedTask.priority).toBe('high');
-      expect(updatedTask.completed).toBe(1); // SQLite returns 1 for true
+      expect(updatedTask.completed).toBe(true);
       expect(updatedTask.completedAt).toBeDefined();
     });
 
-    test('should toggle task completion', () => {
+    test('should toggle task completion', async () => {
       const taskData = {
         id: 'test-task-4',
         listId: 'default-inbox',
@@ -92,20 +101,20 @@ describe('Database Operations', () => {
         labels: [],
       };
 
-      createTask(taskData);
+      await createTask(taskData);
       
       // Toggle to completed
-      const completedTask = toggleTaskComplete('test-task-4');
-      expect(completedTask.completed).toBe(1); // SQLite returns 1 for true
+      const completedTask = await toggleTaskComplete('test-task-4');
+      expect(completedTask.completed).toBe(true);
       expect(completedTask.completedAt).toBeDefined();
       
       // Toggle back to incomplete
-      const incompleteTask = toggleTaskComplete('test-task-4');
-      expect(incompleteTask.completed).toBe(0); // SQLite returns 0 for false
-      expect(incompleteTask.completedAt).toBeNull(); // Should be null when task is incomplete
+      const incompleteTask = await toggleTaskComplete('test-task-4');
+      expect(incompleteTask.completed).toBe(false);
+      expect(incompleteTask.completedAt).toBeUndefined();
     });
 
-    test('should delete task', () => {
+    test('should delete task', async () => {
       const taskData = {
         id: 'test-task-5',
         listId: 'default-inbox',
@@ -116,16 +125,16 @@ describe('Database Operations', () => {
         labels: [],
       };
 
-      createTask(taskData);
-      deleteTask('test-task-5');
+      await createTask(taskData);
+      await deleteTask('test-task-5');
       
-      const deletedTask = getTaskById('test-task-5');
+      const deletedTask = await getTaskById('test-task-5');
       expect(deletedTask).toBeNull();
     });
   });
 
   describe('List Operations', () => {
-    test('should create a new list', () => {
+    test('should create a new list', async () => {
       const listData = {
         id: 'test-list-1',
         name: 'Test List',
@@ -134,7 +143,7 @@ describe('Database Operations', () => {
         isDefault: false,
       };
 
-      const list = createList(listData);
+      const list = await createList(listData);
       
       expect(list).toBeDefined();
       expect(list.name).toBe('Test List');
@@ -142,7 +151,7 @@ describe('Database Operations', () => {
       expect(list.emoji).toBe('📝');
     });
 
-    test('should retrieve list by id', () => {
+    test('should retrieve list by id', async () => {
       const listData = {
         id: 'test-list-2',
         name: 'Retrieve Test List',
@@ -151,8 +160,8 @@ describe('Database Operations', () => {
         isDefault: false,
       };
 
-      createList(listData);
-      const retrievedList = getListById('test-list-2');
+      await createList(listData);
+      const retrievedList = await getListById('test-list-2');
       
       expect(retrievedList).toBeDefined();
       expect(retrievedList?.name).toBe('Retrieve Test List');

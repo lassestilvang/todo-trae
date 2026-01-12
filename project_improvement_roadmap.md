@@ -73,7 +73,8 @@ This roadmap outlines the strategic plan to transform the Daily Task Planner fro
 | INF-01 | **CI/CD Pipeline**: Set up GitHub Actions for automated linting, testing, and deployment. | P0 | Medium | None | ✅ | 2026-01-11 |
 | INF-02 | **E2E Testing Suite**: Implement Playwright for critical path testing (Task CRUD, Auth). | P1 | High | CQ-02 | ✅ | 2026-01-12 |
 | INF-03 | **Monitoring & Logging**: Integrate Sentry for error tracking and a structured logger. | P2 | Low | None | ✅ | 2026-01-12 |
-| INF-04 | **Database Migration**: Transition from SQLite to PostgreSQL for multi-user/production scalability. | P2 | Medium | INF-01 | ⭕ | 2026-01-11 |
+| INF-04 | **Database Migration**: Transition from SQLite to PostgreSQL for multi-user/production scalability. | P2 | Medium | INF-01 | ✅ | 2026-01-12 |
+| INF-05 | **Async/Await Refactoring**: Standardize async operations across API routes and data access layer. | P0 | Medium | CQ-02 | ✅ | 2026-01-12 |
 
 ---
 
@@ -83,14 +84,14 @@ This roadmap outlines the strategic plan to transform the Daily Task Planner fro
 | ID | Task Description | Priority | Effort | Status | Timestamp |
 |:---|:---|:---:|:---:|:---:|:---|
 | DOC-01 | **Interactive API Docs**: Generate Swagger/OpenAPI documentation for all routes. | P1 | Low | ✅ | 2026-01-12 |
-| DOC-02 | **Architecture Guide**: Document the data flow between Zustand, API routes, and SQLite. | P2 | Low | ✅ | 2026-01-12 |
+| DOC-02 | **Architecture Guide**: Document the data flow between Zustand, API routes, and PostgreSQL. | P2 | Low | ✅ | 2026-01-12 |
 | DOC-03 | **Contributor Guide**: Setup instructions, coding standards, and PR templates. | P2 | Low | ✅ | 2026-01-12 |
 
 ---
 
 ## 📊 Progress Summary
-- **Total Tasks**: 23
-- **Completed**: 18 (78.3%)
+- **Total Tasks**: 24
+- **Completed**: 21 (87.5%)
 - **In Progress**: 0 (0%)
 - **Blocked**: 0 (0%)
 

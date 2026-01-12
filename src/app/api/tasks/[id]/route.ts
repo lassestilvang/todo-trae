@@ -63,7 +63,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const task = getTaskById(id);
+    const task = await getTaskById(id);
     if (!task) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
@@ -83,15 +83,15 @@ export async function PUT(
     const body = await request.json();
     const validatedData = UpdateTaskSchema.parse(body);
     
-    const existingTask = getTaskById(id);
+    const existingTask = await getTaskById(id);
     if (!existingTask) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
 
-    const updatedTask = updateTask(id, validatedData as Partial<Task>);
+    const updatedTask = await updateTask(id, validatedData as Partial<Task>);
     
     // Log activity
-    logTaskUpdate(id, validatedData, existingTask);
+    await logTaskUpdate(id, validatedData, existingTask);
     
     return NextResponse.json(updatedTask);
   } catch (error) {
@@ -109,15 +109,15 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const existingTask = getTaskById(id);
+    const existingTask = await getTaskById(id);
     if (!existingTask) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
 
-    deleteTask(id);
+    await deleteTask(id);
     
     // Log activity
-    logTaskActivity(id, 'deleted');
+    await logTaskActivity(id, 'deleted');
     
     return new NextResponse(null, { status: 204 });
   } catch (error) {

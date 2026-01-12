@@ -6,6 +6,7 @@ interface ThemeStore {
   
   // Actions
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
+  toggleDarkMode: () => void;
   initTheme: () => void;
 }
 
@@ -19,12 +20,18 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
     try { localStorage.setItem('theme', theme); } catch {}
   },
 
+  toggleDarkMode: () => {
+    const { theme, isDarkMode } = get();
+    const newTheme = isDarkMode ? 'light' : 'dark';
+    get().setTheme(newTheme);
+  },
+
   initTheme: () => {
     if (typeof window === 'undefined') return;
     
     // Prevent multiple initializations
-    if ((window as any).__THEME_INITIALIZED__) return;
-    (window as any).__THEME_INITIALIZED__ = true;
+    if ((window as unknown as { __THEME_INITIALIZED__?: boolean }).__THEME_INITIALIZED__) return;
+    (window as unknown as { __THEME_INITIALIZED__?: boolean }).__THEME_INITIALIZED__ = true;
     
     const storedTheme = localStorage.getItem('theme') as 'light' | 'dark' | 'system' | null;
     const initialTheme = storedTheme || 'system';

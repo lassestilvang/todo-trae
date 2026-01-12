@@ -36,7 +36,7 @@ import { Label } from '@/types';
 
 export async function GET() {
   try {
-    const labels = getAllLabels();
+    const labels = await getAllLabels();
     return NextResponse.json(labels);
   } catch (error) {
     console.error('Error fetching labels:', error);
@@ -48,10 +48,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const validatedData = LabelSchema.parse(body);
-    const label = createLabel(validatedData as Omit<Label, 'createdAt' | 'updatedAt'>);
+    const label = await createLabel(validatedData as Omit<Label, 'createdAt' | 'updatedAt'>);
     
     // Log activity
-    logLabelActivity(label.id, 'created');
+    await logLabelActivity(label.id, 'created');
     
     return NextResponse.json(label, { status: 201 });
   } catch (error) {

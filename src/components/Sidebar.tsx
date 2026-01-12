@@ -15,7 +15,6 @@ import {
  CheckCircle2,
   Hash,
   Home,
-  Star,
   Tag,
   Sun,
   Moon,
@@ -47,7 +46,6 @@ export function Sidebar() {
     setSearchQuery 
   } = useTaskStore();
   const { theme, setTheme } = useThemeStore();
-  const [searchOpen, setSearchOpen] = useState(false);
   const [showProjects, setShowProjects] = useState(true);
   const [taskFormOpen, setTaskFormOpen] = useState(false);
   const [listFormOpen, setListFormOpen] = useState(false);

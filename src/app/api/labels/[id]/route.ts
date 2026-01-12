@@ -63,7 +63,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const label = getLabelById(id);
+    const label = await getLabelById(id);
     if (!label) {
       return NextResponse.json({ error: 'Label not found' }, { status: 404 });
     }
@@ -83,15 +83,15 @@ export async function PUT(
     const body = await request.json();
     const validatedData = UpdateLabelSchema.parse(body);
     
-    const existingLabel = getLabelById(id);
+    const existingLabel = await getLabelById(id);
     if (!existingLabel) {
       return NextResponse.json({ error: 'Label not found' }, { status: 404 });
     }
 
-    const updatedLabel = updateLabel(id, validatedData as Partial<Label>);
+    const updatedLabel = await updateLabel(id, validatedData as Partial<Label>);
     
     // Log activity
-    logLabelUpdate(id, validatedData, existingLabel);
+    await logLabelUpdate(id, validatedData, existingLabel);
     
     return NextResponse.json(updatedLabel);
   } catch (error) {
@@ -109,15 +109,15 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const existingLabel = getLabelById(id);
+    const existingLabel = await getLabelById(id);
     if (!existingLabel) {
       return NextResponse.json({ error: 'Label not found' }, { status: 404 });
     }
 
-    deleteLabel(id);
+    await deleteLabel(id);
     
     // Log activity
-    logLabelActivity(id, 'deleted');
+    await logLabelActivity(id, 'deleted');
     
     return new NextResponse(null, { status: 204 });
   } catch (error) {

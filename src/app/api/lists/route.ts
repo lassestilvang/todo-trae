@@ -36,7 +36,7 @@ import { TaskList } from '@/types';
 
 export async function GET() {
   try {
-    const lists = getAllLists();
+    const lists = await getAllLists();
     return NextResponse.json(lists);
   } catch (error) {
     console.error('Error fetching lists:', error);
@@ -48,10 +48,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const validatedData = TaskListSchema.parse(body);
-    const list = createList(validatedData as Omit<TaskList, 'createdAt' | 'updatedAt'>);
+    const list = await createList(validatedData as Omit<TaskList, 'createdAt' | 'updatedAt'>);
     
     // Log activity
-    logListActivity(list.id, 'created');
+    await logListActivity(list.id, 'created');
     
     return NextResponse.json(list, { status: 201 });
   } catch (error) {

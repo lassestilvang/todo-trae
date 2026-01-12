@@ -41,8 +41,8 @@ export async function GET(request: NextRequest) {
     const taskId = searchParams.get('taskId');
     
     const logs = taskId 
-      ? getActivityLogByTaskId(taskId, limit, offset)
-      : getAllActivityLogs(limit, offset);
+      ? await getActivityLogByTaskId(taskId, limit, offset)
+      : await getAllActivityLogs(limit, offset);
       
     return NextResponse.json(logs);
   } catch (error) {

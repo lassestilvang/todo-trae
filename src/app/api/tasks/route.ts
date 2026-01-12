@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined;
     const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : undefined;
     
-    const tasks = getAllTasks(limit, offset);
+    const tasks = await getAllTasks(limit, offset);
     return NextResponse.json(tasks);
   } catch (error) {
     logger.error('Error fetching tasks', { error });
@@ -66,10 +66,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const validatedData = CreateTaskSchema.parse(body);
-    const task = createTask(validatedData as unknown as Omit<Task, 'createdAt' | 'updatedAt' | 'subtasks' | 'attachments'> & { labelIds?: string[] });
+    const task = await createTask(validatedData as unknown as Omit<Task, 'createdAt' | 'updatedAt' | 'subtasks' | 'attachments'> & { labelIds?: string[] });
     
     // Log activity
-    logTaskActivity(task.id, 'created');
+    await logTaskActivity(task.id, 'created');
     logger.info('Task created successfully', { taskId: task.id, name: task.name });
     
     return NextResponse.json(task, { status: 201 });

@@ -1,90 +1,78 @@
-import { getDatabase } from './database';
-import { Task, TaskList, Label, Subtask, ActivityLog } from '@/types';
+import { db } from '@/db';
+import { taskLists, tasks, labels, subtasks, taskLabels, activityLog } from '@/db/schema';
+import { Task, TaskList, Label, Subtask, ActivityLog, Priority, RecurringType } from '@/types';
 import { logger } from './logger';
+import { eq, and, isNull, asc, desc } from 'drizzle-orm';
 
-// Task List operations
-interface TaskListRow {
-  id: string;
-  name: string;
-  color: string;
-  emoji: string;
-  is_default: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export function getAllLists(): TaskList[] {
-  const db = getDatabase();
-  const stmt = db.prepare('SELECT * FROM task_lists ORDER BY is_default DESC, name ASC');
-  const results = stmt.all() as TaskListRow[];
-  return results.map(row => ({
-    id: row.id,
-    name: row.name,
-    color: row.color,
-    emoji: row.emoji,
-    isDefault: Boolean(row.is_default),
-    createdAt: new Date(row.created_at),
-    updatedAt: new Date(row.updated_at),
-  }));
-}
-
-export function getListById(id: string): TaskList | null {
-  const db = getDatabase();
-  const stmt = db.prepare('SELECT * FROM task_lists WHERE id = ?');
-  const row = stmt.get(id) as TaskListRow | undefined;
-  if (!row) return null;
+// Helper to map DB row to TaskList type
+function mapTaskList(row: typeof taskLists.$inferSelect): TaskList {
   return {
     id: row.id,
     name: row.name,
     color: row.color,
     emoji: row.emoji,
-    isDefault: Boolean(row.is_default),
-    createdAt: new Date(row.created_at),
-    updatedAt: new Date(row.updated_at),
+    isDefault: !!row.isDefault,
+    createdAt: row.createdAt || new Date(),
+    updatedAt: row.updatedAt || new Date(),
   };
 }
 
-export function createList(list: Omit<TaskList, 'createdAt' | 'updatedAt'>): TaskList {
-  const db = getDatabase();
+// Helper to map DB row to Label type
+function mapLabel(row: typeof labels.$inferSelect): Label {
+  return {
+    id: row.id,
+    name: row.name,
+    color: row.color,
+    icon: row.icon,
+    createdAt: row.createdAt || new Date(),
+    updatedAt: row.updatedAt || new Date(),
+  };
+}
+
+// Task List operations
+export async function getAllLists(): Promise<TaskList[]> {
+  const results = await db.select().from(taskLists).orderBy(desc(taskLists.isDefault), asc(taskLists.name));
+  return results.map(mapTaskList);
+}
+
+export async function getListById(id: string): Promise<TaskList | null> {
+  const results = await db.select().from(taskLists).where(eq(taskLists.id, id)).limit(1);
+  if (results.length === 0) return null;
+  return mapTaskList(results[0]);
+}
+
+export async function createList(list: Omit<TaskList, 'createdAt' | 'updatedAt'>): Promise<TaskList> {
   try {
-    const stmt = db.prepare(`
-      INSERT INTO task_lists (id, name, color, emoji, is_default)
-      VALUES (?, ?, ?, ?, ?)
-    `);
-    stmt.run(list.id, list.name, list.color, list.emoji, list.isDefault ? 1 : 0);
+    await db.insert(taskLists).values({
+      id: list.id,
+      name: list.name,
+      color: list.color,
+      emoji: list.emoji,
+      isDefault: list.isDefault,
+    });
     logger.info('Task list created', { listId: list.id, name: list.name });
-    return getListById(list.id)!;
+    return (await getListById(list.id))!;
   } catch (error) {
     logger.error('Failed to create task list', { error, list });
     throw error;
   }
 }
 
-export function updateList(id: string, updates: Partial<TaskList>): TaskList {
-  const db = getDatabase();
-  
-  const mappedUpdates: Record<string, string | number> = {};
-  if (updates.name !== undefined) mappedUpdates.name = updates.name;
-  if (updates.color !== undefined) mappedUpdates.color = updates.color;
-  if (updates.emoji !== undefined) mappedUpdates.emoji = updates.emoji;
-  if (updates.isDefault !== undefined) mappedUpdates.is_default = updates.isDefault ? 1 : 0;
+export async function updateList(id: string, updates: Partial<TaskList>): Promise<TaskList> {
+  const dbUpdates: Partial<typeof taskLists.$inferInsert> = {};
+  if (updates.name !== undefined) dbUpdates.name = updates.name;
+  if (updates.color !== undefined) dbUpdates.color = updates.color;
+  if (updates.emoji !== undefined) dbUpdates.emoji = updates.emoji;
+  if (updates.isDefault !== undefined) dbUpdates.isDefault = updates.isDefault;
+  dbUpdates.updatedAt = new Date();
 
-  const keys = Object.keys(mappedUpdates);
-  if (keys.length === 0) return getListById(id)!;
-
-  const setClause = keys.map(key => `"${key}" = ?`).join(', ');
-  const values = [...Object.values(mappedUpdates), new Date().toISOString(), id];
-
-  const stmt = db.prepare(`UPDATE task_lists SET ${setClause}, updated_at = ? WHERE id = ?`);
-  stmt.run(...values);
-  return getListById(id)!;
+  await db.update(taskLists).set(dbUpdates).where(eq(taskLists.id, id));
+  return (await getListById(id))!;
 }
 
-export function deleteList(id: string): void {
-  const db = getDatabase();
+export async function deleteList(id: string): Promise<void> {
   try {
-    const stmt = db.prepare('DELETE FROM task_lists WHERE id = ?');
-    stmt.run(id);
+    await db.delete(taskLists).where(eq(taskLists.id, id));
     logger.info('Task list deleted', { listId: id });
   } catch (error) {
     logger.error('Failed to delete task list', { error, listId: id });
@@ -93,430 +81,329 @@ export function deleteList(id: string): void {
 }
 
 // Label operations
-interface LabelRow {
-  id: string;
-  name: string;
-  color: string;
-  icon: string;
-  created_at: string;
-  updated_at: string;
+export async function getAllLabels(): Promise<Label[]> {
+  const results = await db.select().from(labels).orderBy(asc(labels.name));
+  return results.map(mapLabel);
 }
 
-export function getAllLabels(): Label[] {
-  const db = getDatabase();
-  const stmt = db.prepare('SELECT * FROM labels ORDER BY name ASC');
-  const results = stmt.all() as LabelRow[];
-  return results.map(row => ({
-    id: row.id,
-    name: row.name,
-    color: row.color,
-    icon: row.icon,
-    createdAt: new Date(row.created_at),
-    updatedAt: new Date(row.updated_at),
-  }));
+export async function getLabelById(id: string): Promise<Label | null> {
+  const results = await db.select().from(labels).where(eq(labels.id, id)).limit(1);
+  if (results.length === 0) return null;
+  return mapLabel(results[0]);
 }
 
-export function getLabelById(id: string): Label | null {
-  const db = getDatabase();
-  const stmt = db.prepare('SELECT * FROM labels WHERE id = ?');
-  const row = stmt.get(id) as LabelRow | undefined;
-  if (!row) return null;
-  return {
-    id: row.id,
-    name: row.name,
-    color: row.color,
-    icon: row.icon,
-    createdAt: new Date(row.created_at),
-    updatedAt: new Date(row.updated_at),
+export async function createLabel(label: Omit<Label, 'createdAt' | 'updatedAt'>): Promise<Label> {
+  await db.insert(labels).values({
+    id: label.id,
+    name: label.name,
+    color: label.color,
+    icon: label.icon,
+  });
+  return (await getLabelById(label.id))!;
+}
+
+export async function updateLabel(id: string, updates: Partial<Label>): Promise<Label> {
+  const dbUpdates: Partial<typeof labels.$inferInsert> = {
+    ...updates,
+    updatedAt: new Date(),
   };
+  await db.update(labels).set(dbUpdates).where(eq(labels.id, id));
+  return (await getLabelById(id))!;
 }
 
-export function createLabel(label: Omit<Label, 'createdAt' | 'updatedAt'>): Label {
-  const db = getDatabase();
-  const stmt = db.prepare(`
-    INSERT INTO labels (id, name, color, icon)
-    VALUES (?, ?, ?, ?)
-  `);
-  stmt.run(label.id, label.name, label.color, label.icon);
-  return getLabelById(label.id)!;
-}
-
-export function updateLabel(id: string, updates: Partial<Label>): Label {
-  const db = getDatabase();
-  const setClause = Object.keys(updates)
-    .map(key => `${key} = ?`)
-    .join(', ');
-  const values = [...Object.values(updates), new Date().toISOString(), id];
-
-  const stmt = db.prepare(`UPDATE labels SET ${setClause}, updated_at = ? WHERE id = ?`);
-  stmt.run(...values);
-  return getLabelById(id)!;
-}
-
-export function deleteLabel(id: string): void {
-  const db = getDatabase();
-  const stmt = db.prepare('DELETE FROM labels WHERE id = ?');
-  stmt.run(id);
+export async function deleteLabel(id: string): Promise<void> {
+  await db.delete(labels).where(eq(labels.id, id));
 }
 
 // Task operations
-export function getAllTasks(limit?: number, offset?: number): Task[] {
-  const db = getDatabase();
-  let query = `
-    SELECT t.*, GROUP_CONCAT(l.id) as label_ids, GROUP_CONCAT(l.name) as label_names,
-           GROUP_CONCAT(l.color) as label_colors, GROUP_CONCAT(l.icon) as label_icons
-    FROM tasks t
-    LEFT JOIN task_labels tl ON t.id = tl.task_id
-    LEFT JOIN labels l ON tl.label_id = l.id
-    GROUP BY t.id
-    ORDER BY t.completed ASC, t."order" ASC, t.created_at DESC
-  `;
-
-  if (limit !== undefined) {
-    query += ` LIMIT ${limit}`;
-    if (offset !== undefined) {
-      query += ` OFFSET ${offset}`;
-    }
-  }
-
-  const stmt = db.prepare(query);
-  const results = stmt.all() as Record<string, string | number | null>[];
-  return results.map((row) => {
-    const labels = row.label_ids
-      ? String(row.label_ids).split(',').map((id: string, index: number) => ({
-          id,
-          name: String(row.label_names).split(',')[index],
-          color: String(row.label_colors).split(',')[index],
-          icon: String(row.label_icons).split(',')[index],
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }))
-      : [];
-
-    const task: Task = {
-      id: String(row.id),
-      listId: String(row.list_id),
-      name: String(row.name),
-      description: row.description ? String(row.description) : undefined,
-      date: row.date ? new Date(String(row.date)) : undefined,
-      deadline: row.deadline ? new Date(String(row.deadline)) : undefined,
-      reminders: [],
-      estimate: row.estimate ? String(row.estimate) : undefined,
-      actualTime: row.actual_time ? String(row.actual_time) : undefined,
-      priority: String(row.priority) as Task['priority'],
-      completed: Boolean(row.completed),
-      completedAt: row.completed_at ? new Date(String(row.completed_at)) : undefined,
-      recurring: row.recurring ? (String(row.recurring) as Task['recurring']) : undefined,
-      recurringEndDate: row.recurring_end_date ? new Date(String(row.recurring_end_date)) : undefined,
-      parentTaskId: row.parent_task_id ? String(row.parent_task_id) : undefined,
-      order: Number(row.order),
-      createdAt: new Date(String(row.created_at)),
-      updatedAt: new Date(String(row.updated_at)),
-      labels,
-    };
-
-    return task;
+export async function getAllTasks(limit?: number, offset?: number): Promise<Task[]> {
+  const results = await db.query.tasks.findMany({
+    with: {
+      taskLabels: {
+        with: {
+          label: true,
+        },
+      },
+    },
+    orderBy: [asc(tasks.completed), asc(tasks.order), desc(tasks.createdAt)],
+    limit,
+    offset,
   });
+
+  return results.map(row => ({
+    ...row,
+    createdAt: row.createdAt || new Date(),
+    updatedAt: row.updatedAt || new Date(),
+    date: row.date || undefined,
+    deadline: row.deadline || undefined,
+    completed: !!row.completed,
+    completedAt: row.completedAt || undefined,
+    recurringEndDate: row.recurringEndDate || undefined,
+    description: row.description || undefined,
+    estimate: row.estimate || undefined,
+    actualTime: row.actualTime || undefined,
+    parentTaskId: row.parentTaskId || undefined,
+    order: row.order || 0,
+    priority: (row.priority || 'none') as Priority,
+    recurring: (row.recurring || undefined) as RecurringType | undefined,
+    labels: row.taskLabels.map(tl => mapLabel(tl.label)),
+    reminders: [], // Reminders not implemented in mapping yet
+  }));
 }
 
-export function getTasksByListId(listId: string, limit?: number, offset?: number): Task[] {
-  const db = getDatabase();
-  let query = `
-    SELECT t.*, GROUP_CONCAT(l.id) as label_ids, GROUP_CONCAT(l.name) as label_names,
-           GROUP_CONCAT(l.color) as label_colors, GROUP_CONCAT(l.icon) as label_icons
-    FROM tasks t
-    LEFT JOIN task_labels tl ON t.id = tl.task_id
-    LEFT JOIN labels l ON tl.label_id = l.id
-    WHERE t.list_id = ? AND t.parent_task_id IS NULL
-    GROUP BY t.id
-    ORDER BY t.completed ASC, t."order" ASC, t.created_at DESC
-  `;
-
-  if (limit !== undefined) {
-    query += ` LIMIT ${limit}`;
-    if (offset !== undefined) {
-      query += ` OFFSET ${offset}`;
-    }
-  }
-
-  const stmt = db.prepare(query);
-  const results = stmt.all(listId) as Record<string, string | number | null>[];
-  return results.map((row) => {
-    const labels = row.label_ids
-      ? String(row.label_ids).split(',').map((id: string, index: number) => ({
-          id,
-          name: String(row.label_names).split(',')[index],
-          color: String(row.label_colors).split(',')[index],
-          icon: String(row.label_icons).split(',')[index],
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }))
-      : [];
-
-    const task: Task = {
-      id: String(row.id),
-      listId: String(row.list_id),
-      name: String(row.name),
-      description: row.description ? String(row.description) : undefined,
-      date: row.date ? new Date(String(row.date)) : undefined,
-      deadline: row.deadline ? new Date(String(row.deadline)) : undefined,
-      reminders: [],
-      estimate: row.estimate ? String(row.estimate) : undefined,
-      actualTime: row.actual_time ? String(row.actual_time) : undefined,
-      priority: String(row.priority) as Task['priority'],
-      completed: Boolean(row.completed),
-      completedAt: row.completed_at ? new Date(String(row.completed_at)) : undefined,
-      recurring: row.recurring ? (String(row.recurring) as Task['recurring']) : undefined,
-      recurringEndDate: row.recurring_end_date ? new Date(String(row.recurring_end_date)) : undefined,
-      parentTaskId: row.parent_task_id ? String(row.parent_task_id) : undefined,
-      order: Number(row.order),
-      createdAt: new Date(String(row.created_at)),
-      updatedAt: new Date(String(row.updated_at)),
-      labels,
-    };
-
-    return task;
+export async function getTasksByListId(listId: string, limit?: number, offset?: number): Promise<Task[]> {
+  const results = await db.query.tasks.findMany({
+    where: and(eq(tasks.listId, listId), isNull(tasks.parentTaskId)),
+    with: {
+      taskLabels: {
+        with: {
+          label: true,
+        },
+      },
+    },
+    orderBy: [asc(tasks.completed), asc(tasks.order), desc(tasks.createdAt)],
+    limit,
+    offset,
   });
+
+  return results.map(row => ({
+    ...row,
+    createdAt: row.createdAt || new Date(),
+    updatedAt: row.updatedAt || new Date(),
+    date: row.date || undefined,
+    deadline: row.deadline || undefined,
+    completed: !!row.completed,
+    completedAt: row.completedAt || undefined,
+    recurringEndDate: row.recurringEndDate || undefined,
+    description: row.description || undefined,
+    estimate: row.estimate || undefined,
+    actualTime: row.actualTime || undefined,
+    parentTaskId: row.parentTaskId || undefined,
+    order: row.order || 0,
+    priority: (row.priority || 'none') as Priority,
+    recurring: (row.recurring || undefined) as RecurringType | undefined,
+    labels: row.taskLabels.map(tl => mapLabel(tl.label)),
+    reminders: [],
+  }));
 }
 
-export function getTaskById(id: string): Task | null {
-  const db = getDatabase();
-  const stmt = db.prepare(`
-    SELECT t.*, GROUP_CONCAT(l.id) as label_ids, GROUP_CONCAT(l.name) as label_names,
-           GROUP_CONCAT(l.color) as label_colors, GROUP_CONCAT(l.icon) as label_icons
-    FROM tasks t
-    LEFT JOIN task_labels tl ON t.id = tl.task_id
-    LEFT JOIN labels l ON tl.label_id = l.id
-    WHERE t.id = ?
-    GROUP BY t.id
-  `);
+export async function getTaskById(id: string): Promise<Task | null> {
+  const row = await db.query.tasks.findFirst({
+    where: eq(tasks.id, id),
+    with: {
+      taskLabels: {
+        with: {
+          label: true,
+        },
+      },
+    },
+  });
 
-  const row = stmt.get(id) as Record<string, string | number | null> | undefined;
   if (!row) return null;
 
-  const labels = row.label_ids
-    ? String(row.label_ids).split(',').map((id: string, index: number) => ({
-        id,
-        name: String(row.label_names).split(',')[index],
-        color: String(row.label_colors).split(',')[index],
-        icon: String(row.label_icons).split(',')[index],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }))
-    : [];
-
-  const task: Task = {
-    id: String(row.id),
-    listId: String(row.list_id),
-    name: String(row.name),
-    description: row.description ? String(row.description) : undefined,
-    date: row.date ? new Date(String(row.date)) : undefined,
-    deadline: row.deadline ? new Date(String(row.deadline)) : undefined,
+  return {
+    ...row,
+    createdAt: row.createdAt || new Date(),
+    updatedAt: row.updatedAt || new Date(),
+    date: row.date || undefined,
+    deadline: row.deadline || undefined,
+    completed: !!row.completed,
+    completedAt: row.completedAt || undefined,
+    recurringEndDate: row.recurringEndDate || undefined,
+    description: row.description || undefined,
+    estimate: row.estimate || undefined,
+    actualTime: row.actualTime || undefined,
+    parentTaskId: row.parentTaskId || undefined,
+    order: row.order || 0,
+    priority: (row.priority || 'none') as Priority,
+    recurring: (row.recurring || undefined) as RecurringType | undefined,
+    labels: row.taskLabels.map(tl => mapLabel(tl.label)),
     reminders: [],
-    estimate: row.estimate ? String(row.estimate) : undefined,
-    actualTime: row.actual_time ? String(row.actual_time) : undefined,
-    priority: String(row.priority) as Task['priority'],
-    completed: Boolean(row.completed),
-    completedAt: row.completed_at ? new Date(String(row.completed_at)) : undefined,
-    recurring: row.recurring ? (String(row.recurring) as Task['recurring']) : undefined,
-    recurringEndDate: row.recurring_end_date ? new Date(String(row.recurring_end_date)) : undefined,
-    parentTaskId: row.parent_task_id ? String(row.parent_task_id) : undefined,
-    order: Number(row.order),
-    createdAt: new Date(String(row.created_at)),
-    updatedAt: new Date(String(row.updated_at)),
-    labels,
   };
-
-  return task;
 }
 
-export function createTask(task: Omit<Task, 'createdAt' | 'updatedAt' | 'subtasks' | 'attachments'> & { labelIds?: string[] }): Task {
-  const db = getDatabase();
-  const stmt = db.prepare(`
-    INSERT INTO tasks (id, list_id, name, description, date, deadline, estimate, actual_time, priority, completed, recurring, recurring_end_date, parent_task_id, "order")
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
-  stmt.run(
-    task.id,
-    task.listId,
-    task.name,
-    task.description || null,
-    task.date instanceof Date ? task.date.toISOString() : (task.date || null),
-    task.deadline instanceof Date ? task.deadline.toISOString() : (task.deadline || null),
-    task.estimate || null,
-    task.actualTime || null,
-    task.priority,
-    task.completed ? 1 : 0,
-    task.recurring || null,
-    task.recurringEndDate instanceof Date ? task.recurringEndDate.toISOString() : (task.recurringEndDate || null),
-    task.parentTaskId || null,
-    task.order || 0
-  );
+export async function createTask(task: Omit<Task, 'createdAt' | 'updatedAt' | 'subtasks' | 'attachments'> & { labelIds?: string[] }): Promise<Task> {
+  await db.insert(tasks).values({
+    id: task.id,
+    listId: task.listId,
+    name: task.name,
+    description: task.description,
+    date: task.date,
+    deadline: task.deadline,
+    estimate: task.estimate,
+    actualTime: task.actualTime,
+    priority: task.priority,
+    completed: task.completed,
+    recurring: task.recurring,
+    recurringEndDate: task.recurringEndDate,
+    parentTaskId: task.parentTaskId,
+    order: task.order,
+  });
 
   const labelIds = task.labelIds || (task.labels as Label[])?.map(l => l.id) || [];
   if (labelIds.length > 0) {
-    const labelStmt = db.prepare('INSERT INTO task_labels (task_id, label_id) VALUES (?, ?)');
-    for (const labelId of labelIds) {
-      labelStmt.run(task.id, labelId);
-    }
+    await db.insert(taskLabels).values(
+      labelIds.map(labelId => ({
+        taskId: task.id,
+        labelId,
+      }))
+    );
   }
 
-  return getTaskById(task.id)!;
+  return (await getTaskById(task.id))!;
 }
 
-export function updateTask(id: string, updates: Partial<Task> & { labelIds?: string[] }): Task {
-  const db = getDatabase();
+export async function updateTask(id: string, updates: Partial<Task> & { labelIds?: string[] }): Promise<Task> {
+  const dbUpdates: Partial<typeof tasks.$inferInsert> = {};
+  
+  if (updates.listId !== undefined) dbUpdates.listId = updates.listId;
+  if (updates.name !== undefined) dbUpdates.name = updates.name;
+  if (updates.description !== undefined) dbUpdates.description = updates.description;
+  if (updates.date !== undefined) dbUpdates.date = updates.date;
+  if (updates.deadline !== undefined) dbUpdates.deadline = updates.deadline;
+  if (updates.estimate !== undefined) dbUpdates.estimate = updates.estimate;
+  if (updates.actualTime !== undefined) dbUpdates.actualTime = updates.actualTime;
+  if (updates.priority !== undefined) dbUpdates.priority = updates.priority;
+  if (updates.completed !== undefined) dbUpdates.completed = updates.completed;
+  if (updates.completedAt !== undefined) {
+    dbUpdates.completedAt = updates.completedAt === undefined ? null : updates.completedAt;
+  }
+  if (updates.recurring !== undefined) dbUpdates.recurring = updates.recurring;
+  if (updates.recurringEndDate !== undefined) dbUpdates.recurringEndDate = updates.recurringEndDate;
+  if (updates.parentTaskId !== undefined) dbUpdates.parentTaskId = updates.parentTaskId;
+  if (updates.order !== undefined) dbUpdates.order = updates.order;
+  
+  dbUpdates.updatedAt = new Date();
 
-  const fieldMapping: Record<string, string> = {
-    listId: 'list_id',
-    completedAt: 'completed_at',
-    recurringEndDate: 'recurring_end_date',
-    parentTaskId: 'parent_task_id',
-    actualTime: 'actual_time',
-    order: '"order"',
-  };
-
-  const setClause = Object.keys(updates)
-    .filter(key => !['labels', 'labelIds', 'id', 'reminders', 'createdAt', 'updatedAt'].includes(key))
-    .map(key => `${fieldMapping[key] || key} = ?`)
-    .join(', ');
-
-  const values = Object.entries(updates)
-    .filter(([key]) => !['labels', 'labelIds', 'id', 'reminders', 'createdAt', 'updatedAt'].includes(key))
-    .map(([, value]) => {
-      if (value instanceof Date) return value.toISOString();
-      if (typeof value === 'boolean') return value ? 1 : 0;
-      return value ?? null;
-    });
-
-  if (setClause) {
-    const stmt = db.prepare(`UPDATE tasks SET ${setClause}, updated_at = ? WHERE id = ?`);
-    stmt.run(...values, new Date().toISOString(), id);
+  if (Object.keys(dbUpdates).length > 0) {
+    await db.update(tasks).set(dbUpdates).where(eq(tasks.id, id));
   }
 
   const labelIds = updates.labelIds || updates.labels?.map(l => l.id);
   if (labelIds) {
-    const deleteStmt = db.prepare('DELETE FROM task_labels WHERE task_id = ?');
-    deleteStmt.run(id);
-
+    await db.delete(taskLabels).where(eq(taskLabels.taskId, id));
     if (labelIds.length > 0) {
-      const labelStmt = db.prepare('INSERT INTO task_labels (task_id, label_id) VALUES (?, ?)');
-      for (const labelId of labelIds) {
-        labelStmt.run(id, labelId);
-      }
+      await db.insert(taskLabels).values(
+        labelIds.map(labelId => ({
+          taskId: id,
+          labelId,
+        }))
+      );
     }
   }
 
-  return getTaskById(id)!;
+  return (await getTaskById(id))!;
 }
 
-export function deleteTask(id: string): void {
-  const db = getDatabase();
-  const stmt = db.prepare('DELETE FROM tasks WHERE id = ?');
-  stmt.run(id);
+export async function deleteTask(id: string): Promise<void> {
+  await db.delete(tasks).where(eq(tasks.id, id));
 }
 
-export function toggleTaskComplete(id: string): Task {
-  const task = getTaskById(id);
+export async function toggleTaskComplete(id: string): Promise<Task> {
+  const task = await getTaskById(id);
   if (!task) throw new Error('Task not found');
 
   const updates = {
     completed: !task.completed,
-    completedAt: !task.completed ? new Date() : undefined,
+    completedAt: !task.completed ? new Date() : null,
   };
 
-  return updateTask(id, updates);
+  return updateTask(id, updates as Partial<Task>);
 }
 
 // Subtask operations
-export function getSubtasksByTaskId(taskId: string): Subtask[] {
-  const db = getDatabase();
-  const stmt = db.prepare('SELECT * FROM subtasks WHERE task_id = ? ORDER BY "order" ASC');
-  return stmt.all(taskId) as Subtask[];
+export async function getSubtasksByTaskId(taskId: string): Promise<Subtask[]> {
+  const results = await db.select().from(subtasks).where(eq(subtasks.taskId, taskId)).orderBy(asc(subtasks.order));
+  return results.map(row => ({
+    ...row,
+    completed: !!row.completed,
+    order: row.order || 0,
+    createdAt: row.createdAt || new Date(),
+    updatedAt: row.updatedAt || new Date(),
+  }));
 }
 
-export function createSubtask(subtask: Omit<Subtask, 'createdAt' | 'updatedAt'>): Subtask {
-  const db = getDatabase();
-  const stmt = db.prepare(`
-    INSERT INTO subtasks (id, task_id, name, completed, "order")
-    VALUES (?, ?, ?, ?, ?)
-  `);
-  stmt.run(subtask.id, subtask.taskId, subtask.name, subtask.completed, subtask.order);
-  return getSubtaskById(subtask.id)!;
+export async function getSubtaskById(id: string): Promise<Subtask | null> {
+  const results = await db.select().from(subtasks).where(eq(subtasks.id, id)).limit(1);
+  if (results.length === 0) return null;
+  const row = results[0];
+  return {
+    ...row,
+    completed: !!row.completed,
+    order: row.order || 0,
+    createdAt: row.createdAt || new Date(),
+    updatedAt: row.updatedAt || new Date(),
+  };
 }
 
-export function getSubtaskById(id: string): Subtask | null {
-  const db = getDatabase();
-  const stmt = db.prepare('SELECT * FROM subtasks WHERE id = ?');
-  return stmt.get(id) as Subtask | null;
+export async function createSubtask(subtask: Omit<Subtask, 'createdAt' | 'updatedAt'>): Promise<Subtask> {
+  await db.insert(subtasks).values({
+    id: subtask.id,
+    taskId: subtask.taskId,
+    name: subtask.name,
+    completed: subtask.completed,
+    order: subtask.order,
+  });
+  return (await getSubtaskById(subtask.id))!;
 }
 
-export function updateSubtask(id: string, updates: Partial<Subtask>): Subtask {
-  const db = getDatabase();
-  const setClause = Object.keys(updates)
-    .map(key => `${key} = ?`)
-    .join(', ');
-  const values = [...Object.values(updates), new Date().toISOString(), id];
-
-  const stmt = db.prepare(`UPDATE subtasks SET ${setClause}, updated_at = ? WHERE id = ?`);
-  stmt.run(...values);
-  return getSubtaskById(id)!;
+export async function updateSubtask(id: string, updates: Partial<Subtask>): Promise<Subtask> {
+  const dbUpdates: Partial<typeof subtasks.$inferInsert> = {
+    ...updates,
+    updatedAt: new Date(),
+  };
+  await db.update(subtasks).set(dbUpdates).where(eq(subtasks.id, id));
+  return (await getSubtaskById(id))!;
 }
 
-export function deleteSubtask(id: string): void {
-  const db = getDatabase();
-  const stmt = db.prepare('DELETE FROM subtasks WHERE id = ?');
-  stmt.run(id);
+export async function deleteSubtask(id: string): Promise<void> {
+  await db.delete(subtasks).where(eq(subtasks.id, id));
 }
 
 // Activity log operations
-export function getAllActivityLogs(limit?: number, offset?: number): ActivityLog[] {
-  const db = getDatabase();
-  let query = 'SELECT * FROM activity_log ORDER BY created_at DESC';
-  
-  if (limit !== undefined) {
-    query += ` LIMIT ${limit}`;
-    if (offset !== undefined) {
-      query += ` OFFSET ${offset}`;
-    }
-  }
-
-  const stmt = db.prepare(query);
-  return stmt.all() as ActivityLog[];
+export async function getAllActivityLogs(limit?: number, offset?: number): Promise<ActivityLog[]> {
+  const results = await db.select().from(activityLog).orderBy(desc(activityLog.createdAt)).limit(limit || 100).offset(offset || 0);
+  return results.map(row => ({
+    ...row,
+    action: row.action as ActivityLog['action'],
+    taskId: row.taskId || undefined,
+    listId: row.listId || undefined,
+    labelId: row.labelId || undefined,
+    field: row.field || undefined,
+    oldValue: row.oldValue || undefined,
+    newValue: row.newValue || undefined,
+    userId: row.userId || undefined,
+    createdAt: row.createdAt || new Date(),
+  }));
 }
 
-export function getActivityLogByTaskId(taskId: string, limit?: number, offset?: number): ActivityLog[] {
-  const db = getDatabase();
-  let query = 'SELECT * FROM activity_log WHERE task_id = ? ORDER BY created_at DESC';
-  
-  if (limit !== undefined) {
-    query += ` LIMIT ${limit}`;
-    if (offset !== undefined) {
-      query += ` OFFSET ${offset}`;
-    }
-  }
-
-  const stmt = db.prepare(query);
-  return stmt.all(taskId) as ActivityLog[];
+export async function getActivityLogByTaskId(taskId: string, limit?: number, offset?: number): Promise<ActivityLog[]> {
+  const results = await db.select().from(activityLog).where(eq(activityLog.taskId, taskId)).orderBy(desc(activityLog.createdAt)).limit(limit || 100).offset(offset || 0);
+  return results.map(row => ({
+    ...row,
+    action: row.action as ActivityLog['action'],
+    taskId: row.taskId || undefined,
+    listId: row.listId || undefined,
+    labelId: row.labelId || undefined,
+    field: row.field || undefined,
+    oldValue: row.oldValue || undefined,
+    newValue: row.newValue || undefined,
+    userId: row.userId || undefined,
+    createdAt: row.createdAt || new Date(),
+  }));
 }
 
-export function createActivityLog(log: Omit<ActivityLog, 'createdAt'>): ActivityLog {
-  const db = getDatabase();
-  const stmt = db.prepare(`
-    INSERT INTO activity_log (id, task_id, list_id, label_id, action, field, old_value, new_value, user_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-  stmt.run(
-    log.id, 
-    log.taskId || null, 
-    log.listId || null, 
-    log.labelId || null, 
-    log.action, 
-    log.field || null, 
-    log.oldValue || null, 
-    log.newValue || null, 
-    log.userId || null
-  );
+export async function createActivityLog(log: Omit<ActivityLog, 'createdAt'>): Promise<ActivityLog> {
+  await db.insert(activityLog).values({
+    id: log.id,
+    taskId: log.taskId,
+    listId: log.listId,
+    labelId: log.labelId,
+    action: log.action,
+    field: log.field,
+    oldValue: log.oldValue,
+    newValue: log.newValue,
+    userId: log.userId,
+  });
   return { ...log, createdAt: new Date() };
 }

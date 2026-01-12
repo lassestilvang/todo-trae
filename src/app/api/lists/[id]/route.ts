@@ -63,7 +63,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const list = getListById(id);
+    const list = await getListById(id);
     if (!list) {
       return NextResponse.json({ error: 'List not found' }, { status: 404 });
     }
@@ -83,15 +83,15 @@ export async function PUT(
     const body = await request.json();
     const validatedData = UpdateTaskListSchema.parse(body);
     
-    const existingList = getListById(id);
+    const existingList = await getListById(id);
     if (!existingList) {
       return NextResponse.json({ error: 'List not found' }, { status: 404 });
     }
 
-    const updatedList = updateList(id, validatedData as Partial<TaskList>);
+    const updatedList = await updateList(id, validatedData as Partial<TaskList>);
     
     // Log activity
-    logListUpdate(id, validatedData, existingList);
+    await logListUpdate(id, validatedData, existingList);
     
     return NextResponse.json(updatedList);
   } catch (error) {
@@ -109,15 +109,15 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const existingList = getListById(id);
+    const existingList = await getListById(id);
     if (!existingList) {
       return NextResponse.json({ error: 'List not found' }, { status: 404 });
     }
 
-    deleteList(id);
+    await deleteList(id);
     
     // Log activity
-    logListActivity(id, 'deleted');
+    await logListActivity(id, 'deleted');
     
     return new NextResponse(null, { status: 204 });
   } catch (error) {

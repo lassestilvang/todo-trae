@@ -3,7 +3,7 @@ import * as Sentry from '@sentry/nextjs';
 type LogLevel = 'info' | 'warn' | 'error' | 'debug';
 
 interface LogContext {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 class Logger {
@@ -19,14 +19,6 @@ class Logger {
   }
 
   private log(level: LogLevel, message: string, context?: LogContext) {
-    const timestamp = new Date().toISOString();
-    const logData = {
-      timestamp,
-      level,
-      message,
-      ...context,
-    };
-
     // Standard console output for development
     if (process.env.NODE_ENV === 'development') {
       const color = this.getColor(level);

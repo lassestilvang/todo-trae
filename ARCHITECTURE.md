@@ -12,7 +12,7 @@ The application is built as a modern, local-first-ready web application using **
 
 - **Framework**: [Next.js 16](https://nextjs.org/) (App Router, Server Actions, API Routes)
 - **State Management**: [Zustand](https://github.com/pmndrs/zustand)
-- **Database**: [SQLite](https://www.sqlite.org/) (via `better-sqlite3` or `bun:sqlite`)
+- **Database**: [PostgreSQL](https://www.postgresql.org/) (via [Drizzle ORM](https://orm.drizzle.team/))
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/) with Glassmorphism
 - **Animations**: [Framer Motion](https://www.framer.com/motion/)
 - **Validation**: [Zod](https://zod.dev/)
@@ -30,7 +30,7 @@ A typical user action (e.g., creating a task) follows this path:
 4.  **API Call**: The store triggers an asynchronous fetch request to a Next.js API route (e.g., `POST /api/tasks`).
 5.  **Validation**: The API route validates the payload using a **Zod** schema (from `lib/validations.ts`).
 6.  **Persistence Layer**: The API route calls a function in `lib/api.ts`.
-7.  **Database**: `lib/api.ts` uses `getDatabase()` from `lib/database.ts` to execute a SQL statement.
+7.  **Database**: `lib/api.ts` uses **Drizzle ORM** to execute queries against PostgreSQL.
 8.  **Activity Log**: Upon success, an activity record is created in the `activity_log` table via `lib/activityLog.ts`.
 9.  **Sync**: The API returns the persisted object, and the store ensures the local state matches the server truth.
 
@@ -80,3 +80,16 @@ The application maintains a detailed audit trail. Every significant change (CRUD
 - `timestamp`
 
 This enables features like activity feeds and potential "Undo" functionality in the future.
+
+---
+
+## 🧪 Testing
+
+The project uses **Bun Test** for unit and integration testing.
+
+- **Database Tests**: Located in `test/database.test.ts`, these tests verify CRUD operations using the actual database.
+- **Store Tests**: Located in `test/store.test.ts` and `test/store-simple.test.ts`, these verify the Zustand store logic.
+- **E2E Tests**: Located in `tests/`, these use **Playwright** to test the full application flow in the browser.
+
+### Test Database Environment
+To run database tests, ensure you have a `.env` file with a valid `DATABASE_URL` pointing to a PostgreSQL instance. The tests will automatically manage the schema using Drizzle.
