@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Select } from '@/components/ui/Select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/Dialog';
 import { SubtaskManager } from '@/components/SubtaskManager';
 import { AttachmentManager } from '@/components/AttachmentManager';
 import { RecurringTaskSelector } from '@/components/RecurringTaskSelector';
@@ -229,9 +229,14 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
       <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden border-border/30 bg-background/80 backdrop-blur-2xl">
         <div className="flex flex-col h-full max-h-[90vh]">
           <DialogHeader className="px-6 py-4 border-b border-border/20 flex flex-row items-center justify-between space-y-0">
-            <DialogTitle className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70">
-              {task ? 'Edit Task' : 'Create New Task'}
-            </DialogTitle>
+            <div className="flex flex-col gap-1">
+              <DialogTitle className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70">
+                {task ? 'Edit Task' : 'Create New Task'}
+              </DialogTitle>
+              <DialogDescription className="sr-only">
+                {task ? 'Update task details and settings' : 'Fill in the details to create a new task'}
+              </DialogDescription>
+            </div>
             {!task && templates.length > 0 && (
               <Select
                   value=""
@@ -297,7 +302,7 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form id="task-form" onSubmit={handleSubmit} className="space-y-6">
               <AnimatePresence mode="wait">
                 {activeTab === 'basic' ? (
                   <motion.div
@@ -422,6 +427,7 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
                                 : [...formData.labels, label.id];
                               setFormData({ ...formData, labels: newLabels });
                             }}
+                            style={{ borderColor: label.color, color: formData.labels.includes(label.id) ? undefined : label.color }}
                             className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
                               formData.labels.includes(label.id)
                                 ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20'
@@ -510,12 +516,8 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
                 Cancel
               </Button>
               <Button 
-                type="button" 
-                onClick={(e) => {
-                  const form = (e.currentTarget as HTMLButtonElement).form;
-                  if (form) form.requestSubmit();
-                  else handleSubmit(e as unknown as React.FormEvent);
-                }}
+                type="submit" 
+                form="task-form"
                 className="px-8 rounded-xl font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
                 {task ? 'Save Changes' : 'Create Task'}

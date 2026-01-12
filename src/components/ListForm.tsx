@@ -119,34 +119,33 @@ export function ListForm({ open, onOpenChange, list }: ListFormProps) {
                   htmlFor="list-emoji"
                   className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest px-1"
                 >
-                  Emoji Icon
+                  Emoji
                 </label>
                 <Input
                   id="list-emoji"
-                  placeholder="📁"
                   value={formData.emoji}
                   onChange={(e) => setFormData({ ...formData, emoji: e.target.value })}
-                  className="h-11 bg-background/40 backdrop-blur-md border-border/30 focus:bg-background/60 transition-all rounded-xl font-medium text-center text-xl"
-                  aria-label="List emoji icon"
+                  placeholder="e.g. 📁, 🚀, 🏠"
+                  className="bg-background/40 border-border/30 rounded-xl"
                 />
               </div>
+
               <div className="space-y-2">
                 <label 
                   htmlFor="list-color"
                   className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest px-1"
                 >
-                  List Color
+                  Color
                 </label>
-                <div className="flex items-center gap-2 h-11 px-3 bg-background/40 backdrop-blur-md border border-border/30 rounded-xl">
+                <div className="flex items-center gap-3">
                   <input
                     id="list-color"
                     type="color"
                     value={formData.color}
                     onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                    className="w-6 h-6 rounded-md overflow-hidden bg-transparent cursor-pointer"
-                    aria-label="Select list color"
+                    className="h-10 w-20 rounded-lg bg-background/40 border-border/30 cursor-pointer p-1"
                   />
-                  <span className="text-xs font-mono font-medium text-muted-foreground uppercase" aria-hidden="true">{formData.color}</span>
+                  <span className="text-sm font-mono text-muted-foreground uppercase">{formData.color}</span>
                 </div>
               </div>
             </div>

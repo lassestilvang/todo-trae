@@ -10,6 +10,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
 } from '@/components/ui/Dialog';
 import { format } from 'date-fns';
@@ -47,9 +48,9 @@ export function SmartPrioritization() {
             <Sparkles className="w-6 h-6 text-primary" />
             AI Smart Suggestions
           </DialogTitle>
-          <p className="text-muted-foreground text-sm">
+          <DialogDescription className="text-muted-foreground text-sm">
             Based on deadlines, priority, and history, here are your top 3 tasks to focus on today.
-          </p>
+          </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
@@ -104,6 +105,7 @@ export function SmartPrioritization() {
 
         <div className="flex justify-center pt-2">
           <Button 
+            type="button"
             className="w-full rounded-xl" 
             onClick={() => setIsOpen(false)}
           >

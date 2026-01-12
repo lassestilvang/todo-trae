@@ -5,7 +5,7 @@ import { useTaskStore } from '@/stores/taskStore';
 import { Label } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/Dialog';
 import { toast } from 'sonner';
 
 interface LabelFormProps {
@@ -118,15 +118,14 @@ export function LabelForm({ open, onOpenChange, label }: LabelFormProps) {
                   htmlFor="label-icon"
                   className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest px-1"
                 >
-                  Label Icon
+                  Icon
                 </label>
                 <Input
                   id="label-icon"
-                  placeholder="🏷️"
+                  placeholder="e.g. 🏷️, 🚀, 💻"
                   value={formData.icon}
                   onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
                   className="h-11 bg-background/40 backdrop-blur-md border-border/30 focus:bg-background/60 transition-all rounded-xl font-medium text-center text-xl"
-                  aria-label="Label icon"
                 />
               </div>
               <div className="space-y-2">
@@ -134,7 +133,7 @@ export function LabelForm({ open, onOpenChange, label }: LabelFormProps) {
                   htmlFor="label-color"
                   className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest px-1"
                 >
-                  Label Color
+                  Color
                 </label>
                 <div className="flex items-center gap-2 h-11 px-3 bg-background/40 backdrop-blur-md border border-border/30 rounded-xl">
                   <input
@@ -143,9 +142,8 @@ export function LabelForm({ open, onOpenChange, label }: LabelFormProps) {
                     value={formData.color}
                     onChange={(e) => setFormData({ ...formData, color: e.target.value })}
                     className="w-6 h-6 rounded-md overflow-hidden bg-transparent cursor-pointer"
-                    aria-label="Select label color"
                   />
-                  <span className="text-xs font-mono font-medium text-muted-foreground uppercase" aria-hidden="true">{formData.color}</span>
+                  <span className="text-xs font-mono font-medium text-muted-foreground uppercase">{formData.color}</span>
                 </div>
               </div>
             </div>

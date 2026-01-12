@@ -78,26 +78,22 @@ export const CustomCursor = () => {
     default: {
       width: 24,
       height: 24,
-      backgroundColor: 'rgba(var(--primary-rgb), 0)',
       borderWidth: '1px',
     },
     hover: {
       width: 48,
       height: 48,
-      backgroundColor: 'rgba(var(--primary-rgb), 0.1)',
       borderWidth: '2px',
     },
     click: {
       width: 32,
       height: 32,
-      backgroundColor: 'rgba(var(--primary-rgb), 0.3)',
       borderWidth: '2px',
       scale: 0.8,
     },
     text: {
       width: 4,
       height: 32,
-      backgroundColor: 'rgba(var(--primary-rgb), 0.5)',
       borderWidth: '0px',
       borderRadius: '2px',
     }
@@ -110,6 +106,7 @@ export const CustomCursor = () => {
       {/* Main Cursor Dot */}
       <motion.div
         className="fixed top-0 left-0 w-2 h-2 bg-primary rounded-full pointer-events-none z-[9999] mix-blend-difference"
+        aria-hidden="true"
         style={{
           x: mouseX,
           y: mouseY,
@@ -124,7 +121,8 @@ export const CustomCursor = () => {
       
       {/* Cursor Ring/Outer effect */}
       <motion.div
-        className="fixed top-0 left-0 rounded-full border border-primary/40 pointer-events-none z-[9998] glass-effect"
+        className="fixed top-0 left-0 rounded-full border border-primary/40 pointer-events-none z-[9998] glass-effect overflow-hidden"
+        aria-hidden="true"
         variants={variants}
         animate={cursorVariant}
         transition={{ type: 'spring', damping: 25, stiffness: 250 }}
@@ -134,7 +132,17 @@ export const CustomCursor = () => {
           translateX: '-50%',
           translateY: '-50%',
         }}
-      />
+      >
+        <motion.div
+          className="absolute inset-0 bg-primary"
+          animate={{
+            opacity: cursorVariant === 'hover' ? 0.1 : 
+                     cursorVariant === 'click' ? 0.3 : 
+                     cursorVariant === 'text' ? 0.5 : 0
+          }}
+          transition={{ duration: 0.2 }}
+        />
+      </motion.div>
     </>
   );
 };

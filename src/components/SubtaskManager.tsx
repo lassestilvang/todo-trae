@@ -51,6 +51,7 @@ export function SubtaskManager({ taskId, subtasks }: SubtaskManagerProps) {
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-medium">Subtasks</h4>
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={() => setIsAdding(true)}
@@ -74,6 +75,7 @@ export function SubtaskManager({ taskId, subtasks }: SubtaskManagerProps) {
                 className="flex items-center gap-2 group p-2 rounded-lg hover:bg-muted/30 transition-colors"
               >
                 <button
+                  type="button"
                   onClick={() => toggleSubtaskComplete(subtask.id)}
                   className="flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-full"
                   aria-label={subtask.completed ? `Mark subtask "${subtask.name}" as incomplete` : `Mark subtask "${subtask.name}" as complete`}
@@ -90,6 +92,7 @@ export function SubtaskManager({ taskId, subtasks }: SubtaskManagerProps) {
                 </span>
                 
                 <Button
+                  type="button"
                   variant="ghost"
                   size="sm"
                   onClick={() => deleteSubtask(subtask.id)}
