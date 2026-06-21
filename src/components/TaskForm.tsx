@@ -10,10 +10,11 @@ import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Select } from '@/components/ui/Select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
-import { SubtaskManager } from '@/components/SubtaskManager';
-import { AttachmentManager } from '@/components/AttachmentManager';
-import { RecurringTaskSelector } from '@/components/RecurringTaskSelector';
-import { TimeTracker } from '@/components/TimeTracker';
+import dynamic from 'next/dynamic';
+const SubtaskManager = dynamic(() => import('@/components/SubtaskManager').then(m => m.SubtaskManager), { ssr: false });
+const AttachmentManager = dynamic(() => import('@/components/AttachmentManager').then(m => m.AttachmentManager), { ssr: false });
+const RecurringTaskSelector = dynamic(() => import('@/components/RecurringTaskSelector').then(m => m.RecurringTaskSelector), { ssr: false });
+const TimeTracker = dynamic(() => import('@/components/TimeTracker').then(m => m.TimeTracker), { ssr: false });
 
 interface TaskFormProps {
   open: boolean;
@@ -192,6 +193,33 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
                     </option>
                   ))}
                 </Select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-1 block">Tags</label>
+                <div className="flex flex-wrap gap-2">
+                  {labels.map((label) => {
+                    const active = formData.labels.includes(label.id);
+                    return (
+                      <button
+                        type="button"
+                        key={label.id}
+                        onClick={() => {
+                          const exists = formData.labels.includes(label.id);
+                          const next = exists
+                            ? formData.labels.filter((id) => id !== label.id)
+                            : [...formData.labels, label.id];
+                          setFormData({ ...formData, labels: next });
+                        }}
+                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs border ${active ? 'border-primary bg-accent' : 'border-border'} `}
+                        style={{ color: label.color }}
+                      >
+                        {label.icon}
+                        {label.name}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </>
           )}
