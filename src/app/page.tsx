@@ -8,7 +8,14 @@ import { TaskList } from '@/components/TaskList';
 import { Toaster } from 'sonner';
 
 export default function Home() {
-  const { setTasks, setLists, setLabels, setSubtasks, setAttachments, setActivityLogs, isLoading, setIsLoading } = useTaskStore();
+  const setTasks = useTaskStore(s => s.setTasks);
+  const setLists = useTaskStore(s => s.setLists);
+  const setLabels = useTaskStore(s => s.setLabels);
+  const setSubtasks = useTaskStore(s => s.setSubtasks);
+  const setAttachments = useTaskStore(s => s.setAttachments);
+  const setActivityLogs = useTaskStore(s => s.setActivityLogs);
+  const isLoading = useTaskStore(s => s.isLoading);
+  const setIsLoading = useTaskStore(s => s.setIsLoading);
   const { theme } = useThemeStore();
 
   useEffect(() => {
@@ -46,10 +53,12 @@ export default function Home() {
   }, [setTasks, setLists, setLabels, setSubtasks, setAttachments, setActivityLogs, setIsLoading]);
 
   return (
-    <div className="mx-auto max-w-7xl p-6 h-screen">
-      <div className="flex h-full rounded-2xl border border-border bg-background/60 backdrop-blur-md shadow-xl">
-        <Sidebar />
-        <main className="flex-1 flex flex-col">
+    <div className="mx-auto max-w-7xl p-4 md:p-6 h-screen">
+      <div className="grid grid-cols-1 md:grid-cols-[18rem_1fr] gap-4 h-full">
+        <aside className="glass rounded-lg h-full" aria-label="Sidebar">
+          <Sidebar />
+        </aside>
+        <main className="glass rounded-lg h-full flex flex-col" role="main" aria-label="Tasks">
           <TaskList />
         </main>
       </div>
