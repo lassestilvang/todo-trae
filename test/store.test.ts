@@ -37,9 +37,10 @@ describe('Store Tests', () => {
       };
 
       store.addTask(newTask);
+      const next = useTaskStore.getState();
 
-      expect(store.tasks).toHaveLength(1);
-      expect(store.tasks[0].name).toBe('Test Task');
+      expect(next.tasks).toHaveLength(1);
+      expect(next.tasks[0].name).toBe('Test Task');
     });
 
     test('should update a task', () => {
@@ -59,9 +60,10 @@ describe('Store Tests', () => {
 
       store.addTask(newTask);
       store.updateTask('test-task-2', { name: 'Updated Task', priority: 'high' as const });
+      const next = useTaskStore.getState();
 
-      expect(store.tasks[0].name).toBe('Updated Task');
-      expect(store.tasks[0].priority).toBe('high');
+      expect(next.tasks[0].name).toBe('Updated Task');
+      expect(next.tasks[0].priority).toBe('high');
     });
 
     test('should toggle task completion', () => {
@@ -81,14 +83,14 @@ describe('Store Tests', () => {
 
       store.addTask(newTask);
       store.toggleTaskComplete('test-task-3');
-
-      expect(store.tasks[0].completed).toBe(true);
-      expect(store.tasks[0].completedAt).toBeDefined();
+      let next = useTaskStore.getState();
+      expect(next.tasks[0].completed).toBe(true);
+      expect(next.tasks[0].completedAt).toBeDefined();
 
       store.toggleTaskComplete('test-task-3');
-
-      expect(store.tasks[0].completed).toBe(false);
-      expect(store.tasks[0].completedAt).toBeUndefined();
+      next = useTaskStore.getState();
+      expect(next.tasks[0].completed).toBe(false);
+      expect(next.tasks[0].completedAt).toBeUndefined();
     });
 
     test('should delete a task', () => {
@@ -107,12 +109,12 @@ describe('Store Tests', () => {
       };
 
       store.addTask(newTask);
-
-      expect(store.tasks).toHaveLength(1);
+      let next = useTaskStore.getState();
+      expect(next.tasks).toHaveLength(1);
 
       store.deleteTask('test-task-4');
-
-      expect(store.tasks).toHaveLength(0);
+      next = useTaskStore.getState();
+      expect(next.tasks).toHaveLength(0);
     });
 
     test('should filter tasks by search query', () => {
@@ -144,10 +146,9 @@ describe('Store Tests', () => {
       ];
 
       tasks.forEach(task => store.addTask(task));
-
       store.setSearchQuery('groceries');
-
-      expect(store.searchQuery).toBe('groceries');
+      const next = useTaskStore.getState();
+      expect(next.searchQuery).toBe('groceries');
     });
   });
 
@@ -156,18 +157,21 @@ describe('Store Tests', () => {
       const store = useThemeStore.getState();
       const initialDarkMode = store.isDarkMode;
       store.toggleDarkMode();
-      expect(store.isDarkMode).toBe(!initialDarkMode);
-      expect(store.theme).toBe(initialDarkMode ? 'light' : 'dark');
+      const next = useThemeStore.getState();
+      expect(next.isDarkMode).toBe(!initialDarkMode);
+      expect(next.theme).toBe(initialDarkMode ? 'light' : 'dark');
     });
 
     test('should set theme', () => {
       const store = useThemeStore.getState();
       store.setTheme('dark');
-      expect(store.theme).toBe('dark');
-      expect(store.isDarkMode).toBe(true);
+      let next = useThemeStore.getState();
+      expect(next.theme).toBe('dark');
+      expect(next.isDarkMode).toBe(true);
       store.setTheme('light');
-      expect(store.theme).toBe('light');
-      expect(store.isDarkMode).toBe(false);
+      next = useThemeStore.getState();
+      expect(next.theme).toBe('light');
+      expect(next.isDarkMode).toBe(false);
     });
   });
 });
