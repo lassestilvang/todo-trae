@@ -1,18 +1,24 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useDeferredValue } from 'react';
 import { useTaskStore } from '@/stores/taskStore';
-import { TaskForm } from '@/components/TaskForm';
+import dynamic from 'next/dynamic';
+const TaskForm = dynamic(() => import('@/components/TaskForm').then(m => m.TaskForm), { ssr: false });
 import { Task as TaskType, ViewType } from '@/types';
 import { Task } from '@/components/Task';
 import { TaskHeader } from '@/components/TaskHeader';
 import { startOfDay, addDays, isToday, isWithinInterval } from 'date-fns';
-import Fuse from 'fuse.js';
 import { Plus } from 'lucide-react';
 
 export function TaskList() {
-  const { tasks, selectedListId, selectedView, searchQuery, showCompleted } = useTaskStore();
+  const tasks = useTaskStore(s => s.tasks);
+  const selectedListId = useTaskStore(s => s.selectedListId);
+  const selectedView = useTaskStore(s => s.selectedView);
+  const searchQuery = useTaskStore(s => s.searchQuery);
+  const showCompleted = useTaskStore(s => s.showCompleted);
+  const selectedLabelIds = useTaskStore(s => s.selectedLabelIds);
   const [taskFormOpen, setTaskFormOpen] = useState(false);
+  const deferredQuery = useDeferredValue(searchQuery);
 
   const filteredTasks = useMemo(() => {
     let filtered = tasks;
@@ -50,21 +56,32 @@ export function TaskList() {
       }
     }
 
+    // Filter by selected tags
+    if (selectedLabelIds && selectedLabelIds.length > 0) {
+      filtered = filtered.filter(task => {
+        const ids = (task.labels || []).map(l => l.id);
+        return selectedLabelIds.some(id => ids.includes(id));
+      });
+    }
+
     // Filter by completion status
     if (!showCompleted) {
       filtered = filtered.filter(task => !task.completed);
     }
 
     // Search functionality
-    if (searchQuery.trim()) {
-      const fuse = new Fuse(filtered, {
-        keys: ['name', 'description'],
-        threshold: 0.3,
-        includeScore: true,
-      });
-      
-      const searchResults = fuse.search(searchQuery);
-      filtered = searchResults.map(result => result.item);
+    if (deferredQuery.trim()) {
+      // Lazy-load fuse.js only when searching
+      try {
+        const Fuse = require('fuse.js');
+        const fuse = new Fuse(filtered, {
+          keys: ['name', 'description'],
+          threshold: 0.3,
+          includeScore: true,
+        });
+        const searchResults = fuse.search(deferredQuery);
+        filtered = searchResults.map((result: any) => result.item);
+      } catch {}
     }
 
     // Sort tasks
@@ -87,7 +104,7 @@ export function TaskList() {
       const priorityOrder = { high: 0, medium: 1, low: 2, none: 3 };
       return priorityOrder[a.priority] - priorityOrder[b.priority];
     });
-  }, [tasks, selectedListId, selectedView, searchQuery, showCompleted]);
+  }, [tasks, selectedListId, selectedView, deferredQuery, showCompleted, selectedLabelIds]);
 
   const getViewTitle = () => {
     if (selectedListId) {
@@ -111,54 +128,16 @@ export function TaskList() {
         
         <div className="flex-1 overflow-y-auto">
           <div className="p-6">
-            {/* Quick tips */}
-            {filteredTasks.length === 0 && (
-              <div className="space-y-4 mb-6">
-                <div className="bg-gradient-to-br from-indigo-100 to-fuchsia-100 dark:from-slate-800 dark:to-indigo-900 border border-border rounded-xl p-5 shadow-sm">
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
-                      💡
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-foreground mb-1">
-                        Yeah. Think of one simple habit to start… Add it as a recurring task 📅
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        For example, type: Read 30 pages every evening at 8PM. Run two miles every 3 days at 6PM.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="bg-gradient-to-br from-indigo-100 to-fuchsia-100 dark:from-slate-800 dark:to-indigo-900 border border-border rounded-xl p-5 shadow-sm">
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
-                      💡
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-foreground mb-1">
-                        Helpful hint: Set yourself up for success by taking just 15 minutes to plan the week ahead 📅
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        We&apos;re here to help: Start with this project template, watch this video, or read the full guide.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Task list */}
             <div className="space-y-2">
               {filteredTasks.map((task) => (
                 <Task key={task.id} task={task} />
               ))}
             </div>
             
-            {/* Add task button */}
             <button
               onClick={() => setTaskFormOpen(true)}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-border hover:border-primary/50 hover:bg-accent/50 transition-colors mt-4"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-md border border-border hover:bg-accent/50 transition-colors mt-4"
+              aria-label="Add task"
             >
               <div className="w-5 h-5 rounded-full border-2 border-border flex items-center justify-center">
                 <Plus className="w-3 h-3 text-muted-foreground" />
