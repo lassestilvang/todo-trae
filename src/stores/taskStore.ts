@@ -13,6 +13,7 @@ interface TaskStore {
   searchQuery: string;
   showCompleted: boolean;
   isLoading: boolean;
+  selectedLabelIds: string[];
   
   // Actions
   setTasks: (tasks: Task[]) => void;
@@ -26,6 +27,7 @@ interface TaskStore {
   setSearchQuery: (query: string) => void;
   setShowCompleted: (show: boolean) => void;
   setIsLoading: (loading: boolean) => void;
+  setSelectedLabelIds: (labelIds: string[]) => void;
   
   // Task operations
   addTask: (task: Task) => void;
@@ -69,6 +71,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   searchQuery: '',
   showCompleted: true,
   isLoading: false,
+  selectedLabelIds: [],
   
   setTasks: (tasks) => set({ tasks }),
   setLists: (lists) => set({ lists }),
@@ -81,6 +84,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   setSearchQuery: (query) => set({ searchQuery: query }),
   setShowCompleted: (show) => set({ showCompleted: show }),
   setIsLoading: (loading) => set({ isLoading: loading }),
+  setSelectedLabelIds: (labelIds) => set({ selectedLabelIds: labelIds }),
   
   addTask: (task) => {
     set((state) => ({ 
