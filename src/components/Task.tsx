@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTaskStore } from '@/stores/taskStore';
 import { Task as TaskType } from '@/types';
 import { format, isToday, isTomorrow, isPast } from 'date-fns';
@@ -26,6 +26,15 @@ interface TaskProps {
 export function Task({ task }: TaskProps) {
   const { toggleTaskComplete, subtasks, attachments } = useTaskStore();
   const [expanded, setExpanded] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (rootRef.current) {
+      try {
+        const { appear } = require('@/lib/animations');
+        appear(rootRef.current);
+      } catch {}
+    }
+  }, []);
   
   // Get task's subtasks and attachments
   const taskSubtasks = subtasks.filter(s => s.taskId === task.id);
@@ -52,6 +61,7 @@ export function Task({ task }: TaskProps) {
 
   return (
     <div
+      ref={rootRef}
       className={`group border rounded-xl p-5 shadow-sm hover:shadow-md transition-all ${
         task.completed ? 'bg-muted/50 border-border' : 'bg-card/80 border-border hover:border-primary/50'
       } ${isOverdue ? 'border-red-500/50' : ''}`}
@@ -60,6 +70,7 @@ export function Task({ task }: TaskProps) {
         <button
           onClick={() => toggleTaskComplete(task.id)}
           className="mt-0.5 flex-shrink-0"
+          aria-label="Toggle complete"
         >
           {task.completed ? (
             <CheckCircle2 className="w-5 h-5 text-green-500" />
