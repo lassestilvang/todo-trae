@@ -1,0 +1,54 @@
+{
+  "unit": {
+    "linesPct": 65.75,
+    "funcsPct": 38.18,
+    "branchesPct": null,
+    "lines": {
+      "linesFound": 181,
+      "linesHit": 119,
+      "funcsFound": 55,
+      "funcsHit": 21,
+      "branchesFound": 0,
+      "branchesHit": 0
+    }
+  },
+  "integration": {
+    "linesPct": 44.7,
+    "funcsPct": 45.45,
+    "branchesPct": null,
+    "lines": {
+      "linesFound": 302,
+      "linesHit": 135,
+      "funcsFound": 33,
+      "funcsHit": 15,
+      "branchesFound": 0,
+      "branchesHit": 0
+    }
+  },
+  "e2e": {
+    "linesPct": 0,
+    "funcsPct": 0,
+    "branchesPct": null,
+    "lines": {
+      "linesFound": 0,
+      "linesHit": 0,
+      "funcsFound": 0,
+      "funcsHit": 0,
+      "branchesFound": 0,
+      "branchesHit": 0
+    }
+  },
+  "overall": {
+    "linesPct": 52.39,
+    "funcsPct": 40.23,
+    "branchesPct": null,
+    "lines": {
+      "linesFound": 481,
+      "linesHit": 252,
+      "funcsFound": 87,
+      "funcsHit": 35,
+      "branchesFound": 0,
+      "branchesHit": 0
+    }
+  }
+}
