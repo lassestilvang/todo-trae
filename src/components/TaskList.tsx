@@ -1,26 +1,24 @@
 'use client';
 
-import { useState, useMemo, useDeferredValue } from 'react';
+import { useMemo } from 'react';
 import { useTaskStore } from '@/stores/taskStore';
-import dynamic from 'next/dynamic';
-const TaskForm = dynamic(() => import('@/components/TaskForm').then(m => m.TaskForm), { ssr: false });
-import { Task as TaskType, ViewType } from '@/types';
+import { useUIStore } from '@/stores/uiStore';
+import { TaskForm } from '@/components/TaskForm';
 import { Task } from '@/components/Task';
 import { TaskHeader } from '@/components/TaskHeader';
 import { startOfDay, addDays, isToday, isWithinInterval } from 'date-fns';
+import Fuse from 'fuse.js';
 import { Plus } from 'lucide-react';
 
+import { Virtuoso } from 'react-virtuoso';
+import { AnimatePresence } from 'framer-motion';
+
 export function TaskList() {
-  const tasks = useTaskStore(s => s.tasks);
-  const selectedListId = useTaskStore(s => s.selectedListId);
-  const selectedView = useTaskStore(s => s.selectedView);
-  const searchQuery = useTaskStore(s => s.searchQuery);
-  const showCompleted = useTaskStore(s => s.showCompleted);
-  const selectedLabelIds = useTaskStore(s => s.selectedLabelIds);
-  const [taskFormOpen, setTaskFormOpen] = useState(false);
-  const deferredQuery = useDeferredValue(searchQuery);
+  const { tasks, selectedListId, selectedView, searchQuery, showCompleted } = useTaskStore();
+  const { isTaskFormOpen: taskFormOpen, setTaskFormOpen: setTaskFormOpen } = useUIStore();
 
   const filteredTasks = useMemo(() => {
+    console.log(`Filtering tasks: ${tasks.length} total, view: ${selectedView}, query: "${searchQuery}"`);
     let filtered = tasks;
 
     // Filter by list
@@ -56,32 +54,21 @@ export function TaskList() {
       }
     }
 
-    // Filter by selected tags
-    if (selectedLabelIds && selectedLabelIds.length > 0) {
-      filtered = filtered.filter(task => {
-        const ids = (task.labels || []).map(l => l.id);
-        return selectedLabelIds.some(id => ids.includes(id));
-      });
-    }
-
     // Filter by completion status
     if (!showCompleted) {
       filtered = filtered.filter(task => !task.completed);
     }
 
     // Search functionality
-    if (deferredQuery.trim()) {
-      // Lazy-load fuse.js only when searching
-      try {
-        const Fuse = require('fuse.js');
-        const fuse = new Fuse(filtered, {
-          keys: ['name', 'description'],
-          threshold: 0.3,
-          includeScore: true,
-        });
-        const searchResults = fuse.search(deferredQuery);
-        filtered = searchResults.map((result: any) => result.item);
-      } catch {}
+    if (searchQuery.trim()) {
+      const fuse = new Fuse(filtered, {
+        keys: ['name', 'description'],
+        threshold: 0.3,
+        includeScore: true,
+      });
+      
+      const searchResults = fuse.search(searchQuery);
+      filtered = searchResults.map(result => result.item);
     }
 
     // Sort tasks
@@ -102,9 +89,20 @@ export function TaskList() {
       
       // Sort by priority
       const priorityOrder = { high: 0, medium: 1, low: 2, none: 3 };
-      return priorityOrder[a.priority] - priorityOrder[b.priority];
+      if (a.priority !== b.priority) {
+        return priorityOrder[a.priority] - priorityOrder[b.priority];
+      }
+
+      // Sort by creation date (newest first)
+      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bTime - aTime;
     });
-  }, [tasks, selectedListId, selectedView, deferredQuery, showCompleted, selectedLabelIds]);
+  }, [tasks, selectedView, selectedListId, searchQuery, showCompleted]);
+
+  const activeTaskCount = useMemo(() => {
+    return filteredTasks.filter(task => !task.completed).length;
+  }, [filteredTasks]);
 
   const getViewTitle = () => {
     if (selectedListId) {
@@ -123,28 +121,85 @@ export function TaskList() {
 
   return (
     <>
-      <div className="flex-1 flex flex-col">
-        <TaskHeader title={getViewTitle()} taskCount={filteredTasks.length} />
+      <div className="flex-1 flex flex-col h-full">
+        <TaskHeader title={getViewTitle()} taskCount={activeTaskCount} />
         
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-6">
-            <div className="space-y-2">
-              {filteredTasks.map((task) => (
-                <Task key={task.id} task={task} />
-              ))}
-            </div>
-            
-            <button
-              onClick={() => setTaskFormOpen(true)}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-md border border-border hover:bg-accent/50 transition-colors mt-4"
-              aria-label="Add task"
-            >
-              <div className="w-5 h-5 rounded-full border-2 border-border flex items-center justify-center">
-                <Plus className="w-3 h-3 text-muted-foreground" />
+        <div className="flex-1 min-h-0">
+          <Virtuoso
+            style={{ height: '100%' }}
+            data={filteredTasks}
+            totalCount={filteredTasks.length}
+            increaseViewportBy={200}
+            itemContent={(index, task) => (
+              <div className="px-6 py-1" role="listitem">
+                <AnimatePresence mode="popLayout">
+                  <Task key={task.id} task={task} />
+                </AnimatePresence>
               </div>
-              <span className="text-muted-foreground">Add task</span>
-            </button>
-          </div>
+            )}
+            components={{
+              List: ({ children, ...props }) => (
+                <div {...props} role="list" aria-label="Tasks">
+                  {children}
+                </div>
+              ),
+              Header: () => (
+                <div className="px-6 pt-6 pb-2" role="complementary" aria-label="Tips">
+                  {/* Quick tips */}
+                  {filteredTasks.length === 0 && (
+                    <div className="space-y-4 mb-6">
+                      <div className="glass-card rounded-xl p-5" role="note">
+                        <div className="flex items-start gap-3">
+                          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold" aria-hidden="true">
+                            💡
+                          </div>
+                          <div>
+                            <h3 className="font-medium text-foreground mb-1">
+                              Yeah. Think of one simple habit to start… Add it as a recurring task 📅
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              For example, type: Read 30 pages every evening at 8PM. Run two miles every 3 days at 6PM.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="glass-card rounded-xl p-5" role="note">
+                        <div className="flex items-start gap-3">
+                          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold" aria-hidden="true">
+                            💡
+                          </div>
+                          <div>
+                            <h3 className="font-medium text-foreground mb-1">
+                              Helpful hint: Set yourself up for success by taking just 15 minutes to plan the week ahead 📅
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              We&apos;re here to help: Start with this project template, watch this video, or read the full guide.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ),
+              Footer: () => (
+                <div className="px-6 pb-6">
+                  {/* Add task button */}
+                  <button
+                    onClick={() => setTaskFormOpen(true)}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-border hover:border-primary/50 hover:bg-accent/50 transition-colors mt-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                    aria-label="Add new task"
+                  >
+                    <div className="w-5 h-5 rounded-full border-2 border-border flex items-center justify-center" aria-hidden="true">
+                      <Plus className="w-3 h-3 text-muted-foreground" />
+                    </div>
+                    <span className="text-muted-foreground font-medium">Add task</span>
+                  </button>
+                </div>
+              ),
+            }}
+          />
         </div>
       </div>
 

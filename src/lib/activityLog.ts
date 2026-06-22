@@ -1,60 +1,154 @@
-import { ActivityLog, Task } from '@/types';
+import { ActivityLog, Task, TaskList, Label } from '@/types';
+import { createActivityLog } from '@/lib/api';
 
-export function logTaskActivity(
+export async function logTaskActivity(
   taskId: string,
   action: ActivityLog['action'],
+  userId: string,
   field?: string,
   oldValue?: string,
   newValue?: string
-): void {
+): Promise<void> {
   try {
-    // Only log if we have a valid task ID (not in test environment) and we're on the server
-    if (!taskId || taskId.startsWith('test-') || typeof window !== 'undefined') {
-      return;
-    }
+    const log: Omit<ActivityLog, 'createdAt'> = {
+      id: crypto.randomUUID(),
+      taskId,
+      action,
+      field,
+      oldValue,
+      newValue,
+      userId,
+    };
 
-    // Dynamic import to avoid client-side issues
-    import('@/lib/api').then(({ createActivityLog }) => {
-      const log: Omit<ActivityLog, 'createdAt'> = {
-        id: crypto.randomUUID(),
-        taskId,
-        action,
-        field,
-        oldValue,
-        newValue,
-        userId: 'current-user', // In a real app, this would come from auth
-      };
-
-      createActivityLog(log);
-    }).catch((error) => {
-      // Silently fail in development/testing
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('Failed to log activity:', error);
-      }
-    });
+    await createActivityLog(log);
   } catch (error) {
-    // Silently fail in development/testing
+    // Log error in development
     if (process.env.NODE_ENV === 'development') {
-      console.warn('Failed to log activity:', error);
+      console.error('Failed to log task activity:', error);
     }
   }
 }
 
-export function logTaskUpdate(
+export async function logListActivity(
+  listId: string,
+  action: ActivityLog['action'],
+  userId: string,
+  field?: string,
+  oldValue?: string,
+  newValue?: string
+): Promise<void> {
+  try {
+    const log: Omit<ActivityLog, 'createdAt'> = {
+      id: crypto.randomUUID(),
+      listId,
+      action,
+      field,
+      oldValue,
+      newValue,
+      userId,
+    };
+
+    await createActivityLog(log);
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Failed to log list activity:', error);
+    }
+  }
+}
+
+export async function logLabelActivity(
+  labelId: string,
+  action: ActivityLog['action'],
+  userId: string,
+  field?: string,
+  oldValue?: string,
+  newValue?: string
+): Promise<void> {
+  try {
+    const log: Omit<ActivityLog, 'createdAt'> = {
+      id: crypto.randomUUID(),
+      labelId,
+      action,
+      field,
+      oldValue,
+      newValue,
+      userId,
+    };
+
+    await createActivityLog(log);
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Failed to log label activity:', error);
+    }
+  }
+}
+
+export async function logTaskUpdate(
   taskId: string,
   updates: Partial<Task>,
-  oldTask: Task
-): void {
-  Object.entries(updates).forEach(([field, newValue]) => {
+  oldTask: Task,
+  userId: string
+): Promise<void> {
+  for (const field of Object.keys(updates) as Array<keyof Task>) {
+    const newValue = updates[field];
     const oldValue = oldTask[field];
-    if (oldValue !== newValue) {
-      logTaskActivity(
+    
+    // Simple comparison for logging
+    if (JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
+      await logTaskActivity(
         taskId,
         'updated',
-        field,
-        String(oldValue),
-        String(newValue)
+        userId,
+        String(field),
+        oldValue !== undefined ? String(oldValue) : undefined,
+        newValue !== undefined ? String(newValue) : undefined
       );
     }
-  });
+  }
+}
+
+export async function logListUpdate(
+  listId: string,
+  updates: Partial<TaskList>,
+  oldList: TaskList,
+  userId: string
+): Promise<void> {
+  for (const field of Object.keys(updates) as Array<keyof TaskList>) {
+    const newValue = updates[field];
+    const oldValue = oldList[field];
+    
+    if (JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
+      await logListActivity(
+        listId,
+        'updated',
+        userId,
+        String(field),
+        oldValue !== undefined ? String(oldValue) : undefined,
+        newValue !== undefined ? String(newValue) : undefined
+      );
+    }
+  }
+}
+
+export async function logLabelUpdate(
+  labelId: string,
+  updates: Partial<Label>,
+  oldLabel: Label,
+  userId: string
+): Promise<void> {
+  for (const field of Object.keys(updates) as Array<keyof Label>) {
+    const newValue = updates[field];
+    const oldValue = oldLabel[field];
+    
+    if (JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
+      await logLabelActivity(
+        labelId,
+        'updated',
+        userId,
+        String(field),
+        oldValue !== undefined ? String(oldValue) : undefined,
+        newValue !== undefined ? String(newValue) : undefined
+      );
+    }
+  }
 }

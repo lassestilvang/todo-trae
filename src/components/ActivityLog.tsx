@@ -1,20 +1,19 @@
 'use client';
 
 import { useTaskStore } from '@/stores/taskStore';
-import { ActivityLog, Task } from '@/types';
+import type { ActivityLog as ActivityLogType, Task as TaskType } from '@/types';
 import { format, formatDistanceToNow } from 'date-fns';
 import { History, Plus, Edit3, CheckCircle, Trash2, Move } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
 
 interface ActivityLogProps {
-  task: Task;
+  task: TaskType;
 }
 
 export function ActivityLog({ task }: ActivityLogProps) {
   const { activityLogs } = useTaskStore();
   const taskLogs = activityLogs.filter(log => log.taskId === task.id);
 
-  const getActionIcon = (action: ActivityLog['action']) => {
+  const getActionIcon = (action: ActivityLogType['action']) => {
     switch (action) {
       case 'created': return <Plus className="w-4 h-4 text-green-500" />;
       case 'updated': return <Edit3 className="w-4 h-4 text-blue-500" />;
@@ -25,7 +24,7 @@ export function ActivityLog({ task }: ActivityLogProps) {
     }
   };
 
-  const getActionDescription = (log: ActivityLog) => {
+  const getActionDescription = (log: ActivityLogType) => {
     switch (log.action) {
       case 'created':
         return 'Task created';
@@ -74,10 +73,10 @@ export function ActivityLog({ task }: ActivityLogProps) {
   }
 
   return (
-    <div className="space-y-3 max-h-64 overflow-y-auto">
+    <ul className="space-y-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar" role="log" aria-label="Task activity log">
       {taskLogs.map((log) => (
-        <div key={log.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
-          <div className="flex-shrink-0 mt-0.5">
+        <li key={log.id} className="flex items-start gap-3 p-3 rounded-xl glass-card border-none">
+          <div className="flex-shrink-0 mt-0.5 bg-background/50 p-1.5 rounded-lg">
             {getActionIcon(log.action)}
           </div>
           
@@ -98,13 +97,13 @@ export function ActivityLog({ task }: ActivityLogProps) {
                 )}
                 {log.oldValue && log.newValue && ' → '}
                 {log.newValue && (
-                  <span className="text-foreground">{formatFieldValue(log.field, log.newValue)}</span>
+                  <span className="text-foreground font-medium">{formatFieldValue(log.field, log.newValue)}</span>
                 )}
               </div>
             )}
           </div>
-        </div>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
