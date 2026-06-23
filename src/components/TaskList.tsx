@@ -100,6 +100,10 @@ export function TaskList() {
     });
   }, [tasks, selectedView, selectedListId, searchQuery, showCompleted]);
 
+  const activeTaskCount = useMemo(() => {
+    return filteredTasks.filter(task => !task.completed).length;
+  }, [filteredTasks]);
+
   const getViewTitle = () => {
     if (selectedListId) {
       const list = tasks.find(task => task.listId === selectedListId);
@@ -118,7 +122,7 @@ export function TaskList() {
   return (
     <>
       <div className="flex-1 flex flex-col h-full">
-        <TaskHeader title={getViewTitle()} taskCount={filteredTasks.length} />
+        <TaskHeader title={getViewTitle()} taskCount={activeTaskCount} />
         
         <div className="flex-1 min-h-0">
           <Virtuoso

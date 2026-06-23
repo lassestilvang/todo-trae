@@ -1,0 +1,254 @@
+<!doctype html>
+  <html>
+    <head>
+      <meta charset="utf-8" />
+      <title>Test Coverage Report</title>
+      <style>
+        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; color: #111; }
+        h1 { margin-bottom: 4px; }
+        .subtitle { color: #555; margin-bottom: 16px; }
+        .summary { display: grid; grid-template-columns: repeat(3, minmax(220px, 1fr)); gap: 12px; margin: 12px 0 24px; }
+        .summary-item { border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; background: #fafafa; }
+        .summary-item .label { font-size: 12px; color: #666; }
+        .summary-item .value { font-size: 20px; font-weight: 600; }
+        .summary-item .bench { font-size: 12px; margin-top: 4px; }
+        .bench.ok { color: #2e7d32; }
+        .bench.bad { color: #c62828; }
+        table.coverage { width: 100%; border-collapse: collapse; margin: 8px 0 24px; }
+        table.coverage th, table.coverage td { border: 1px solid #e0e0e0; padding: 8px; text-align: left; font-size: 13px; }
+        table.coverage th { background: #f5f5f5; }
+        td.file { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .bar { display: inline-block; height: 10px; width: calc(var(--p) * 1%); border-radius: 4px; margin-right: 6px; background: #999; vertical-align: middle; }
+        .pct { font-size: 12px; color: #444; vertical-align: middle; }
+        .badge-na { display: inline-block; padding: 2px 6px; border-radius: 6px; background: #eee; color: #666; font-size: 12px; }
+        .section { margin-bottom: 24px; }
+        .callout { border-left: 4px solid #c62828; background: #fff3e0; padding: 12px; margin: 16px 0; }
+        ul { margin: 6px 0 12px 20px; }
+        li { margin: 4px 0; }
+      </style>
+    </head>
+    <body>
+      <h1>Comprehensive Test Coverage Report</h1>
+      <div class="subtitle">Generated 2025-11-18T15:56:05.448Z</div>
+
+      <div class="section">
+        <h2>Coverage Summary</h2>
+        <div class="summary">
+    <div class="summary-item">
+      <div class="label">Unit — Lines</div>
+      <div class="value" style="color:#f57c00">65.75%</div>
+      <div class="bench bad">Benchmark 80%</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Unit — Functions</div>
+      <div class="value" style="color:#c62828">38.18%</div>
+      <div class="bench bad">Benchmark 80%</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Unit — Branches</div>
+      <div class="value">N/A</div>
+      <div class="bench bad">Benchmark 80%</div>
+    </div>
+  </div>
+        <div class="summary">
+    <div class="summary-item">
+      <div class="label">Integration — Lines</div>
+      <div class="value" style="color:#c62828">44.7%</div>
+      <div class="bench bad">Benchmark 70%</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Integration — Functions</div>
+      <div class="value" style="color:#c62828">45.45%</div>
+      <div class="bench bad">Benchmark 70%</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Integration — Branches</div>
+      <div class="value">N/A</div>
+      <div class="bench bad">Benchmark 70%</div>
+    </div>
+  </div>
+        <div class="summary">
+    <div class="summary-item">
+      <div class="label">End-to-End — Lines</div>
+      <div class="value" style="color:#c62828">0%</div>
+      <div class="bench bad">Benchmark 50%</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">End-to-End — Functions</div>
+      <div class="value" style="color:#c62828">0%</div>
+      <div class="bench bad">Benchmark 50%</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">End-to-End — Branches</div>
+      <div class="value">N/A</div>
+      <div class="bench bad">Benchmark 50%</div>
+    </div>
+  </div>
+        <div class="summary">
+    <div class="summary-item">
+      <div class="label">Overall — Lines</div>
+      <div class="value" style="color:#f57c00">52.39%</div>
+      <div class="bench bad">Benchmark 80%</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Overall — Functions</div>
+      <div class="value" style="color:#c62828">40.23%</div>
+      <div class="bench bad">Benchmark 80%</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Overall — Branches</div>
+      <div class="value">N/A</div>
+      <div class="bench bad">Benchmark 80%</div>
+    </div>
+  </div>
+      </div>
+
+      <div class="section">
+        <h2>Unit Files</h2>
+        <h3>Per-file Unit Coverage</h3>
+  <table class="coverage">
+    <thead>
+      <tr><th>File</th><th>Lines</th><th>Functions</th><th>Branches</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="file">happydom.ts</td>
+        <td><div class="bar" style="--p:100;background:#2e7d32"></div><span class="pct">100%</span></td>
+        <td><div class="bar" style="--p:100;background:#2e7d32"></div><span class="pct">100%</span></td>
+        <td><span class="badge badge-na">N/A</span></td>
+      </tr>
+<tr>
+        <td class="file">src/stores/taskStore.ts</td>
+        <td><div class="bar" style="--p:58.27;background:#f57c00"></div><span class="pct">58.27%</span></td>
+        <td><div class="bar" style="--p:32.65;background:#c62828"></div><span class="pct">32.65%</span></td>
+        <td><span class="badge badge-na">N/A</span></td>
+      </tr>
+<tr>
+        <td class="file">src/stores/themeStore.ts</td>
+        <td><div class="bar" style="--p:90;background:#2e7d32"></div><span class="pct">90%</span></td>
+        <td><div class="bar" style="--p:80;background:#558b2f"></div><span class="pct">80%</span></td>
+        <td><span class="badge badge-na">N/A</span></td>
+      </tr>
+    </tbody>
+  </table>
+      </div>
+
+      <div class="section">
+        <h2>Integration Files</h2>
+        <h3>Per-file Integration Coverage</h3>
+  <table class="coverage">
+    <thead>
+      <tr><th>File</th><th>Lines</th><th>Functions</th><th>Branches</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="file">happydom.ts</td>
+        <td><div class="bar" style="--p:100;background:#2e7d32"></div><span class="pct">100%</span></td>
+        <td><div class="bar" style="--p:100;background:#2e7d32"></div><span class="pct">100%</span></td>
+        <td><span class="badge badge-na">N/A</span></td>
+      </tr>
+<tr>
+        <td class="file">src/lib/api.ts</td>
+        <td><div class="bar" style="--p:39.53;background:#c62828"></div><span class="pct">39.53%</span></td>
+        <td><div class="bar" style="--p:37.93;background:#c62828"></div><span class="pct">37.93%</span></td>
+        <td><span class="badge badge-na">N/A</span></td>
+      </tr>
+<tr>
+        <td class="file">src/lib/database.ts</td>
+        <td><div class="bar" style="--p:70.21;background:#f9a825"></div><span class="pct">70.21%</span></td>
+        <td><div class="bar" style="--p:100;background:#2e7d32"></div><span class="pct">100%</span></td>
+        <td><span class="badge badge-na">N/A</span></td>
+      </tr>
+    </tbody>
+  </table>
+      </div>
+
+      <div class="section">
+        <h2>Overall Heat Map</h2>
+        <h3>All Covered Files</h3>
+  <table class="coverage">
+    <thead>
+      <tr><th>File</th><th>Lines</th><th>Functions</th><th>Branches</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="file">happydom.ts</td>
+        <td><div class="bar" style="--p:100;background:#2e7d32"></div><span class="pct">100%</span></td>
+        <td><div class="bar" style="--p:100;background:#2e7d32"></div><span class="pct">100%</span></td>
+        <td><span class="badge badge-na">N/A</span></td>
+      </tr>
+<tr>
+        <td class="file">src/lib/api.ts</td>
+        <td><div class="bar" style="--p:39.53;background:#c62828"></div><span class="pct">39.53%</span></td>
+        <td><div class="bar" style="--p:37.93;background:#c62828"></div><span class="pct">37.93%</span></td>
+        <td><span class="badge badge-na">N/A</span></td>
+      </tr>
+<tr>
+        <td class="file">src/lib/database.ts</td>
+        <td><div class="bar" style="--p:70.21;background:#f9a825"></div><span class="pct">70.21%</span></td>
+        <td><div class="bar" style="--p:100;background:#2e7d32"></div><span class="pct">100%</span></td>
+        <td><span class="badge badge-na">N/A</span></td>
+      </tr>
+<tr>
+        <td class="file">src/stores/taskStore.ts</td>
+        <td><div class="bar" style="--p:58.27;background:#f57c00"></div><span class="pct">58.27%</span></td>
+        <td><div class="bar" style="--p:32.65;background:#c62828"></div><span class="pct">32.65%</span></td>
+        <td><span class="badge badge-na">N/A</span></td>
+      </tr>
+<tr>
+        <td class="file">src/stores/themeStore.ts</td>
+        <td><div class="bar" style="--p:90;background:#2e7d32"></div><span class="pct">90%</span></td>
+        <td><div class="bar" style="--p:80;background:#558b2f"></div><span class="pct">80%</span></td>
+        <td><span class="badge badge-na">N/A</span></td>
+      </tr>
+    </tbody>
+  </table>
+      </div>
+
+      <div class="section">
+        <h2>Critical Modules With Insufficient Coverage</h2>
+        
+        <h3>Needs Attention</h3>
+  <table class="coverage">
+    <thead>
+      <tr><th>File</th><th>Lines</th><th>Functions</th><th>Branches</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="file">src/lib/api.ts</td>
+        <td><div class="bar" style="--p:39.53;background:#c62828"></div><span class="pct">39.53%</span></td>
+        <td><div class="bar" style="--p:37.93;background:#c62828"></div><span class="pct">37.93%</span></td>
+        <td><span class="badge badge-na">N/A</span></td>
+      </tr>
+<tr>
+        <td class="file">src/lib/database.ts</td>
+        <td><div class="bar" style="--p:70.21;background:#f9a825"></div><span class="pct">70.21%</span></td>
+        <td><div class="bar" style="--p:100;background:#2e7d32"></div><span class="pct">100%</span></td>
+        <td><span class="badge badge-na">N/A</span></td>
+      </tr>
+<tr>
+        <td class="file">src/stores/taskStore.ts</td>
+        <td><div class="bar" style="--p:58.27;background:#f57c00"></div><span class="pct">58.27%</span></td>
+        <td><div class="bar" style="--p:32.65;background:#c62828"></div><span class="pct">32.65%</span></td>
+        <td><span class="badge badge-na">N/A</span></td>
+      </tr>
+    </tbody>
+  </table>
+        <div class="callout">
+          Branch coverage is not available from Bun's built-in reporter; consider adding an additional coverage tool if branch metrics are required.
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Recommendations</h2>
+        <ul>
+          <li>Increase tests for <code>src/lib/api.ts</code> covering error paths, invalid IDs, empty input, and boundary values.</li>
+          <li>Expand <code>src/stores/taskStore.ts</code> tests to assert state mutations for add/update/delete, toggle completion, and search filters across edge cases.</li>
+          <li>Add tests for list/label management flows and attachment handling where applicable.</li>
+          <li>Introduce component-level tests using Bun with happy-dom to validate rendering, interactions, and accessibility states for key UI components.</li>
+          <li>Adopt coverage thresholds via <code>bunfig.toml</code> to enforce minimum coverage in CI.</li>
+          <li>If branch metrics are required, integrate LCOV + an external analyzer, or adopt Jest/Vitest with Istanbul to collect branch data.</li>
+        </ul>
+      </div>
+    </body>
+  </html>

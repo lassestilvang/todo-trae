@@ -44,6 +44,13 @@ const config: Config = {
           foreground: "hsl(var(--card-foreground))",
         },
       },
+      boxShadow: {
+        soft: '0 10px 30px hsl(0 0% 0% / 0.06)',
+        neo: '8px 8px 16px hsl(0 0% 0% / 0.08), -8px -8px 16px hsl(0 0% 100% / 0.7)',
+        'neo-md': '10px 10px 20px hsl(0 0% 0% / 0.08), -10px -10px 20px hsl(0 0% 100% / 0.7)',
+        'neo-lg': '14px 14px 28px hsl(0 0% 0% / 0.08), -14px -14px 28px hsl(0 0% 100% / 0.7)',
+        'inner-soft': 'inset 0 8px 20px hsl(0 0% 0% / 0.05)'
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

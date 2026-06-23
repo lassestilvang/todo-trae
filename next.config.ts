@@ -9,8 +9,17 @@ const withPWA = withPWAInit({
 });
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  reactStrictMode: true,
   reactCompiler: true,
+  compiler: {
+    removeConsole: { exclude: ["error", "warn"] },
+  },
+  images: {
+    formats: ["image/avif", "image/webp"],
+  },
+  experimental: {
+    optimizePackageImports: ["lucide-react"],
+  },
 };
 
 const config = withPWA(nextConfig);

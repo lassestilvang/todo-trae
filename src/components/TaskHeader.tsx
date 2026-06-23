@@ -47,9 +47,10 @@ export function TaskHeader({ title, taskCount }: TaskHeaderProps) {
       
       <div className="px-8 pb-4">
         <div className="flex items-center gap-4">
-          <label className="flex items-center gap-2 text-sm cursor-pointer group">
+          <label htmlFor="show-completed" className="flex items-center gap-2 text-sm cursor-pointer group">
             <div className="relative flex items-center">
               <input
+                id="show-completed"
                 type="checkbox"
                 checked={showCompleted}
                 onChange={(e) => setShowCompleted(e.target.checked)}

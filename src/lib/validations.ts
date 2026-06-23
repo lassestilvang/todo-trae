@@ -4,14 +4,14 @@ export const PrioritySchema = z.enum(['high', 'medium', 'low', 'none']);
 export const RecurringTypeSchema = z.enum(['daily', 'weekly', 'weekday', 'monthly', 'yearly', 'custom']);
 
 export const LabelSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string(),
   name: z.string().min(1).max(50),
   color: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/),
   icon: z.string().min(1).optional(),
 });
 
 export const TaskListSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string(),
   name: z.string().min(1).max(100),
   color: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/),
   emoji: z.string().min(1),
@@ -19,16 +19,16 @@ export const TaskListSchema = z.object({
 });
 
 export const SubtaskSchema = z.object({
-  id: z.string().uuid(),
-  taskId: z.string().uuid(),
+  id: z.string(),
+  taskId: z.string(),
   name: z.string().min(1).max(255),
   completed: z.boolean(),
   order: z.number().int().nonnegative(),
 });
 
 export const TaskSchema = z.object({
-  id: z.string().uuid(),
-  listId: z.string().uuid(),
+  id: z.string(),
+  listId: z.string(),
   name: z.string().min(1).max(255),
   description: z.string().optional(),
   date: z.coerce.date().optional(),
@@ -41,9 +41,9 @@ export const TaskSchema = z.object({
   completedAt: z.coerce.date().optional(),
   recurring: RecurringTypeSchema.optional(),
   recurringEndDate: z.coerce.date().optional(),
-  parentTaskId: z.string().uuid().optional(),
+  parentTaskId: z.string().optional(),
   order: z.number().int().nonnegative(),
-  labelIds: z.array(z.string().uuid()).optional(),
+  labelIds: z.array(z.string()).optional(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
 });

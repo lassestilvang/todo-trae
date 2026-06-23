@@ -253,8 +253,10 @@ export function Sidebar() {
         <LabelForm open={labelFormOpen} onOpenChange={setLabelFormOpen} />
 
         <div className="relative group">
+          <label htmlFor="sidebar-search" className="sr-only">Search tasks</label>
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" aria-hidden="true" />
           <Input
+            id="sidebar-search"
             ref={searchInputRef}
             type="text"
             placeholder="Search tasks..."
@@ -338,11 +340,19 @@ export function Sidebar() {
           </div>
           <div className="space-y-1">
             {lists.map((list) => (
-              <button
+              <div
                 key={list.id}
                 onClick={() => handleListSelect(list.id)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleListSelect(list.id);
+                  }
+                }}
                 aria-current={selectedListId === list.id ? 'page' : undefined}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer group ${
                   selectedListId === list.id
                     ? 'bg-primary/10 text-primary shadow-sm'
                     : 'hover:bg-accent/40 text-muted-foreground hover:text-foreground'
@@ -351,25 +361,25 @@ export function Sidebar() {
                 <div className="flex items-center gap-3">
                   <span className="text-base" aria-hidden="true">{list.emoji}</span>
                   <span>{list.name}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 rounded-lg hover:bg-primary/20 text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => handleShareList(e, list.id)}
+                    aria-label="Share list"
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                  </Button>
+                  {(list.isDefault || tasks.filter(t => t.listId === list.id && !t.completed).length > 0) && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/20 text-primary" aria-label={`${tasks.filter(t => t.listId === list.id && !t.completed).length} tasks`}>
+                      {tasks.filter(t => t.listId === list.id && !t.completed).length || '0'}
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 rounded-lg hover:bg-primary/20 text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={(e) => handleShareList(e, list.id)}
-                  aria-label="Share list"
-                >
-                  <Share2 className="w-3.5 h-3.5" />
-                </Button>
-                {(list.isDefault || tasks.filter(t => t.listId === list.id && !t.completed).length > 0) && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/20 text-primary" aria-label={`${tasks.filter(t => t.listId === list.id && !t.completed).length} tasks`}>
-                    {tasks.filter(t => t.listId === list.id && !t.completed).length || '0'}
-                  </span>
-                )}
-              </div>
-            </button>
-          ))}
+            ))}
         </div>
         </div>
 

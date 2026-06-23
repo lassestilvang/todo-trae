@@ -8,7 +8,8 @@
     "start": "next start",
     "socket": "bun run src/lib/socket-server.ts",
     "lint": "eslint",
-    "test": "bun test test/*.test.ts"
+    "test": "bun test test/*.test.ts",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.1",
