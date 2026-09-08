@@ -5,6 +5,7 @@ import { logLabelActivity } from '@/lib/activityLog';
 import { ZodError } from 'zod';
 import { Label } from '@/types';
 import { auth } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 
 /**
  * @swagger
@@ -45,7 +46,7 @@ export async function GET() {
     const labels = await getAllLabels(session.user.id);
     return NextResponse.json(labels);
   } catch (error) {
-    console.error('Error fetching labels:', error);
+    logger.error('Error fetching labels', { error });
     return NextResponse.json({ error: 'Failed to fetch labels' }, { status: 500 });
   }
 }
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof ZodError) {
       return NextResponse.json({ error: 'Validation failed', details: error.issues }, { status: 400 });
     }
-    console.error('Error creating label:', error);
+    logger.error('Error creating label', { error });
     return NextResponse.json({ error: 'Failed to create label' }, { status: 500 });
   }
 }
