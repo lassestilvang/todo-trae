@@ -10,10 +10,12 @@ interface TaskStore {
   attachments: Attachment[];
   activityLogs: ActivityLog[];
   selectedListId: string | null;
+  selectedLabelId: string | null;
   selectedView: ViewType;
   searchQuery: string;
   showCompleted: boolean;
   isLoading: boolean;
+  selectedTaskIds: Set<string>;
   
   // Actions
   setTasks: (tasks: Task[]) => void;
@@ -23,6 +25,7 @@ interface TaskStore {
   setAttachments: (attachments: Attachment[]) => void;
   setActivityLogs: (logs: ActivityLog[]) => void;
   setSelectedListId: (listId: string | null) => void;
+  setSelectedLabelId: (labelId: string | null) => void;
   setSelectedView: (view: ViewType) => void;
   setSearchQuery: (query: string) => void;
   setShowCompleted: (show: boolean) => void;
@@ -46,7 +49,17 @@ interface TaskStore {
   
   // Activity log operations
   addActivityLog: (log: ActivityLog) => void;
-  
+
+  // Bulk selection
+  selectTask: (taskId: string) => void;
+  deselectTask: (taskId: string) => void;
+  selectAllTasks: (taskIds: string[]) => void;
+  clearSelection: () => void;
+  isTaskSelected: (taskId: string) => boolean;
+
+  // Drag-and-drop
+  reorderTasks: (listId: string, newOrder: string[]) => void;
+
   // List operations
   addList: (list: TaskList) => void;
   updateList: (listId: string, updates: Partial<TaskList>) => void;
@@ -68,10 +81,12 @@ export const useTaskStore = create<TaskStore>()(
       attachments: [],
       activityLogs: [],
       selectedListId: null,
+      selectedLabelId: null,
       selectedView: 'today',
       searchQuery: '',
       showCompleted: true,
       isLoading: false,
+      selectedTaskIds: new Set(),
       
       setTasks: (tasks) => set({ tasks }),
       setLists: (lists) => set({ lists }),
@@ -79,11 +94,33 @@ export const useTaskStore = create<TaskStore>()(
       setSubtasks: (subtasks) => set({ subtasks }),
       setAttachments: (attachments) => set({ attachments }),
       setActivityLogs: (logs) => set({ activityLogs: logs }),
-      setSelectedListId: (listId) => set({ selectedListId: listId }),
-      setSelectedView: (view) => set({ selectedView: view }),
+      setSelectedListId: (listId) => set({ selectedListId: listId, selectedLabelId: null }),
+      setSelectedLabelId: (labelId) => set({ selectedLabelId: labelId, selectedListId: null, selectedView: 'all' }),
+      setSelectedView: (view) => set({ selectedView: view, selectedLabelId: null }),
       setSearchQuery: (query) => set({ searchQuery: query }),
       setShowCompleted: (show) => set({ showCompleted: show }),
       setIsLoading: (loading) => set({ isLoading: loading }),
+      selectTask: (taskId) =>
+        set((state) => {
+          const newSet = new Set(state.selectedTaskIds);
+          newSet.add(taskId);
+          return { selectedTaskIds: newSet };
+        }),
+      deselectTask: (taskId) =>
+        set((state) => {
+          const newSet = new Set(state.selectedTaskIds);
+          newSet.delete(taskId);
+          return { selectedTaskIds: newSet };
+        }),
+      selectAllTasks: (taskIds) => set({ selectedTaskIds: new Set(taskIds) }),
+      clearSelection: () => set({ selectedTaskIds: new Set() }),
+      isTaskSelected: (taskId) => {
+        let result = false;
+        useTaskStore.getState().selectedTaskIds.forEach((id) => {
+          if (id === taskId) result = true;
+        });
+        return result;
+      },
       
       addTask: (task) => {
         set((state) => ({ 
@@ -101,10 +138,13 @@ export const useTaskStore = create<TaskStore>()(
       
       deleteTask: (taskId) => {
         set((state) => {
+          const newSelected = new Set(state.selectedTaskIds);
+          newSelected.delete(taskId);
           return {
             tasks: state.tasks.filter(task => task.id !== taskId),
             subtasks: state.subtasks.filter(subtask => subtask.taskId !== taskId),
-            attachments: state.attachments.filter(attachment => attachment.taskId !== taskId)
+            attachments: state.attachments.filter(attachment => attachment.taskId !== taskId),
+            selectedTaskIds: newSelected,
           };
         });
       },
@@ -174,18 +214,33 @@ export const useTaskStore = create<TaskStore>()(
         )
       })),
       
-      deleteList: (listId) => set((state) => ({
-        lists: state.lists.filter(list => list.id !== listId),
-        tasks: state.tasks.filter(task => task.listId !== listId),
-        subtasks: state.subtasks.filter(subtask => {
-          const task = state.tasks.find(t => t.id === subtask.taskId);
-          return task?.listId !== listId;
-        }),
-        attachments: state.attachments.filter(attachment => {
-          const task = state.tasks.find(t => t.id === attachment.taskId);
-          return task?.listId !== listId;
-        })
-      })),
+      reorderTasks: (listId: string, newOrder: string[]) => {
+        set((state) => {
+          const tasksInList = state.tasks.filter(t => t.listId === listId);
+          const orderMap = new Map(newOrder.map((id, index) => [id, index]));
+
+          const updatedTasks = state.tasks.map(task => {
+            if (task.listId === listId && orderMap.has(task.id)) {
+              return { ...task, order: orderMap.get(task.id)! };
+            }
+            return task;
+          });
+
+          return { tasks: updatedTasks };
+        });
+      },
+
+      deleteList: (listId) => set((state) => {
+        const taskIdsInList = new Set(
+          state.tasks.filter(task => task.listId === listId).map(task => task.id)
+        );
+        return {
+          lists: state.lists.filter(list => list.id !== listId),
+          tasks: state.tasks.filter(task => task.listId !== listId),
+          subtasks: state.subtasks.filter(subtask => !taskIdsInList.has(subtask.taskId)),
+          attachments: state.attachments.filter(attachment => !taskIdsInList.has(attachment.taskId))
+        };
+      }),
       
       // Label operations
       addLabel: (label) => set((state) => ({ 
@@ -205,8 +260,9 @@ export const useTaskStore = create<TaskStore>()(
     {
       name: 'daily-task-planner-storage',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ 
+      partialize: (state) => ({
         selectedListId: state.selectedListId,
+        selectedLabelId: state.selectedLabelId,
         selectedView: state.selectedView,
         showCompleted: state.showCompleted,
       }),
