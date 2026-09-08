@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { TaskForm } from './TaskForm';
 import { emitTaskUpdate } from '@/lib/socket-client';
+import { logger } from '@/lib/logger';
 
 interface TaskProps {
   task: TaskType;
@@ -64,7 +65,7 @@ export function Task({ task }: TaskProps) {
       toggleTaskComplete(task.id);
       emitTaskUpdate(task.listId, 'update', updatedTask);
     } catch (error) {
-      console.error('Error toggling completion:', error);
+      logger.error('Error toggling task completion', { error, taskId: task.id });
     }
   };
 
