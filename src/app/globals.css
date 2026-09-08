@@ -24,9 +24,14 @@
   --primary-rgb: 37, 99, 235;
 }
 
-/* Hide default cursor globally */
+/* Custom cursor is opt-in via data attribute on body
+   This preserves native cursor accessibility for all users */
 @media (pointer: fine) {
-  body, button, a, [role="button"], .cursor-pointer {
+  body[data-custom-cursor] body,
+  body[data-custom-cursor] button,
+  body[data-custom-cursor] a,
+  body[data-custom-cursor] [role="button"],
+  body[data-custom-cursor] .cursor-pointer {
     cursor: none !important;
   }
 }
