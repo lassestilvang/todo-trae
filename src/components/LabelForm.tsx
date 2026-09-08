@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/Dialog';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 interface LabelFormProps {
   open: boolean;
@@ -79,7 +80,7 @@ export function LabelForm({ open, onOpenChange, label }: LabelFormProps) {
       }
       onOpenChange(false);
     } catch (error) {
-      console.error('Error saving label:', error);
+      logger.error('Error saving label', { error });
       toast.error('Failed to save label');
     }
   };
