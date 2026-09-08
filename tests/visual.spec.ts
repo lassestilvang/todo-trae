@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 async function setTheme(page: any, theme: 'light' | 'dark' | 'system') {
-  await page.addInitScript((t) => {
+  await page.addInitScript((t: string) => {
     try { localStorage.setItem('theme', t); } catch {}
   }, theme);
 }
