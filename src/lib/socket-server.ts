@@ -1,39 +1,40 @@
 import { Server } from 'socket.io';
 import { createServer } from 'http';
+import { logger } from './logger';
 
 const httpServer = createServer();
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3000",
     methods: ["GET", "POST"]
   }
 });
 
 io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
+  logger.info('Client connected', { socketId: socket.id });
 
   socket.on('join-list', (listId: string) => {
     socket.join(listId);
-    console.log(`Client ${socket.id} joined list: ${listId}`);
+    logger.debug('Client joined list', { socketId: socket.id, listId });
   });
 
   socket.on('leave-list', (listId: string) => {
     socket.leave(listId);
-    console.log(`Client ${socket.id} left list: ${listId}`);
+    logger.debug('Client left list', { socketId: socket.id, listId });
   });
 
   socket.on('task-update', (data: { listId: string; type: string; task: unknown }) => {
     // Broadcast to everyone in the room except the sender
     socket.to(data.listId).emit('task-updated', data);
-    console.log(`Task update in list ${data.listId}: ${data.type}`);
+    logger.debug('Task update broadcast', { listId: data.listId, type: data.type });
   });
 
   socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
+    logger.info('Client disconnected', { socketId: socket.id });
   });
 });
 
-const PORT = 3001;
+const PORT = process.env.SOCKET_PORT || 3001;
 httpServer.listen(PORT, () => {
-  console.log(`Socket.io server running on port ${PORT}`);
+  logger.info('Socket.io server running', { port: PORT });
 });
