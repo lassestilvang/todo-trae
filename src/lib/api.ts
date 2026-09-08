@@ -1,8 +1,8 @@
 import { db } from '@/db';
-import { taskLists, tasks, labels, subtasks, taskLabels, activityLog } from '@/db/schema';
-import { Task, TaskList, Label, Subtask, ActivityLog, Priority, RecurringType } from '@/types';
+import { taskLists, tasks, labels, subtasks, taskLabels, activityLog, reminders, taskDependencies } from '@/db/schema';
+import { Task, TaskList, Label, Subtask, ActivityLog, Priority, RecurringType, TaskDependency } from '@/types';
 import { logger } from './logger';
-import { eq, and, isNull, asc, desc } from 'drizzle-orm';
+import { eq, and, isNull, asc, desc, inArray, or } from 'drizzle-orm';
 
 // Helper to map DB row to TaskList type
 function mapTaskList(row: typeof taskLists.$inferSelect): TaskList {
@@ -150,25 +150,28 @@ export async function getAllTasks(userId: string, limit?: number, offset?: numbe
     offset,
   });
 
-  return results.map(row => ({
-    ...row,
-    createdAt: row.createdAt || new Date(),
-    updatedAt: row.updatedAt || new Date(),
-    date: row.date || undefined,
-    deadline: row.deadline || undefined,
-    completed: !!row.completed,
-    completedAt: row.completedAt || undefined,
-    recurringEndDate: row.recurringEndDate || undefined,
-    description: row.description || undefined,
-    estimate: row.estimate || undefined,
-    actualTime: row.actualTime || undefined,
-    parentTaskId: row.parentTaskId || undefined,
-    userId: row.userId || undefined,
-    order: row.order || 0,
-    priority: (row.priority || 'none') as Priority,
-    recurring: (row.recurring || undefined) as RecurringType | undefined,
-    labels: row.taskLabels.map(tl => mapLabel(tl.label)),
-    reminders: [], // Reminders not implemented in mapping yet
+  return await Promise.all(results.map(async row => {
+    const taskReminders = await getRemindersByTaskId(row.id);
+    return {
+      ...row,
+      createdAt: row.createdAt || new Date(),
+      updatedAt: row.updatedAt || new Date(),
+      date: row.date || undefined,
+      deadline: row.deadline || undefined,
+      completed: !!row.completed,
+      completedAt: row.completedAt || undefined,
+      recurringEndDate: row.recurringEndDate || undefined,
+      description: row.description || undefined,
+      estimate: row.estimate || undefined,
+      actualTime: row.actualTime || undefined,
+      parentTaskId: row.parentTaskId || undefined,
+      userId: row.userId || undefined,
+      order: row.order || 0,
+      priority: (row.priority || 'none') as Priority,
+      recurring: (row.recurring || undefined) as RecurringType | undefined,
+      labels: row.taskLabels.map(tl => mapLabel(tl.label)),
+      reminders: taskReminders,
+    };
   }));
 }
 
@@ -187,25 +190,28 @@ export async function getTasksByListId(listId: string, userId: string, limit?: n
     offset,
   });
 
-  return results.map(row => ({
-    ...row,
-    createdAt: row.createdAt || new Date(),
-    updatedAt: row.updatedAt || new Date(),
-    date: row.date || undefined,
-    deadline: row.deadline || undefined,
-    completed: !!row.completed,
-    completedAt: row.completedAt || undefined,
-    recurringEndDate: row.recurringEndDate || undefined,
-    description: row.description || undefined,
-    estimate: row.estimate || undefined,
-    actualTime: row.actualTime || undefined,
-    parentTaskId: row.parentTaskId || undefined,
-    userId: row.userId || undefined,
-    order: row.order || 0,
-    priority: (row.priority || 'none') as Priority,
-    recurring: (row.recurring || undefined) as RecurringType | undefined,
-    labels: row.taskLabels.map(tl => mapLabel(tl.label)),
-    reminders: [],
+  return await Promise.all(results.map(async row => {
+    const taskReminders = await getRemindersByTaskId(row.id);
+    return {
+      ...row,
+      createdAt: row.createdAt || new Date(),
+      updatedAt: row.updatedAt || new Date(),
+      date: row.date || undefined,
+      deadline: row.deadline || undefined,
+      completed: !!row.completed,
+      completedAt: row.completedAt || undefined,
+      recurringEndDate: row.recurringEndDate || undefined,
+      description: row.description || undefined,
+      estimate: row.estimate || undefined,
+      actualTime: row.actualTime || undefined,
+      parentTaskId: row.parentTaskId || undefined,
+      userId: row.userId || undefined,
+      order: row.order || 0,
+      priority: (row.priority || 'none') as Priority,
+      recurring: (row.recurring || undefined) as RecurringType | undefined,
+      labels: row.taskLabels.map(tl => mapLabel(tl.label)),
+      reminders: taskReminders,
+    };
   }));
 }
 
@@ -222,6 +228,9 @@ export async function getTaskById(id: string, userId: string): Promise<Task | nu
   });
 
   if (!row) return null;
+
+  const taskReminders = await getRemindersByTaskId(id);
+  const taskDeps = await getTaskDependencies(id, userId);
 
   return {
     ...row,
@@ -241,7 +250,8 @@ export async function getTaskById(id: string, userId: string): Promise<Task | nu
     priority: (row.priority || 'none') as Priority,
     recurring: (row.recurring || undefined) as RecurringType | undefined,
     labels: row.taskLabels.map(tl => mapLabel(tl.label)),
-    reminders: [],
+    reminders: taskReminders,
+    dependencies: taskDeps,
   };
 }
 
@@ -292,7 +302,7 @@ export async function updateTask(id: string, userId: string, updates: Partial<Ta
   if (updates.priority !== undefined) dbUpdates.priority = updates.priority;
   if (updates.completed !== undefined) dbUpdates.completed = updates.completed;
   if (updates.completedAt !== undefined) {
-    dbUpdates.completedAt = updates.completedAt === undefined ? null : updates.completedAt;
+    dbUpdates.completedAt = updates.completedAt;
   }
   if (updates.recurring !== undefined) dbUpdates.recurring = updates.recurring;
   if (updates.recurringEndDate !== undefined) dbUpdates.recurringEndDate = updates.recurringEndDate;
@@ -384,6 +394,212 @@ export async function updateSubtask(id: string, updates: Partial<Subtask>): Prom
 
 export async function deleteSubtask(id: string): Promise<void> {
   await db.delete(subtasks).where(eq(subtasks.id, id));
+}
+
+// Batch task reordering
+export async function reorderTasks(userId: string, listId: string, orderedIds: string[]): Promise<void> {
+  const updates = orderedIds.map((taskId, order) => ({
+    id: taskId,
+    order,
+  }));
+
+  for (const { id, order } of updates) {
+    await db
+      .update(tasks)
+      .set({ order })
+      .where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
+  }
+
+  logger.info('Tasks reordered', { listId, count: orderedIds.length, userId });
+}
+
+// Reminder operations
+export async function getRemindersByTaskId(taskId: string): Promise<Date[]> {
+  const results = await db
+    .select()
+    .from(reminders)
+    .where(eq(reminders.taskId, taskId))
+    .orderBy(asc(reminders.reminderTime));
+  return results.map(r => r.reminderTime);
+}
+
+export async function createReminder(taskId: string, reminderTime: Date): Promise<void> {
+  await db.insert(reminders).values({
+    id: crypto.randomUUID(),
+    taskId,
+    reminderTime,
+  });
+}
+
+export async function deleteReminder(taskId: string, reminderTime: Date): Promise<void> {
+  await db
+    .delete(reminders)
+    .where(and(eq(reminders.taskId, taskId), eq(reminders.reminderTime, reminderTime)));
+}
+
+export async function deleteAllRemindersForTask(taskId: string): Promise<void> {
+  await db.delete(reminders).where(eq(reminders.taskId, taskId));
+}
+
+// Bulk operations
+export async function bulkUpdateTasks(
+  userId: string,
+  taskIds: string[],
+  updates: Partial<Task>
+): Promise<Task[]> {
+  const updatedTasks: Task[] = [];
+  for (const taskId of taskIds) {
+    const updated = await updateTask(taskId, userId, updates);
+    updatedTasks.push(updated);
+  }
+  logger.info('Bulk updated tasks', { count: taskIds.length, action: 'bulk-update', userId });
+  return updatedTasks;
+}
+
+export async function bulkDeleteTasks(userId: string, taskIds: string[]): Promise<void> {
+  for (const taskId of taskIds) {
+    await deleteTask(taskId, userId);
+  }
+  logger.info('Bulk deleted tasks', { count: taskIds.length, userId });
+}
+
+export async function bulkAssignLabels(userId: string, taskIds: string[], labelIds: string[]): Promise<void> {
+  for (const taskId of taskIds) {
+    await updateTask(taskId, userId, { labelIds });
+  }
+  logger.info('Bulk assigned labels', { count: taskIds.length, labelCount: labelIds.length, userId });
+}
+
+// Task dependency operations
+export async function getTaskDependencies(taskId: string, userId: string): Promise<TaskDependency[]> {
+  const results = await db
+    .select()
+    .from(taskDependencies)
+    .where(and(eq(taskDependencies.taskId, taskId), eq(tasks.userId, userId)))
+    .innerJoin(tasks, eq(taskDependencies.dependsOnTaskId, tasks.id));
+  return results.map(r => ({
+    id: r.task_dependencies.id,
+    taskId: r.task_dependencies.taskId,
+    dependsOnTaskId: r.task_dependencies.dependsOnTaskId,
+    createdAt: r.task_dependencies.createdAt || new Date(),
+  }));
+}
+
+export async function getDependentTasks(taskId: string, userId: string): Promise<Task[]> {
+  // Get tasks that depend on this task (i.e., this task is a prerequisite)
+  const results = await db
+    .select()
+    .from(taskDependencies)
+    .where(eq(taskDependencies.dependsOnTaskId, taskId));
+  // Filter to only the ones owned by the user
+  const taskIds = results.map(r => r.taskId);
+  if (taskIds.length === 0) return [];
+  const rawTasks = await db.query.tasks.findMany({
+    where: and(inArray(tasks.id, taskIds), eq(tasks.userId, userId)),
+    with: {
+      taskLabels: { with: { label: true } },
+    },
+  });
+  return rawTasks.map(row => ({
+    ...row,
+    createdAt: row.createdAt || new Date(),
+    updatedAt: row.updatedAt || new Date(),
+    date: row.date || undefined,
+    deadline: row.deadline || undefined,
+    completed: !!row.completed,
+    completedAt: row.completedAt || undefined,
+    recurringEndDate: row.recurringEndDate || undefined,
+    description: row.description || undefined,
+    estimate: row.estimate || undefined,
+    actualTime: row.actualTime || undefined,
+    parentTaskId: row.parentTaskId || undefined,
+    userId: row.userId || undefined,
+    order: row.order || 0,
+    priority: (row.priority || 'none') as Priority,
+    recurring: (row.recurring || undefined) as RecurringType | undefined,
+    labels: row.taskLabels.map(tl => mapLabel(tl.label)),
+    reminders: [] as Date[],
+  }));
+}
+
+export async function addTaskDependency(taskId: string, dependsOnTaskId: string, userId: string): Promise<TaskDependency> {
+  // Verify both tasks belong to the user
+  const userTasks = await db
+    .select({ id: tasks.id })
+    .from(tasks)
+    .where(and(inArray(tasks.id, [taskId, dependsOnTaskId]), eq(tasks.userId, userId)));
+  if (userTasks.length !== 2) {
+    throw new Error('One or both tasks not found or not owned by user');
+  }
+
+  // Prevent self-dependency
+  if (taskId === dependsOnTaskId) {
+    throw new Error('Task cannot depend on itself');
+  }
+
+  // Check for circular dependency
+  if (await hasCircularDependency(dependsOnTaskId, taskId, userId)) {
+    throw new Error('Circular dependency detected');
+  }
+
+  const id = crypto.randomUUID();
+  await db.insert(taskDependencies).values({
+    id,
+    taskId,
+    dependsOnTaskId,
+  });
+
+  logger.info('Task dependency added', { taskId, dependsOnTaskId, userId });
+  return { id, taskId, dependsOnTaskId, createdAt: new Date() };
+}
+
+export async function removeTaskDependency(taskId: string, dependsOnTaskId: string, userId: string): Promise<void> {
+  await db
+    .delete(taskDependencies)
+    .where(
+      and(
+        eq(taskDependencies.taskId, taskId),
+        eq(taskDependencies.dependsOnTaskId, dependsOnTaskId)
+      )
+    );
+  logger.info('Task dependency removed', { taskId, dependsOnTaskId, userId });
+}
+
+export async function removeAllTaskDependencies(taskId: string, userId: string): Promise<void> {
+  // Remove dependencies where this task is the dependent or the prerequisite
+  const taskIds = await db
+    .select({ id: tasks.id })
+    .from(tasks)
+    .where(eq(tasks.id, taskId));
+  const task = taskIds[0];
+  if (!task) return;
+
+  await db.delete(taskDependencies).where(
+    or(eq(taskDependencies.taskId, taskId), eq(taskDependencies.dependsOnTaskId, taskId))
+  );
+}
+
+async function hasCircularDependency(fromTaskId: string, toTaskId: string, userId: string): Promise<boolean> {
+  // Check if toTaskId can reach fromTaskId through dependency chain
+  const visited = new Set<string>();
+  const queue: string[] = [toTaskId];
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    if (current === fromTaskId) return true;
+    if (visited.has(current)) continue;
+    visited.add(current);
+
+    const deps = await db
+      .select({ dependsOnTaskId: taskDependencies.dependsOnTaskId })
+      .from(taskDependencies)
+      .innerJoin(tasks, eq(taskDependencies.taskId, tasks.id))
+      .where(eq(taskDependencies.dependsOnTaskId, current));
+    for (const dep of deps) {
+      queue.push(dep.dependsOnTaskId);
+    }
+  }
+  return false;
 }
 
 // Activity log operations
