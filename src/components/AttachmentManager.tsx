@@ -6,6 +6,7 @@ import { Attachment } from '@/types';
 import { Upload, File, X, Download } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
+import { logger } from '@/lib/logger';
 
 interface AttachmentManagerProps {
   taskId: string;
@@ -42,7 +43,7 @@ export function AttachmentManager({ taskId, attachments }: AttachmentManagerProp
         addAttachment(attachment);
       }
     } catch (error) {
-      console.error('Error uploading files:', error);
+      logger.error('Error uploading files', { error });
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -70,7 +71,7 @@ export function AttachmentManager({ taskId, attachments }: AttachmentManagerProp
 
   const handleDownload = (attachment: Attachment) => {
     // In a real app, this would download from your file storage service
-    console.log('Download requested for:', attachment.filename);
+    logger.debug('Download requested for attachment', { filename: attachment.filename });
     // For demo purposes, we'll create a blob URL
     const link = document.createElement('a');
     link.href = '#';
