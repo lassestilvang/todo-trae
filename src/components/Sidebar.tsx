@@ -16,7 +16,6 @@ import {
   Clock,
   CheckCircle2,
   Hash,
-  Home,
   Tag,
   Sun,
   Moon,
@@ -27,7 +26,9 @@ import {
   Trash2,
   LogOut,
   User,
-  Settings
+  Settings,
+  Download,
+  Upload
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { isToday } from 'date-fns';
@@ -52,20 +53,21 @@ export function Sidebar() {
   const { data: session } = useSession();
   const router = useRouter();
   const pathname = usePathname();
-  const { 
+  const {
     tasks,
-    lists, 
+    lists,
     labels,
-    selectedListId, 
-    selectedView, 
-    setSelectedListId, 
-    setSelectedView, 
-    setSearchQuery 
+    selectedListId,
+    selectedLabelId,
+    selectedView,
+    setSelectedListId,
+    setSelectedLabelId,
+    setSelectedView,
+    setSearchQuery
   } = useTaskStore();
   const { theme, setTheme } = useThemeStore();
   const { isSearchFocused, setSearchFocused, isTaskFormOpen, setTaskFormOpen } = useUIStore();
   const { templates, deleteTemplate } = useTemplateStore();
-  const [showProjects, setShowProjects] = useState(true);
   const [showTemplates, setShowTemplates] = useState(false);
   const [listFormOpen, setListFormOpen] = useState(false);
   const [labelFormOpen, setLabelFormOpen] = useState(false);
@@ -189,6 +191,65 @@ export function Sidebar() {
                 <Settings className="w-4 h-4 text-muted-foreground" />
                 <span>Settings</span>
               </DropdownMenuItem>
+              <DropdownMenuItem
+                className="gap-2 rounded-lg py-2 cursor-pointer"
+                onClick={async () => {
+                  try {
+                    const response = await fetch('/api/export');
+                    if (!response.ok) throw new Error('Export failed');
+                    const data = await response.json();
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `task-planner-export-${new Date().toISOString().split('T')[0]}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    toast.success('Data exported successfully');
+                  } catch {
+                    toast.error('Failed to export data');
+                  }
+                }}
+              >
+                <Download className="w-4 h-4 text-muted-foreground" />
+                <span>Export Data</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="gap-2 rounded-lg py-2 cursor-pointer"
+                onClick={() => {
+                  document.getElementById('import-file-input')?.click();
+                }}
+              >
+                <Upload className="w-4 h-4 text-muted-foreground" />
+                <span>Import Data</span>
+              </DropdownMenuItem>
+              <input
+                id="import-file-input"
+                type="file"
+                accept=".json,application/json"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  try {
+                    const text = await file.text();
+                    const data = JSON.parse(text);
+                    const response = await fetch('/api/import', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(data),
+                    });
+                    if (!response.ok) throw new Error('Import failed');
+                    const result = await response.json();
+                    toast.success(`Imported: ${result.imported.lists} lists, ${result.imported.labels} labels, ${result.imported.tasks} tasks`);
+                    // Refresh the page to show imported data
+                    window.location.reload();
+                  } catch {
+                    toast.error('Failed to import data');
+                  }
+                  e.target.value = '';
+                }}
+              />
               <div className="h-px bg-border/30 my-1" />
               <DropdownMenuItem 
                 className="gap-2 rounded-lg py-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
@@ -398,13 +459,18 @@ export function Sidebar() {
             </Button>
           </div>
           <div className="flex flex-wrap gap-2 px-1">
-            {labels.map((label) => (
+            {labels.map((label) => {
+              const isActive = selectedLabelId === label.id;
+              return (
               <button
                 key={label.id}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all hover:scale-105 active:scale-95"
-                aria-label={`Filter by label: ${label.name}`}
-                style={{ 
-                  color: label.color, 
+                onClick={() => setSelectedLabelId(isActive ? null : label.id)}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all hover:scale-105 active:scale-95 ${
+                  isActive ? 'ring-2 ring-offset-2 ring-offset-background' : ''
+                }`}
+                aria-label={`Filter by label: ${label.name}${isActive ? ' (active)' : ''}`}
+                style={{
+                  color: label.color,
                   borderColor: `${label.color}30`,
                   backgroundColor: `${label.color}10`
                 }}
@@ -412,53 +478,37 @@ export function Sidebar() {
                 <Tag className="w-3 h-3" aria-hidden="true" />
                 {label.name}
               </button>
-            ))}
+              );
+            })}
           </div>
         </div>
 
-        {/* Projects */}
-        <div className="p-4 border-t border-border/30" role="group" aria-labelledby="projects-heading">
-          <button
-            onClick={() => setShowProjects(!showProjects)}
-            aria-expanded={showProjects}
-            aria-controls="projects-container"
-            className="w-full flex items-center justify-between text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3 hover:text-foreground transition-colors px-3"
-          >
-            <span id="projects-heading">My Projects</span>
-            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showProjects ? '' : '-rotate-90'}`} aria-hidden="true" />
-          </button>
-          
-          <AnimatePresence>
-            {showProjects && (
-              <motion.div
-                id="projects-container"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-1 overflow-hidden"
-              >
-                <button className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium hover:bg-accent/40 text-muted-foreground hover:text-foreground transition-all">
-                  <div className="flex items-center gap-3">
-                    <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500" aria-hidden="true">
-                      <Home className="w-4 h-4" />
-                    </div>
-                    <span>Home</span>
-                  </div>
-                  <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-full" aria-label="6 tasks">6</span>
-                </button>
-                <button className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium hover:bg-accent/40 text-muted-foreground hover:text-foreground transition-all">
-                  <div className="flex items-center gap-3">
-                    <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-500" aria-hidden="true">
-                      <Hash className="w-4 h-4" />
-                    </div>
-                    <span>n0rd</span>
-                  </div>
-                  <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-full" aria-label="1 task">1</span>
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+        {/* Quick Actions */}
+        <div className="p-4 border-t border-border/30" role="group" aria-label="Quick actions">
+          <div className="space-y-1 px-2">
+            <button
+              onClick={() => router.push('/analytics')}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium hover:bg-accent/40 text-muted-foreground hover:text-foreground transition-all"
+              aria-label="View analytics dashboard"
+            >
+              <div className="p-1.5 rounded-lg bg-primary/10 text-primary" aria-hidden="true">
+                <TrendingUp className="w-4 h-4" />
+              </div>
+              <span>Analytics</span>
+            </button>
+            <button
+              onClick={() => setShowTemplates(!showTemplates)}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium hover:bg-accent/40 text-muted-foreground hover:text-foreground transition-all"
+              aria-label="Toggle templates section"
+              aria-expanded={showTemplates}
+            >
+              <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-500" aria-hidden="true">
+                <LayoutTemplate className="w-4 h-4" />
+              </div>
+              <span>Templates</span>
+              <ChevronDown className={`w-3.5 h-3.5 ml-auto text-muted-foreground transition-transform duration-200 ${showTemplates ? '' : '-rotate-90'}`} />
+            </button>
+          </div>
         </div>
       </div>
 
