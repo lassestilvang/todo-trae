@@ -5,6 +5,7 @@ import { logListActivity } from '@/lib/activityLog';
 import { ZodError } from 'zod';
 import { TaskList } from '@/types';
 import { auth } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 
 /**
  * @swagger
@@ -45,7 +46,7 @@ export async function GET() {
     const lists = await getAllLists(session.user.id);
     return NextResponse.json(lists);
   } catch (error) {
-    console.error('Error fetching lists:', error);
+    logger.error('Error fetching lists', { error });
     return NextResponse.json({ error: 'Failed to fetch lists' }, { status: 500 });
   }
 }
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof ZodError) {
       return NextResponse.json({ error: 'Validation failed', details: error.issues }, { status: 400 });
     }
-    console.error('Error creating list:', error);
+    logger.error('Error creating list', { error });
     return NextResponse.json({ error: 'Failed to create list' }, { status: 500 });
   }
 }
