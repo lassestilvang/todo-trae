@@ -156,6 +156,16 @@ export const reminders = pgTable('reminders', {
   idxRemindersTime: index('idx_reminders_time').on(table.reminderTime),
 }));
 
+export const taskDependencies = pgTable('task_dependencies', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  taskId: text('task_id').notNull().references(() => tasks.id, { onDelete: 'cascade' }),
+  dependsOnTaskId: text('depends_on_task_id').notNull().references(() => tasks.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  idxTaskDepsTaskId: index('idx_task_deps_task_id').on(table.taskId),
+  idxTaskDepsDependsOn: index('idx_task_deps_depends_on').on(table.dependsOnTaskId),
+}));
+
 export const attachments = pgTable('attachments', {
   id: text('id').primaryKey(),
   taskId: text('task_id').notNull().references(() => tasks.id, { onDelete: 'cascade' }),
@@ -230,6 +240,18 @@ export const tasksRelations = relations(tasks, ({ one, many }) => ({
   }),
   childTasks: many(tasks, {
     relationName: 'subtasks',
+  }),
+  taskDependencies: many(taskDependencies),
+}));
+
+export const taskDependenciesRelations = relations(taskDependencies, ({ one }) => ({
+  task: one(tasks, {
+    fields: [taskDependencies.taskId],
+    references: [tasks.id],
+  }),
+  dependsOnTask: one(tasks, {
+    fields: [taskDependencies.dependsOnTaskId],
+    references: [tasks.id],
   }),
 }));
 
