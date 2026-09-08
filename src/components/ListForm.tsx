@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 interface ListFormProps {
   open: boolean;
@@ -80,7 +81,7 @@ export function ListForm({ open, onOpenChange, list }: ListFormProps) {
       }
       onOpenChange(false);
     } catch (error) {
-      console.error('Error saving list:', error);
+      logger.error('Error saving list', { error });
       toast.error('Failed to save list');
     }
   };
