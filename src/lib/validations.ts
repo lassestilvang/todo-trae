@@ -56,3 +56,8 @@ export const CreateTaskSchema = TaskSchema.partial({
 export const UpdateTaskSchema = TaskSchema.partial();
 export const UpdateTaskListSchema = TaskListSchema.partial();
 export const UpdateLabelSchema = LabelSchema.partial();
+
+export const ReorderTasksSchema = z.object({
+  listId: z.string(),
+  orderedIds: z.array(z.string()),
+});
