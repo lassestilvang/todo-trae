@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllActivityLogs, getActivityLogByTaskId } from '@/lib/api';
 import { auth } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 
 /**
  * @swagger
@@ -52,7 +53,7 @@ export async function GET(request: NextRequest) {
       
     return NextResponse.json(logs);
   } catch (error) {
-    console.error('Error fetching activity logs:', error);
+    logger.error('Error fetching activity logs', { error });
     return NextResponse.json({ error: 'Failed to fetch activity logs' }, { status: 500 });
   }
 }
