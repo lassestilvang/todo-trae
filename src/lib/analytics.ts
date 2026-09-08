@@ -68,7 +68,11 @@ export async function getAnalyticsData(userId: string) {
 
   // 4. Tasks by Label
   const allLabels = await db.select().from(labels).where(eq(labels.userId, userId));
-  const allTaskLabels = await db.select().from(taskLabels);
+  const allTaskLabels = await db
+    .select({ taskId: taskLabels.taskId, labelId: taskLabels.labelId })
+    .from(taskLabels)
+    .innerJoin(tasks, eq(taskLabels.taskId, tasks.id))
+    .where(eq(tasks.userId, userId));
   
   const tasksByLabel = allLabels.map(label => {
     const taskIds = allTaskLabels.filter(tl => tl.labelId === label.id).map(tl => tl.taskId);
