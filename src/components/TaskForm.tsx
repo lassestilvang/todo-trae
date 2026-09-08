@@ -5,7 +5,7 @@ import { useTaskStore } from '@/stores/taskStore';
 import { useTemplateStore } from '@/stores/templateStore';
 import { Label, Priority, Task, TaskTemplate } from '@/types';
 import { format } from 'date-fns';
-import { Calendar, Clock, Flag, Hash, Trash2, Copy } from 'lucide-react';
+import { Calendar, Clock, Flag, Hash, Trash2, Copy, Bell, X, Link, Unlink, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
@@ -18,6 +18,7 @@ import { TimeTracker } from '@/components/TimeTracker';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { emitTaskUpdate } from '@/lib/socket-client';
+import { logger } from '@/lib/logger';
 
 interface TaskFormProps {
   open: boolean;
@@ -36,6 +37,7 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
     listId: task?.listId || listId || lists.find(l => l.isDefault)?.id || '',
     date: task?.date ? format(new Date(task.date), 'yyyy-MM-dd') : '',
     time: task?.date ? format(new Date(task.date), 'HH:mm') : '',
+    deadlineDate: task?.deadline ? format(new Date(task.deadline), 'yyyy-MM-dd') : '',
     deadline: task?.deadline ? format(new Date(task.deadline), 'HH:mm') : '',
     priority: task?.priority || 'none' as Priority,
     estimate: task?.estimate || '',
@@ -43,6 +45,9 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
     labels: task?.labels?.map((l: Label) => l.id) || [] as string[],
     recurring: task?.recurring,
     recurringEndDate: task?.recurringEndDate ? format(new Date(task.recurringEndDate), 'yyyy-MM-dd') : '',
+    reminderDate: '',
+    reminderTime: '',
+    dependencyTaskId: '',
   });
 
   useEffect(() => {
@@ -113,6 +118,7 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
         listId: task.listId,
         date: task.date ? format(new Date(task.date), 'yyyy-MM-dd') : '',
         time: task.date ? format(new Date(task.date), 'HH:mm') : '',
+        deadlineDate: task.deadline ? format(new Date(task.deadline), 'yyyy-MM-dd') : '',
         deadline: task.deadline ? format(new Date(task.deadline), 'HH:mm') : '',
         priority: task.priority,
         estimate: task.estimate || '',
@@ -120,6 +126,9 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
         labels: task.labels?.map((l: Label) => l.id) || [],
         recurring: task.recurring,
         recurringEndDate: task.recurringEndDate ? format(new Date(task.recurringEndDate), 'yyyy-MM-dd') : '',
+        reminderDate: '',
+        reminderTime: '',
+        dependencyTaskId: '',
       });
     } else {
       setFormData(prev => ({
@@ -129,6 +138,7 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
         listId: prev.listId || listId || lists.find(l => l.isDefault)?.id || (lists.length > 0 ? lists[0].id : ''),
         date: '',
         time: '',
+        deadlineDate: '',
         deadline: '',
         priority: 'none',
         estimate: '',
@@ -136,6 +146,9 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
         labels: [],
         recurring: undefined,
         recurringEndDate: '',
+        reminderDate: '',
+        reminderTime: '',
+        dependencyTaskId: '',
       }));
     }
   }, [task, listId, lists]);
@@ -158,7 +171,7 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
       description: formData.description || undefined,
       listId: formData.listId,
       date: formData.date ? new Date(`${formData.date}T${formData.time || '00:00'}`) : undefined,
-      deadline: formData.date && formData.deadline ? new Date(`${formData.date}T${formData.deadline}`) : undefined,
+      deadline: formData.deadlineDate && formData.deadline ? new Date(`${formData.deadlineDate}T${formData.deadline}`) : undefined,
       priority: formData.priority,
       estimate: formData.estimate || undefined,
       actualTime: formData.actualTime || undefined,
@@ -200,7 +213,7 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
       }
       onOpenChange(false);
     } catch (error) {
-      console.error('Error saving task:', error);
+      logger.error('Error saving task', { error });
       toast.error('Failed to save task');
     }
   };
@@ -219,7 +232,7 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
       toast.success('Task deleted');
       onOpenChange(false);
     } catch (error) {
-      console.error('Error deleting task:', error);
+      logger.error('Error deleting task', { error });
       toast.error('Failed to delete task');
     }
   };
@@ -314,7 +327,43 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
                     className="space-y-6"
                   >
                     <div className="space-y-2">
-                      <label htmlFor="task-name" className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1">Task Name</label>
+                      <label htmlFor="task-name" className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1 flex items-center justify-between">
+                        <span>Task Name</span>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const input = prompt('Type a task in natural language.\n\nExamples:\n• "Buy milk #shopping tomorrow at 3pm"\n• "Submit report #work by Friday deadline"\n• "Call mom in 2 days important"');
+                            if (!input) return;
+                            try {
+                              const response = await fetch('/api/parse-task', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ text: input }),
+                              });
+                              if (!response.ok) throw new Error('Failed to parse');
+                              const parsed = await response.json();
+                              setFormData(prev => ({
+                                ...prev,
+                                name: parsed.name,
+                                description: parsed.description || prev.description,
+                                priority: parsed.priority || prev.priority,
+                                labels: parsed.labelIds.length ? parsed.labelIds : prev.labels,
+                                deadlineDate: parsed.deadline ? format(new Date(parsed.deadline), 'yyyy-MM-dd') : prev.deadlineDate,
+                                deadline: parsed.deadline ? format(new Date(parsed.deadline), 'HH:mm') : prev.deadline,
+                                estimate: parsed.estimate || prev.estimate,
+                              }));
+                              toast.success('Task parsed from natural language');
+                            } catch {
+                              toast.error('Failed to parse natural language');
+                            }
+                          }}
+                          className="px-2 py-1 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-xs font-medium flex items-center gap-1"
+                          aria-label="Parse natural language"
+                        >
+                          <Sparkles className="w-3 h-3" />
+                          AI Parse
+                        </button>
+                      </label>
                       <Input
                         id="task-name"
                         placeholder="What needs to be done?"
@@ -324,6 +373,9 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
                         autoFocus
                         aria-required="true"
                       />
+                      <p className="text-xs text-muted-foreground">
+                        Tip: Type naturally like "Buy milk #shopping tomorrow at 3pm urgent" — click "AI Parse" to parse it automatically.
+                      </p>
                     </div>
 
                     <div className="space-y-2">
@@ -450,6 +502,238 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
                     transition={{ duration: 0.2 }}
                     className="space-y-8"
                   >
+                    <div className="glass-card p-6 rounded-2xl border-border/20">
+                      <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <Clock className="w-3 h-3" />
+                        Time Estimate
+                      </h3>
+                      <Input
+                        id="task-estimate"
+                        type="text"
+                        placeholder="HH:MM"
+                        value={formData.estimate}
+                        onChange={(e) => setFormData({ ...formData, estimate: e.target.value })}
+                        className="bg-background/40 backdrop-blur-md border-border/30 focus:bg-background/60 transition-all rounded-xl h-11 font-mono"
+                      />
+                    </div>
+
+                    <div className="glass-card p-6 rounded-2xl border-border/20">
+                      <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <Calendar className="w-3 h-3" />
+                        Deadline
+                      </h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label htmlFor="task-deadline-date" className="text-xs text-muted-foreground">Date</label>
+                          <Input
+                            id="task-deadline-date"
+                            type="date"
+                            value={formData.deadlineDate}
+                            onChange={(e) => setFormData({ ...formData, deadlineDate: e.target.value })}
+                            className="bg-background/40 backdrop-blur-md border-border/30 focus:bg-background/60 transition-all rounded-xl h-11"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label htmlFor="task-deadline-time" className="text-xs text-muted-foreground">Time</label>
+                          <Input
+                            id="task-deadline-time"
+                            type="time"
+                            value={formData.deadline}
+                            onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+                            disabled={!formData.deadlineDate}
+                            className="bg-background/40 backdrop-blur-md border-border/30 focus:bg-background/60 transition-all rounded-xl h-11"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Reminders */}
+                    <div className="glass-card p-6 rounded-2xl border-border/20">
+                      <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <Bell className="w-3 h-3" />
+                        Reminders
+                      </h3>
+                      {task && task.reminders && task.reminders.length > 0 ? (
+                        <div className="space-y-2 mb-3">
+                          {task.reminders.map((reminder, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-2 rounded-xl bg-background/30">
+                              <span className="text-sm text-muted-foreground">
+                                {format(new Date(reminder), 'PPpp')}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  await fetch('/api/reminders', {
+                                    method: 'DELETE',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ taskId: task.id, reminderTime: reminder.toISOString() }),
+                                  });
+                                  // Refresh the task data
+                                  const updated = await fetch(`/api/tasks/${task.id}`);
+                                  const updatedTask = await updated.json();
+                                  updateTask(task.id, updatedTask);
+                                }}
+                                className="p-1 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                                aria-label={`Remove reminder at ${format(new Date(reminder), 'PPpp')}`}
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label htmlFor="task-reminder-date" className="text-xs text-muted-foreground">Date</label>
+                          <Input
+                            id="task-reminder-date"
+                            type="date"
+                            value={formData.reminderDate}
+                            onChange={(e) => setFormData({ ...formData, reminderDate: e.target.value })}
+                            className="bg-background/40 backdrop-blur-md border-border/30 focus:bg-background/60 transition-all rounded-xl h-11"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label htmlFor="task-reminder-time" className="text-xs text-muted-foreground">Time</label>
+                          <Input
+                            id="task-reminder-time"
+                            type="time"
+                            value={formData.reminderTime}
+                            onChange={(e) => setFormData({ ...formData, reminderTime: e.target.value })}
+                            disabled={!formData.reminderDate}
+                            className="bg-background/40 backdrop-blur-md border-border/30 focus:bg-background/60 transition-all rounded-xl h-11"
+                          />
+                        </div>
+                      </div>
+
+                      {formData.reminderDate && formData.reminderTime && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="mt-3 w-full rounded-xl border-primary/30 text-primary hover:bg-primary/10 font-semibold"
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            if (!task) return;
+                            const reminderDateTime = new Date(`${formData.reminderDate}T${formData.reminderTime}`);
+                            try {
+                              await fetch('/api/reminders', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  taskId: task.id,
+                                  reminderTime: reminderDateTime.toISOString(),
+                                }),
+                              });
+                              // Refresh task data to get updated reminders
+                              const updated = await fetch(`/api/tasks/${task.id}`);
+                              const updatedTask = await updated.json();
+                              updateTask(task.id, updatedTask);
+                              setFormData({ ...formData, reminderDate: '', reminderTime: '' });
+                              toast.success('Reminder added');
+                            } catch {
+                              toast.error('Failed to add reminder');
+                            }
+                          }}
+                        >
+                          Add Reminder
+                        </Button>
+                      )}
+                      {!task && formData.reminderDate && formData.reminderTime && (
+                        <p className="text-xs text-muted-foreground mt-2">Note: Reminders can be added after task creation.</p>
+                      )}
+                    </div>
+
+                    {/* Dependencies */}
+                    {task && (
+                      <div className="glass-card p-6 rounded-2xl border-border/20">
+                        <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
+                          <Link className="w-3 h-3" />
+                          Dependencies
+                        </h3>
+                        {task.dependencies && task.dependencies.length > 0 ? (
+                          <div className="space-y-2 mb-3">
+                            {task.dependencies.map((dep) => (
+                              <div key={dep.id} className="flex items-center justify-between p-2 rounded-xl bg-background/30">
+                                <span className="text-sm text-muted-foreground">
+                                  Depends on: <span className="text-foreground font-medium">{dep.dependsOnTaskId}</span>
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    try {
+                                      await fetch('/api/tasks/dependencies', {
+                                        method: 'DELETE',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ taskId: task.id, dependsOnTaskId: dep.dependsOnTaskId }),
+                                      });
+                                      const updated = await fetch(`/api/tasks/${task.id}`);
+                                      const updatedTask = await updated.json();
+                                      updateTask(task.id, updatedTask);
+                                      toast.success('Dependency removed');
+                                    } catch {
+                                      toast.error('Failed to remove dependency');
+                                    }
+                                  }}
+                                  className="p-1 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                                  aria-label="Remove dependency"
+                                >
+                                  <Unlink className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground mb-3">No dependencies set.</p>
+                        )}
+
+                        <div className="flex gap-2">
+                          <Input
+                            type="text"
+                            value={formData.dependencyTaskId}
+                            onChange={(e) => setFormData({ ...formData, dependencyTaskId: e.target.value })}
+                            placeholder="Task ID to depend on"
+                            className="flex-1 bg-background/40 backdrop-blur-md border-border/30 focus:bg-background/60 transition-all rounded-xl h-11"
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={async (e) => {
+                              e.preventDefault();
+                              if (!task || !formData.dependencyTaskId.trim()) return;
+                              try {
+                                const response = await fetch('/api/tasks/dependencies', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    taskId: task.id,
+                                    dependsOnTaskId: formData.dependencyTaskId.trim(),
+                                  }),
+                                });
+                                if (!response.ok) {
+                                  const error = await response.json();
+                                  throw new Error(error.error || 'Failed to add dependency');
+                                }
+                                const updated = await fetch(`/api/tasks/${task.id}`);
+                                const updatedTask = await updated.json();
+                                updateTask(task.id, updatedTask);
+                                setFormData({ ...formData, dependencyTaskId: '' });
+                                toast.success('Dependency added');
+                              } catch (error) {
+                                toast.error(error instanceof Error ? error.message : 'Failed to add dependency');
+                              }
+                            }}
+                          >
+                            Add
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="glass-card p-6 rounded-2xl border-border/20">
                       <RecurringTaskSelector
                         value={formData.recurring}
