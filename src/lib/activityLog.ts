@@ -1,5 +1,6 @@
 import { ActivityLog, Task, TaskList, Label } from '@/types';
 import { createActivityLog } from '@/lib/api';
+import { logger } from './logger';
 
 export async function logTaskActivity(
   taskId: string,
@@ -22,10 +23,7 @@ export async function logTaskActivity(
 
     await createActivityLog(log);
   } catch (error) {
-    // Log error in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Failed to log task activity:', error);
-    }
+    logger.error('Failed to log task activity', { error });
   }
 }
 
@@ -50,9 +48,7 @@ export async function logListActivity(
 
     await createActivityLog(log);
   } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Failed to log list activity:', error);
-    }
+    logger.error('Failed to log list activity', { error });
   }
 }
 
@@ -77,9 +73,7 @@ export async function logLabelActivity(
 
     await createActivityLog(log);
   } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Failed to log label activity:', error);
-    }
+    logger.error('Failed to log label activity', { error });
   }
 }
 
