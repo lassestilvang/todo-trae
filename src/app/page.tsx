@@ -9,6 +9,7 @@ import { TaskList } from '@/components/TaskList';
 import { Toaster, toast } from 'sonner';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { getSocket, joinListRoom, leaveListRoom } from '@/lib/socket-client';
+import { logger } from '@/lib/logger';
 import { useUIStore } from '@/stores/uiStore';
 import { useHotkeys } from '@/lib/hooks';
 import { Task } from '@/types';
@@ -87,7 +88,7 @@ function HomeContent() {
     const socket = getSocket();
     
     socket.on('task-updated', (data: { type: string; task: Task }) => {
-      console.log('Received socket update:', data);
+        logger.debug('Received socket update', { type: data.type, taskId: data.task?.id });
       switch (data.type) {
         case 'add':
           addTask(data.task);
@@ -148,7 +149,7 @@ function HomeContent() {
         setAttachments([]);
         setActivityLogs([]);
       } catch (error) {
-        console.error('Failed to load data:', error);
+        logger.error('Failed to load initial data', { error });
         toast.error('Failed to load data. Please check your connection.');
       } finally {
         setIsLoading(false);
