@@ -59,5 +59,5 @@ export const UpdateLabelSchema = LabelSchema.partial();
 
 export const ReorderTasksSchema = z.object({
   listId: z.string(),
-  orderedIds: z.array(z.string()),
+  orderedIds: z.array(z.string()).min(1),
 });
