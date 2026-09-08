@@ -1,0 +1,19 @@
+.next/
+out/
+build/
+coverage/
+screenshots/
+screenshots-before/
+reports/
+node_modules/
+package-lock.json
+yarn.lock
+bun.lock
+.idea
+.vscode
+
+# Generated files
+.next/
+out/
+*.log
+next-env.d.ts
