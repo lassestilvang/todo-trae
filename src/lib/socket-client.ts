@@ -1,18 +1,19 @@
 import { io, type Socket } from 'socket.io-client';
 import { Task } from '@/types';
+import { logger } from '@/lib/logger';
 
 let socket: Socket | null = null;
 
 export const getSocket = () => {
   if (!socket) {
-    socket = io('http://localhost:3001');
-    
+    socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001');
+
     socket.on('connect', () => {
-      console.log('Connected to Socket.io server');
+      logger.info('Connected to Socket.io server');
     });
 
     socket.on('disconnect', () => {
-      console.log('Disconnected from Socket.io server');
+      logger.info('Disconnected from Socket.io server');
     });
   }
   return socket;
