@@ -1,6 +1,7 @@
 'use client';
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
+import * as Sentry from '@sentry/nextjs';
 import { Button } from './ui/Button';
 import { AlertCircle, RefreshCw, Home } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -25,7 +26,17 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo);
+    if (process.env.NODE_ENV === 'production') {
+      Sentry.captureException(error, {
+        contexts: {
+          reactErrorBoundary: {
+            componentStack: errorInfo.componentStack || errorInfo.toString(),
+          },
+        },
+      });
+    } else {
+      console.error('Uncaught error:', error, errorInfo);
+    }
   }
 
   private handleReset = () => {
