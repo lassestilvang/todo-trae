@@ -12,13 +12,13 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "data/**",
+    "coverage/**",
+    "screenshots/**",
+    "screenshots-before/**",
+    "reports/**",
+    "node_modules/**",
   ]),
-  {
-    files: ["src/lib/database.ts"],
-    rules: {
-      "@typescript-eslint/no-require-imports": "off",
-    },
-  },
 ]);
 
 export default eslintConfig;
