@@ -5,6 +5,7 @@ import { logLabelActivity, logLabelUpdate } from '@/lib/activityLog';
 import { ZodError } from 'zod';
 import { Label } from '@/types';
 import { auth } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 
 /**
  * @swagger
@@ -75,7 +76,7 @@ export async function GET(
     }
     return NextResponse.json(label);
   } catch (error) {
-    console.error('Error fetching label:', error);
+    logger.error('Error fetching label', { error });
     return NextResponse.json({ error: 'Failed to fetch label' }, { status: 500 });
   }
 }
@@ -109,7 +110,7 @@ export async function PUT(
     if (error instanceof ZodError) {
       return NextResponse.json({ error: 'Validation failed', details: error.issues }, { status: 400 });
     }
-    console.error('Error updating label:', error);
+    logger.error('Error updating label', { error });
     return NextResponse.json({ error: 'Failed to update label' }, { status: 500 });
   }
 }
@@ -137,7 +138,7 @@ export async function DELETE(
     
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error('Error deleting label:', error);
+    logger.error('Error deleting label', { error });
     return NextResponse.json({ error: 'Failed to delete label' }, { status: 500 });
   }
 }
