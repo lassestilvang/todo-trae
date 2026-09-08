@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { TaskTemplate } from '@/types';
+import { logger } from '@/lib/logger';
 
 interface TemplateStore {
   templates: TaskTemplate[];
@@ -41,7 +42,7 @@ export const useTemplateStore = create<TemplateStore>((set) => ({
         set({ templates });
       }
     } catch (error) {
-      console.error('Failed to fetch templates:', error);
+      logger.error('Failed to fetch templates', { error });
     } finally {
       set({ isLoading: false });
     }
