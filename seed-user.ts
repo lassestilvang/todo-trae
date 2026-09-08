@@ -2,6 +2,7 @@ import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from './src/db/schema';
 import * as dotenv from 'dotenv';
+import { hashPassword } from './src/lib/password';
 
 dotenv.config();
 
@@ -17,7 +18,7 @@ async function seed() {
     id: 'test-user-id',
     name: 'Test User',
     email: 'test@example.com',
-    password: 'password123', // Plain text as per src/lib/auth.ts line 39
+    password: hashPassword('password123'),
   }).onConflictDoNothing();
   
   // Create a default list for the user
