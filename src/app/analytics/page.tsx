@@ -10,10 +10,8 @@ import {
   ArrowUpRight, ArrowDownRight, Activity, Calendar
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { logger } from '@/lib/logger';
 import { Sidebar } from '@/components/Sidebar';
-import { CustomCursor } from '@/components/CustomCursor';
-import { ThemeProvider } from '@/components/ThemeProvider';
-import { AuthProvider } from '@/components/AuthProvider';
 
 interface AnalyticsData {
   summary: {
@@ -57,7 +55,7 @@ export default function AnalyticsPage() {
           setData(result);
         }
       } catch (error) {
-        console.error('Failed to fetch analytics:', error);
+        logger.error('Failed to fetch analytics', { error });
       } finally {
         setLoading(false);
       }
@@ -67,16 +65,22 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="flex h-screen">
+        <Sidebar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="flex items-center justify-center h-screen text-muted-foreground">
-        Failed to load analytics data.
+      <div className="flex h-screen">
+        <Sidebar />
+        <div className="flex-1 flex items-center justify-center text-muted-foreground">
+          Failed to load analytics data.
+        </div>
       </div>
     );
   }
@@ -84,21 +88,18 @@ export default function AnalyticsPage() {
   const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
 
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <div className="flex h-screen bg-background text-foreground selection:bg-primary/20">
-          <CustomCursor />
-          <Sidebar />
-          
-          <main className="flex-1 overflow-y-auto p-8 bg-background/40 backdrop-blur-3xl">
-            <header className="mb-8">
-              <h1 className="text-3xl font-black tracking-tight mb-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                Productivity Analytics
-              </h1>
-              <p className="text-muted-foreground">Visualize your progress and optimize your workflow.</p>
-            </header>
+    <div className="flex h-screen bg-background text-foreground selection:bg-primary/20">
+      <Sidebar />
 
-            {/* Summary Grid */}
+      <main className="flex-1 overflow-y-auto p-8 bg-background/40 backdrop-blur-3xl">
+        <header className="mb-8">
+          <h1 className="text-3xl font-black tracking-tight mb-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            Productivity Analytics
+          </h1>
+          <p className="text-muted-foreground">Visualize your progress and optimize your workflow.</p>
+        </header>
+
+        {/* Summary Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               {[
                 { 
@@ -319,7 +320,5 @@ export default function AnalyticsPage() {
             </motion.div>
           </main>
         </div>
-      </ThemeProvider>
-    </AuthProvider>
-  );
-}
+    );
+  }
