@@ -5,6 +5,7 @@ import { logListActivity, logListUpdate } from '@/lib/activityLog';
 import { ZodError } from 'zod';
 import { TaskList } from '@/types';
 import { auth } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 
 /**
  * @swagger
@@ -75,7 +76,7 @@ export async function GET(
     }
     return NextResponse.json(list);
   } catch (error) {
-    console.error('Error fetching list:', error);
+    logger.error('Error fetching list', { error });
     return NextResponse.json({ error: 'Failed to fetch list' }, { status: 500 });
   }
 }
@@ -109,7 +110,7 @@ export async function PUT(
     if (error instanceof ZodError) {
       return NextResponse.json({ error: 'Validation failed', details: error.issues }, { status: 400 });
     }
-    console.error('Error updating list:', error);
+    logger.error('Error updating list', { error });
     return NextResponse.json({ error: 'Failed to update list' }, { status: 500 });
   }
 }
@@ -137,7 +138,7 @@ export async function DELETE(
     
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error('Error deleting list:', error);
+    logger.error('Error deleting list', { error });
     return NextResponse.json({ error: 'Failed to delete list' }, { status: 500 });
   }
 }
