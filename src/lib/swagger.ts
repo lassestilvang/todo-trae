@@ -105,6 +105,59 @@ export const getApiDocs = () => {
               color: { type: 'string' },
             },
           },
+          TaskTemplate: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              name: { type: 'string' },
+              description: { type: 'string', nullable: true },
+              priority: { type: 'string', enum: ['high', 'medium', 'low', 'none'] },
+              estimate: { type: 'string', pattern: '^\\d{2}:\\d{2}$', nullable: true },
+              listId: { type: 'string', nullable: true },
+              userId: { type: 'string', nullable: true },
+              createdAt: { type: 'string', format: 'date-time' },
+              updatedAt: { type: 'string', format: 'date-time' },
+            },
+          },
+          CreateTemplate: {
+            type: 'object',
+            required: ['name'],
+            properties: {
+              name: { type: 'string' },
+              description: { type: 'string' },
+              priority: { type: 'string', enum: ['high', 'medium', 'low', 'none'] },
+              estimate: { type: 'string', pattern: '^\\d{2}:\\d{2}$' },
+              listId: { type: 'string' },
+            },
+          },
+          UpdateTemplate: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              description: { type: 'string' },
+              priority: { type: 'string', enum: ['high', 'medium', 'low', 'none'] },
+              estimate: { type: 'string', pattern: '^\\d{2}:\\d{2}$' },
+              listId: { type: 'string' },
+            },
+          },
+          Reminder: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              taskId: { type: 'string' },
+              reminderTime: { type: 'string', format: 'date-time' },
+              createdAt: { type: 'string', format: 'date-time' },
+            },
+          },
+          TaskDependency: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              taskId: { type: 'string' },
+              dependsOnTaskId: { type: 'string' },
+              createdAt: { type: 'string', format: 'date-time' },
+            },
+          },
           ActivityLog: {
             type: 'object',
             properties: {
