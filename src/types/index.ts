@@ -54,6 +54,13 @@ export interface TaskTemplate {
   updatedAt: Date;
 }
 
+export interface TaskDependency {
+  id: string;
+  taskId: string;
+  dependsOnTaskId: string;
+  createdAt: Date;
+}
+
 export interface Task {
   id: string;
   listId: string;
@@ -74,11 +81,12 @@ export interface Task {
   order: number;
   createdAt: Date;
   updatedAt: Date;
-  
+
   // Relations
   subtasks?: Subtask[];
   attachments?: Attachment[];
   labels?: Label[];
+  dependencies?: TaskDependency[];
 }
 
 export interface ActivityLog {
