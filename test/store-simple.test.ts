@@ -12,10 +12,12 @@ describe('Store Tests', () => {
       attachments: [],
       activityLogs: [],
       selectedListId: null,
+      selectedLabelId: null,
       selectedView: 'today',
       searchQuery: '',
       showCompleted: true,
       isLoading: false,
+      selectedTaskIds: new Set(),
     });
     useThemeStore.setState({ theme: 'system', isDarkMode: false });
   });
@@ -27,10 +29,12 @@ describe('Store Tests', () => {
       expect(store.lists).toEqual([]);
       expect(store.labels).toEqual([]);
       expect(store.selectedListId).toBeNull();
+      expect(store.selectedLabelId).toBeNull();
       expect(store.selectedView).toBe('today');
       expect(store.searchQuery).toBe('');
       expect(store.showCompleted).toBe(true);
       expect(store.isLoading).toBe(false);
+      expect(store.selectedTaskIds).toEqual(new Set());
     });
 
     test('should set tasks', () => {
