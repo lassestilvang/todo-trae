@@ -5,7 +5,9 @@ import { logger } from './logger';
 const httpServer = createServer();
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3000",
+    // Allow requests from the Next.js frontend (the browser origin),
+    // not the socket.io server's own address
+    origin: process.env.NEXTAUTH_URL || "http://localhost:3000",
     methods: ["GET", "POST"]
   }
 });
