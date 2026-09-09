@@ -1,5 +1,5 @@
 import { Task, Priority } from '@/types';
-import { differenceInDays, isBefore, startOfToday, addDays, setHours, setMinutes, parse } from 'date-fns';
+import { differenceInDays, isBefore, startOfToday, addDays, setHours, setMinutes } from 'date-fns';
 import { logger } from '@/lib/logger';
 
 export function suggestTopTasks(tasks: Task[], count: number = 3): Task[] {
@@ -61,9 +61,14 @@ export function suggestTopTasks(tasks: Task[], count: number = 3): Task[] {
     return { ...task, aiScore: score };
   });
 
-  // Sort by score descending and take the top N
+  // Sort by score descending, then by creation date (newest first) for tie-breaking
   return scoredTasks
-    .sort((a, b) => (b as Task & { aiScore: number }).aiScore - (a as Task & { aiScore: number }).aiScore)
+    .sort((a, b) => {
+      const scoreDiff = (b as Task & { aiScore: number }).aiScore - (a as Task & { aiScore: number }).aiScore;
+      if (scoreDiff !== 0) return scoreDiff;
+      // Tie-break: newer tasks first
+      return (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0);
+    })
     .slice(0, count);
 }
 
@@ -133,7 +138,8 @@ const ESTIMATE_REGEX = /(\d+)\s*(min|minutes?|hrs?|hours?)\b/i;
 const LABEL_REGEX = /#([\w-]+)/g;
 
 // Deadline indicator: "by", "due", "deadline"
-const DEADLINE_REGEX = /\b(by|due|deadline|ddl)\s+(.+?)(?:\s*(?:#|in\s+\d|tomorrow|$))/i;
+// Only captures up to 2 words after the keyword to avoid consuming other parsed entities
+const DEADLINE_REGEX = /\b(by|due|deadline|ddl)\s+(\w+(?:\s+\w+)?)/i;
 
 /**
  * Parses natural language input into structured task fields.
@@ -196,7 +202,6 @@ export function parseNaturalLanguage(
 
   // Extract scheduled date/time
   let date: Date | undefined;
-  let extractedTimeFromDeadline = false;
 
   // Check for date expressions
   const dateResult = parseDateExpression(text, parsedTime);
@@ -205,7 +210,6 @@ export function parseNaturalLanguage(
       date = dateResult;
     } else {
       deadline = dateResult;
-      extractedTimeFromDeadline = true;
     }
     // Remove the matched date text from input
     for (const pattern of DATE_PATTERNS) {
@@ -285,6 +289,11 @@ function parseDateExpression(text: string, parsedTime: { hours: number; minutes:
       }
 
       date = addDays(startOfToday(), result);
+
+      // Guard against invalid dates (e.g., NaN from unsupported weekday like "week"/"month")
+      if (isNaN(date.getTime())) {
+        return null;
+      }
 
       if (parsedTime) {
         date = setMinutes(setHours(date, parsedTime.hours), parsedTime.minutes);
