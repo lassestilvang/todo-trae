@@ -1,13 +1,12 @@
 import { test, expect } from '@playwright/test';
+import { loginAsTestUser } from './helpers/auth';
 
 test.describe('Task Management', () => {
   test.beforeEach(async ({ page }) => {
     page.on('console', msg => {
       if (msg.type() === 'error') console.log(`BROWSER ERROR: ${msg.text()}`);
     });
-    await page.goto('/');
-    // Wait for the page to load and the create task button to appear
-    await page.waitForSelector('button:has-text("Create new task")');
+    await loginAsTestUser(page);
 
     // Switch to "All Tasks" view to ensure all created tasks are visible
     const allTasksButton = page.getByRole('button', { name: /^All$/ });
@@ -23,8 +22,8 @@ test.describe('Task Management', () => {
 
     // Fill in task details
     const taskName = `Test Task ${Date.now()}`;
-    await page.getByPlaceholder('What needs to be done?').fill(taskName);
-    await page.getByPlaceholder('Add more details...').fill('This is a test task description');
+    await page.getByPlaceholder('What needs to be done?').first().fill(taskName);
+    await page.getByPlaceholder('Add more details...').first().fill('This is a test task description');
 
     // Submit the form
     await page.getByRole('button', { name: 'Create Task' }).click();
@@ -37,7 +36,7 @@ test.describe('Task Management', () => {
     // Create a task first
     const taskName = `Task to complete ${Date.now()}`;
     await page.getByRole('button', { name: 'Create new task' }).first().click();
-    await page.getByPlaceholder('What needs to be done?').fill(taskName);
+    await page.getByPlaceholder('What needs to be done?').first().fill(taskName);
     await page.getByRole('button', { name: 'Create Task' }).click();
 
     // Find the task item and click the checkbox
@@ -55,7 +54,7 @@ test.describe('Task Management', () => {
     // Create a task first
     const taskName = `Task to delete ${Date.now()}`;
     await page.getByRole('button', { name: 'Create new task' }).first().click();
-    await page.getByPlaceholder('What needs to be done?').fill(taskName);
+    await page.getByPlaceholder('What needs to be done?').first().fill(taskName);
     await page.getByRole('button', { name: 'Create Task' }).click();
 
     // Click on the task to open edit form
@@ -70,7 +69,7 @@ test.describe('Task Management', () => {
     });
 
     // Find and click delete button in the dialog header
-    const dialog = page.getByRole('dialog');
+    const dialog = page.getByRole('dialog').last();
     const deleteButton = dialog.getByRole('button', { name: 'Delete task' });
     await deleteButton.click();
 
@@ -82,7 +81,7 @@ test.describe('Task Management', () => {
     // Create a task first
     const taskName = `Task to edit ${Date.now()}`;
     await page.getByRole('button', { name: 'Create new task' }).first().click();
-    await page.getByPlaceholder('What needs to be done?').fill(taskName);
+    await page.getByPlaceholder('What needs to be done?').first().fill(taskName);
     await page.getByRole('button', { name: 'Create Task' }).click();
 
     // Click on the task to open edit form
@@ -92,8 +91,8 @@ test.describe('Task Management', () => {
 
     // Update task details
     const updatedName = `${taskName} - updated`;
-    await page.getByPlaceholder('What needs to be done?').fill(updatedName);
-    await page.getByPlaceholder('Add more details...').fill('Updated description');
+    await page.getByPlaceholder('What needs to be done?').first().fill(updatedName);
+    await page.getByPlaceholder('Add more details...').first().fill('Updated description');
 
     // Submit the form
     await page.getByRole('button', { name: 'Save Changes' }).click();
@@ -108,7 +107,7 @@ test.describe('Task Management', () => {
 
     // Fill task name and use AI Parse
     const taskName = `AI Task ${Date.now()}`;
-    await page.getByPlaceholder('What needs to be done?').fill('Submit report #work high priority');
+    await page.getByPlaceholder('What needs to be done?').first().fill('Submit report #work high priority');
 
     // Use the AI Parse button
     await page.getByRole('button', { name: 'AI Parse' }).click();
@@ -128,7 +127,7 @@ test.describe('Task Management', () => {
     expect(result.estimate).toBe('02:00');
 
     // Fill in task name for actual submission
-    await page.getByPlaceholder('What needs to be done?').fill(taskName);
+    await page.getByPlaceholder('What needs to be done?').first().fill(taskName);
     await page.getByRole('button', { name: 'Create Task' }).click();
     await expect(page.getByRole('heading', { name: taskName })).toBeVisible({ timeout: 10000 });
   });
@@ -140,7 +139,7 @@ test.describe('Task Management', () => {
 
     for (const name of [task1, task2]) {
       await page.getByRole('button', { name: 'Create new task' }).first().click();
-      await page.getByPlaceholder('What needs to be done?').fill(name);
+      await page.getByPlaceholder('What needs to be done?').first().fill(name);
       await page.getByRole('button', { name: 'Create Task' }).click();
       await expect(page.getByRole('heading', { name: name })).toBeVisible({ timeout: 10000 });
     }
@@ -171,7 +170,7 @@ test.describe('Task Management', () => {
 
     // Create a task
     await page.getByRole('button', { name: 'Create new task' }).first().click();
-    await page.getByPlaceholder('What needs to be done?').fill(taskName);
+    await page.getByPlaceholder('What needs to be done?').first().fill(taskName);
     await page.getByRole('button', { name: 'Create Task' }).click();
     await expect(page.getByRole('heading', { name: taskName })).toBeVisible({ timeout: 10000 });
 
@@ -207,7 +206,7 @@ test.describe('Task Management', () => {
 
     for (const name of [task1, task2]) {
       await page.getByRole('button', { name: 'Create new task' }).first().click();
-      await page.getByPlaceholder('What needs to be done?').fill(name);
+      await page.getByPlaceholder('What needs to be done?').first().fill(name);
       await page.getByRole('button', { name: 'Create Task' }).click();
       await expect(page.getByRole('heading', { name: name })).toBeVisible({ timeout: 10000 });
     }
