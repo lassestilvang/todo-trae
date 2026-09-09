@@ -1,11 +1,17 @@
 import { test, expect } from '@playwright/test';
+import { loginAsTestUser } from './helpers/auth';
 
 test.describe('List and Label Management', () => {
   test.beforeEach(async ({ page }) => {
     page.on('console', msg => {
       if (msg.type() === 'error') console.log(`BROWSER ERROR: ${msg.text()}`);
     });
-    await page.goto('/');
+    await loginAsTestUser(page);
+
+    // Switch to "All Tasks" view to ensure all created tasks are visible
+    const allTasksButton = page.getByRole('button', { name: /^All$/ });
+    await allTasksButton.click();
+    await expect(page.getByRole('heading', { name: 'All Tasks' })).toBeVisible();
   });
 
   test('should create a new list', async ({ page }) => {
@@ -43,7 +49,7 @@ test.describe('List and Label Management', () => {
     // Create a task first
     const taskName = `Labelled Task ${Date.now()}`;
     await page.getByRole('button', { name: 'Create new task' }).first().click();
-    await page.getByPlaceholder('What needs to be done?').fill(taskName);
+    await page.getByPlaceholder('What needs to be done?').first().fill(taskName);
     await page.getByRole('button', { name: 'Create Task' }).click();
 
     // Wait for task to appear
