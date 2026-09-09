@@ -309,8 +309,7 @@ export function Sidebar() {
           Add new task
         </Button>
 
-        <TaskForm open={isTaskFormOpen} onOpenChange={setTaskFormOpen} />
-        <ListForm open={listFormOpen} onOpenChange={setListFormOpen} />
+                <ListForm open={listFormOpen} onOpenChange={setListFormOpen} />
         <LabelForm open={labelFormOpen} onOpenChange={setLabelFormOpen} />
 
         <div className="relative group">
