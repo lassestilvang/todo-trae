@@ -21,8 +21,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Apply rate limiting to API routes
-  if (pathname.startsWith('/api')) {
+  // Apply rate limiting to API routes (skip in development/test to avoid issues)
+  if (pathname.startsWith('/api') && process.env.NODE_ENV === 'production') {
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     const now = Date.now();
     const key = `api:${ip}`;
