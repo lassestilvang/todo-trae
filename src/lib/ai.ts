@@ -67,7 +67,10 @@ export function suggestTopTasks(tasks: Task[], count: number = 3): Task[] {
       const scoreDiff = (b as Task & { aiScore: number }).aiScore - (a as Task & { aiScore: number }).aiScore;
       if (scoreDiff !== 0) return scoreDiff;
       // Tie-break: newer tasks first
-      return (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0);
+      // createdAt may be a string from the API/DB, not a Date object
+      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      return (isNaN(bTime) ? 0 : bTime) - (isNaN(aTime) ? 0 : aTime);
     })
     .slice(0, count);
 }
