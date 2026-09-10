@@ -50,7 +50,7 @@ function SortableTask({ task }: { task: import('@/types').Task }) {
   };
 
   const isSelected = isTaskSelected(task.id);
-  const showCheckbox = Array.from(selectedTaskIds).length > 0;
+  const showCheckbox = true;
 
   return (
     <div
