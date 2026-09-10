@@ -4,14 +4,35 @@ import { useTaskStore } from '@/stores/taskStore';
 import type { ActivityLog as ActivityLogType, Task as TaskType } from '@/types';
 import { format, formatDistanceToNow } from 'date-fns';
 import { History, Plus, Edit3, CheckCircle, Trash2, Move } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 interface ActivityLogProps {
   task: TaskType;
 }
 
 export function ActivityLog({ task }: ActivityLogProps) {
-  const { activityLogs } = useTaskStore();
+  const { activityLogs, addActivityLog } = useTaskStore();
+  const [isLoading, setIsLoading] = useState(false);
   const taskLogs = activityLogs.filter(log => log.taskId === task.id);
+
+  useEffect(() => {
+    // Fetch task-specific activity logs if we haven't already
+    if (!taskLogs.length) {
+      setIsLoading(true);
+      fetch(`/api/activity-logs?taskId=${task.id}`)
+        .then(res => res.json())
+        .then((logs: ActivityLogType[]) => {
+          logs.forEach(log => addActivityLog(log));
+        })
+        .catch(error => {
+          logger.error('Failed to load activity logs', { error });
+          toast.error('Failed to load activity history');
+        })
+        .finally(() => setIsLoading(false));
+    }
+  }, [task.id, taskLogs.length, addActivityLog]);
 
   const getActionIcon = (action: ActivityLogType['action']) => {
     switch (action) {
@@ -62,6 +83,15 @@ export function ActivityLog({ task }: ActivityLogProps) {
     }
     return value;
   };
+
+  if (isLoading) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        <History className="w-8 h-8 mx-auto mb-2 opacity-50 animate-pulse" />
+        <p className="text-sm">Loading activity history...</p>
+      </div>
+    );
+  }
 
   if (taskLogs.length === 0) {
     return (
