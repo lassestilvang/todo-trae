@@ -14,6 +14,7 @@ interface TaskStore {
   selectedView: ViewType;
   searchQuery: string;
   showCompleted: boolean;
+  showCompletedOnly: boolean;
   isLoading: boolean;
   selectedTaskIds: Set<string>;
   
@@ -29,6 +30,7 @@ interface TaskStore {
   setSelectedView: (view: ViewType) => void;
   setSearchQuery: (query: string) => void;
   setShowCompleted: (show: boolean) => void;
+  setShowCompletedOnly: (show: boolean) => void;
   setIsLoading: (loading: boolean) => void;
   
   // Task operations
@@ -85,6 +87,7 @@ export const useTaskStore = create<TaskStore>()(
       selectedView: 'today',
       searchQuery: '',
       showCompleted: true,
+      showCompletedOnly: false,
       isLoading: false,
       selectedTaskIds: new Set(),
       
@@ -99,6 +102,7 @@ export const useTaskStore = create<TaskStore>()(
       setSelectedView: (view) => set({ selectedView: view, selectedLabelId: null }),
       setSearchQuery: (query) => set({ searchQuery: query }),
       setShowCompleted: (show) => set({ showCompleted: show }),
+      setShowCompletedOnly: (show) => set({ showCompletedOnly: show }),
       setIsLoading: (loading) => set({ isLoading: loading }),
       selectTask: (taskId) =>
         set((state) => {
@@ -115,11 +119,7 @@ export const useTaskStore = create<TaskStore>()(
       selectAllTasks: (taskIds) => set({ selectedTaskIds: new Set(taskIds) }),
       clearSelection: () => set({ selectedTaskIds: new Set() }),
       isTaskSelected: (taskId) => {
-        let result = false;
-        useTaskStore.getState().selectedTaskIds.forEach((id) => {
-          if (id === taskId) result = true;
-        });
-        return result;
+        return useTaskStore.getState().selectedTaskIds.has(taskId);
       },
       
       addTask: (task) => {
@@ -265,6 +265,7 @@ export const useTaskStore = create<TaskStore>()(
         selectedLabelId: state.selectedLabelId,
         selectedView: state.selectedView,
         showCompleted: state.showCompleted,
+        showCompletedOnly: state.showCompletedOnly,
       }),
     }
   )
