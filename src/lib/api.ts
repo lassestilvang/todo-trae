@@ -537,8 +537,10 @@ export async function addTaskDependency(taskId: string, dependsOnTaskId: string,
     throw new Error('Task cannot depend on itself');
   }
 
-  // Check for circular dependency
-  if (await hasCircularDependency(dependsOnTaskId, taskId, userId)) {
+  // Check for circular dependency: if taskId already (transitively) depends on
+  // dependsOnTaskId, then adding taskId → dependsOnTaskId would create a cycle.
+  // We start from dependsOnTaskId and follow the chain to see if we reach taskId.
+  if (await hasCircularDependency(taskId, dependsOnTaskId, userId)) {
     throw new Error('Circular dependency detected');
   }
 
@@ -593,8 +595,7 @@ async function hasCircularDependency(fromTaskId: string, toTaskId: string, userI
     const deps = await db
       .select({ dependsOnTaskId: taskDependencies.dependsOnTaskId })
       .from(taskDependencies)
-      .innerJoin(tasks, eq(taskDependencies.taskId, tasks.id))
-      .where(eq(taskDependencies.dependsOnTaskId, current));
+      .where(eq(taskDependencies.taskId, current));
     for (const dep of deps) {
       queue.push(dep.dependsOnTaskId);
     }
