@@ -7,6 +7,7 @@ import { Upload, File, X, Download } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { logger } from '@/lib/logger';
+import { toast } from 'sonner';
 
 interface AttachmentManagerProps {
   taskId: string;
@@ -26,24 +27,26 @@ export function AttachmentManager({ taskId, attachments }: AttachmentManagerProp
 
     try {
       for (const file of Array.from(files)) {
-        // In a real app, you would upload to a file storage service
-        // For now, we'll create a mock file path and store the file info
-        const filePath = `/uploads/${taskId}/${file.name}`;
-        
-        const attachment: Attachment = {
-          id: crypto.randomUUID(),
-          taskId,
-          filename: file.name,
-          filePath,
-          fileSize: file.size,
-          mimeType: file.type,
-          createdAt: new Date(),
-        };
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('taskId', taskId);
 
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Upload failed for ${file.name}`);
+        }
+
+        const attachment: Attachment = await response.json();
         addAttachment(attachment);
       }
+      toast.success(`${files.length} file${files.length > 1 ? 's' : ''} uploaded`);
     } catch (error) {
       logger.error('Error uploading files', { error });
+      toast.error('Failed to upload files');
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -70,12 +73,13 @@ export function AttachmentManager({ taskId, attachments }: AttachmentManagerProp
   };
 
   const handleDownload = (attachment: Attachment) => {
-    // In a real app, this would download from your file storage service
     logger.debug('Download requested for attachment', { filename: attachment.filename });
-    // For demo purposes, we'll create a blob URL
+    // Use the actual file path — in production this could be an S3 URL
     const link = document.createElement('a');
-    link.href = '#';
+    link.href = attachment.filePath;
     link.download = attachment.filename;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
     link.click();
   };
 
