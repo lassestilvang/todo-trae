@@ -5,22 +5,33 @@ import { motion } from 'framer-motion';
 import { useTaskStore } from '@/stores/taskStore';
 import { Task as TaskType } from '@/types';
 import { format, isToday, isTomorrow, isPast } from 'date-fns';
-import { 
-  Circle, 
-  CheckCircle2, 
-  Calendar, 
+import {
+  Circle,
+  CheckCircle2,
+  Calendar,
   Flag,
   MoreHorizontal,
   ChevronRight,
   ChevronDown,
   Repeat,
   Paperclip,
-  ListTodo
+  ListTodo,
+  Clock,
+  Link,
+  Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/components/ui/DropdownMenu';
 import { TaskForm } from './TaskForm';
 import { emitTaskUpdate } from '@/lib/socket-client';
 import { logger } from '@/lib/logger';
+import { toast } from 'sonner';
 
 interface TaskProps {
   task: TaskType;
@@ -64,9 +75,14 @@ export function Task({ task }: TaskProps) {
       const updatedTask = await response.json();
       toggleTaskComplete(task.id);
       emitTaskUpdate(task.listId, 'update', updatedTask);
+      toast.success(task.completed ? 'Task marked incomplete' : 'Task completed');
     } catch (error) {
       logger.error('Error toggling task completion', { error, taskId: task.id });
     }
+  };
+
+  const handleEdit = () => {
+    setEditFormOpen(true);
   };
 
   return (
@@ -158,9 +174,73 @@ export function Task({ task }: TaskProps) {
               </div>
 
               <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full" aria-label="Task options">
-                  <MoreHorizontal className="w-4 h-4" />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full" aria-label="Task options">
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem
+                      className="gap-2 cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEdit();
+                      }}
+                    >
+                      <Clock className="w-4 h-4" />
+                      <span>Edit</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="gap-2 cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleComplete(e as any);
+                      }}
+                    >
+                      {task.completed ? (
+                        <>
+                          <Circle className="w-4 h-4" />
+                          <span>Mark incomplete</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>Complete</span>
+                        </>
+                      )}
+                    </DropdownMenuItem>
+                    {task.dependencies && task.dependencies.length > 0 && (
+                      <DropdownMenuItem
+                        className="gap-2 cursor-pointer"
+                        disabled
+                        aria-label="Task has dependencies — cannot delete"
+                      >
+                        <Link className="w-4 h-4" />
+                        <span>Has dependencies</span>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        if (!confirm('Are you sure you want to delete this task?')) return;
+                        try {
+                          await fetch(`/api/tasks/${task.id}`, { method: 'DELETE' });
+                          useTaskStore.getState().deleteTask(task.id);
+                          emitTaskUpdate(task.listId, 'delete', task);
+                          toast.success('Task deleted');
+                        } catch {
+                          toast.error('Failed to delete task');
+                        }
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>Delete</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
