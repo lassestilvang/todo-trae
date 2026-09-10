@@ -136,23 +136,25 @@ export function BulkOperationsBar({ listId, labels, lists, onBulkAction }: BulkO
       : tasks;
     const visibleTaskIds = listTasks.map(t => t.id);
     const allSelected = visibleTaskIds.every(id => selectedTaskIds.has(id));
+
     if (allSelected) {
-      const unselected = visibleTaskIds.filter(id => !selectedTaskIds.has(id));
-      // Deselect visible tasks
-      unselected.forEach(id => {
-        // We need to invert: if all are selected, deselect all visible
-      });
-      // Actually, invert selection
-      const newSelection = new Set(visibleTaskIds.filter(id => !selectedTaskIds.has(id)));
+      // Invert: deselect all visible tasks
+      const newSelection = new Set(
+        Array.from(selectedTaskIds).filter(id => !visibleTaskIds.includes(id))
+      );
       useTaskStore.setState({ selectedTaskIds: newSelection });
     } else {
-      useTaskStore.setState({ selectedTaskIds: new Set(visibleTaskIds) });
+      // Select all visible tasks
+      useTaskStore.setState({ selectedTaskIds: new Set([...selectedTaskIds, ...visibleTaskIds]) });
     }
   };
 
   const listOptions = lists.map(l => ({ value: l.id, label: l.name }));
-  const isAllSelected = listId
-    ? tasks.filter(t => t.listId === listId).every(t => selectedTaskIds.has(t.id))
+  const visibleTasks = listId
+    ? tasks.filter(t => t.listId === listId)
+    : tasks;
+  const isAllSelected = visibleTasks.length > 0
+    ? visibleTasks.every(t => selectedTaskIds.has(t.id))
     : false;
 
   return (
@@ -192,7 +194,7 @@ export function BulkOperationsBar({ listId, labels, lists, onBulkAction }: BulkO
           Uncomplete
         </Button>
 
-        <select
+        <Select
           value=""
           onChange={(e) => {
             if (e.target.value) handleBulkMove(e.target.value);
@@ -203,9 +205,9 @@ export function BulkOperationsBar({ listId, labels, lists, onBulkAction }: BulkO
           {listOptions.map(l => (
             <option key={l.value} value={l.value}>{l.label}</option>
           ))}
-        </select>
+        </Select>
 
-        <select
+        <Select
           value=""
           onChange={(e) => {
             if (e.target.value) handleBulkSetPriority(e.target.value as 'low' | 'medium' | 'high');
@@ -216,7 +218,7 @@ export function BulkOperationsBar({ listId, labels, lists, onBulkAction }: BulkO
           <option value="low">Low Priority</option>
           <option value="medium">Medium Priority</option>
           <option value="high">High Priority</option>
-        </select>
+        </Select>
 
         <Button
           variant="outline"
@@ -228,16 +230,14 @@ export function BulkOperationsBar({ listId, labels, lists, onBulkAction }: BulkO
           Delete
         </Button>
 
-        {listId && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleSelectAll}
-            className="rounded-xl text-xs"
-          >
-            {isAllSelected ? 'Deselect all' : 'Select all'}
-          </Button>
-        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleSelectAll}
+          className="rounded-xl text-xs"
+        >
+          {isAllSelected ? 'Deselect all' : 'Select all'}
+        </Button>
       </div>
     </div>
   );
