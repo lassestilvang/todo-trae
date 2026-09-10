@@ -123,6 +123,8 @@ mock.module('@/lib/api', () => ({
   getAllActivityLogs: mockGetAllActivityLogs,
   getActivityLogByTaskId: mockGetActivityLogByTaskId,
   createActivityLog: mockCreateActivityLog,
+  generateNextRecurringTask: mock(async () => null),
+  calculateNextRecurringDate: mock(() => null),
 }));
 
 mock.module('@/lib/activityLog', () => ({
