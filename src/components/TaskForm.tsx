@@ -5,7 +5,7 @@ import { useTaskStore } from '@/stores/taskStore';
 import { useTemplateStore } from '@/stores/templateStore';
 import { Label, Priority, Task, TaskTemplate } from '@/types';
 import { format } from 'date-fns';
-import { Calendar, Clock, Flag, Hash, Trash2, Copy, Bell, X, Link, Unlink, Sparkles } from 'lucide-react';
+import { Calendar, Clock, Flag, Hash, Trash2, Copy, Bell, X, Link, Unlink, Sparkles, History } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
@@ -15,6 +15,7 @@ import { SubtaskManager } from '@/components/SubtaskManager';
 import { AttachmentManager } from '@/components/AttachmentManager';
 import { RecurringTaskSelector } from '@/components/RecurringTaskSelector';
 import { TimeTracker } from '@/components/TimeTracker';
+import { ActivityLog } from '@/components/ActivityLog';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { emitTaskUpdate } from '@/lib/socket-client';
@@ -30,7 +31,7 @@ interface TaskFormProps {
 export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
   const { lists, labels, subtasks, attachments, addTask, updateTask, deleteTask } = useTaskStore();
   const { templates, fetchTemplates, addTemplate } = useTemplateStore();
-  const [activeTab, setActiveTab] = useState<'basic' | 'advanced'>('basic');
+  const [activeTab, setActiveTab] = useState<'basic' | 'advanced' | 'activity'>('basic');
   const [formData, setFormData] = useState({
     name: task?.name || '',
     description: task?.description || '',
@@ -286,8 +287,8 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
                 className="absolute inset-y-1 rounded-xl bg-background shadow-sm border border-border/10"
                 initial={false}
                 animate={{
-                  x: activeTab === 'basic' ? 0 : '100%',
-                  width: 'calc(50% - 4px)',
+                  x: activeTab === 'basic' ? 0 : activeTab === 'advanced' ? '100%' : '200%',
+                  width: 'calc(33.333% - 4px)',
                 }}
                 transition={{ type: "spring", bounce: 0.15, duration: 0.4 }}
               />
@@ -313,6 +314,19 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
               >
                 Advanced
               </button>
+              {task && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('activity')}
+                  className={`relative z-10 flex-1 px-4 py-2.5 text-sm font-bold rounded-xl transition-colors duration-200 ${
+                    activeTab === 'activity' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                  aria-selected={activeTab === 'activity'}
+                  role="tab"
+                >
+                  Activity
+                </button>
+              )}
             </div>
 
             <form id="task-form" onSubmit={handleSubmit} className="space-y-6">
@@ -493,7 +507,7 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
                       </div>
                     </div>
                   </motion.div>
-                ) : (
+                ) : activeTab === 'advanced' ? (
                   <motion.div
                     key="advanced"
                     initial={{ opacity: 0, y: 10 }}
@@ -774,6 +788,23 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
                         />
                       </div>
                     )}
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="activity"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="space-y-8"
+                  >
+                    <div className="glass-card p-6 rounded-2xl border-border/20">
+                      <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <History className="w-3 h-3" />
+                        Activity History
+                      </h3>
+                      {task && <ActivityLog task={task} />}
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
