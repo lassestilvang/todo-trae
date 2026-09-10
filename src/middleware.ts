@@ -62,6 +62,8 @@ export function middleware(request: NextRequest) {
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  // Content Security Policy — restrict to same-origin with safe fallbacks
+  response.headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://*.sentry.io; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data: https:; connect-src 'self' wss: https:; object-src 'none'; base-uri 'self'; frame-ancestors 'none';");
 
   // HSTS only in production (prevents issues with self-signed certs in dev)
   if (process.env.NODE_ENV === 'production') {
