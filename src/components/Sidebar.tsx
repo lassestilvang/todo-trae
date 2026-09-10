@@ -44,6 +44,7 @@ import {
 import { TaskForm } from './TaskForm';
 import { ListForm } from './ListForm';
 import { LabelForm } from './LabelForm';
+import { NotificationCenter } from './NotificationCenter';
 import { useRef, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
@@ -183,11 +184,17 @@ export function Sidebar() {
                   </div>
                 </div>
               </div>
-              <DropdownMenuItem className="gap-2 rounded-lg py-2 cursor-pointer">
+              <DropdownMenuItem
+                className="gap-2 rounded-lg py-2 cursor-pointer"
+                onClick={() => router.push('/settings')}
+              >
                 <User className="w-4 h-4 text-muted-foreground" />
                 <span>Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2 rounded-lg py-2 cursor-pointer">
+              <DropdownMenuItem
+                className="gap-2 rounded-lg py-2 cursor-pointer"
+                onClick={() => router.push('/settings')}
+              >
                 <Settings className="w-4 h-4 text-muted-foreground" />
                 <span>Settings</span>
               </DropdownMenuItem>
@@ -262,9 +269,7 @@ export function Sidebar() {
           </DropdownMenu>
 
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-xl hover:bg-accent/50" aria-label="Notifications">
-              <Bell className="w-4 h-4" />
-            </Button>
+            <NotificationCenter />
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
