@@ -6,6 +6,7 @@ import { ZodError } from 'zod';
 import { Task } from '@/types';
 import { auth } from '@/lib/auth';
 import { logger } from '@/lib/logger';
+import { createTask, calculateNextRecurringDate, generateNextRecurringTask } from '@/lib/api';
 
 /**
  * @swagger
@@ -94,17 +95,27 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
     const validatedData = UpdateTaskSchema.parse(body);
-    
+
     const existingTask = await getTaskById(id, session.user.id);
     if (!existingTask) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
 
     const updatedTask = await updateTask(id, session.user.id, validatedData as Partial<Task>);
-    
+
     // Log activity
     await logTaskUpdate(id, validatedData, existingTask, session.user.id);
-    
+
+    // Auto-generate next recurring task instance when completing a recurring task
+    if (validatedData.completed === true && existingTask.recurring && !existingTask.completed) {
+      try {
+        await generateNextRecurringTask(existingTask, session.user.id);
+      } catch (error) {
+        logger.error('Failed to generate next recurring task', { error, taskId: id });
+        // Don't fail the response — task was already updated
+      }
+    }
+
     return NextResponse.json(updatedTask);
   } catch (error) {
     if (error instanceof ZodError) {
