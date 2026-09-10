@@ -9,7 +9,7 @@ test.describe('List and Label Management', () => {
     await loginAsTestUser(page);
 
     // Switch to "All Tasks" view to ensure all created tasks are visible
-    const allTasksButton = page.getByRole('button', { name: /^All$/ });
+    const allTasksButton = page.getByRole('button', { name: /^All/ });
     await allTasksButton.click();
     await expect(page.getByRole('heading', { name: 'All Tasks' })).toBeVisible();
   });
@@ -25,7 +25,7 @@ test.describe('List and Label Management', () => {
     await page.getByRole('button', { name: 'Create List' }).click();
 
     // Verify list is created in the sidebar
-    await expect(page.locator('button').filter({ hasText: listName })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('button', { name: new RegExp(listName) })).toBeVisible({ timeout: 10000 });
   });
 
   test('should create a new label', async ({ page }) => {
