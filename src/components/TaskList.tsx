@@ -101,7 +101,7 @@ function SortableTask({ task }: { task: import('@/types').Task }) {
 }
 
 export function TaskList() {
-  const { tasks, labels, lists, selectedListId, selectedLabelId, selectedView, searchQuery, showCompleted, setSelectedLabelId, reorderTasks, selectedTaskIds, clearSelection } = useTaskStore();
+  const { tasks, labels, lists, selectedListId, selectedLabelId, selectedView, searchQuery, showCompleted, showCompletedOnly, setShowCompletedOnly, setSelectedLabelId, reorderTasks, selectedTaskIds, clearSelection } = useTaskStore();
   const { isTaskFormOpen: taskFormOpen, setTaskFormOpen: setTaskFormOpen } = useUIStore();
 
   const filteredTasks = useMemo(() => {
@@ -149,7 +149,11 @@ export function TaskList() {
     }
 
     // Filter by completion status
-    if (!showCompleted) {
+    if (showCompletedOnly) {
+      // Show only completed tasks
+      filtered = filtered.filter(task => task.completed);
+    } else if (!showCompleted) {
+      // Hide completed tasks
       filtered = filtered.filter(task => !task.completed);
     }
 
@@ -192,7 +196,7 @@ export function TaskList() {
       const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return bTime - aTime;
     });
-  }, [tasks, selectedView, selectedListId, searchQuery, showCompleted]);
+  }, [tasks, selectedView, selectedListId, searchQuery, showCompleted, showCompletedOnly]);
 
   const activeTaskCount = useMemo(() => {
     return filteredTasks.filter(task => !task.completed).length;
