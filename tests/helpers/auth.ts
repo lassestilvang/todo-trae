@@ -14,5 +14,7 @@ export async function loginAsTestUser(page: Page): Promise<void> {
 
   // Wait for redirect to home page after successful login
   await page.waitForURL('http://localhost:3000/', { timeout: 15000 });
+  // Wait for the app to finish loading data and stabilize
+  await page.waitForLoadState('networkidle', { timeout: 10000 });
 }
 
