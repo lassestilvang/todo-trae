@@ -46,11 +46,11 @@ export async function GET(request: NextRequest) {
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined;
     const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : undefined;
     const taskId = searchParams.get('taskId');
-    
-    const logs = taskId 
+
+    const logs = taskId
       ? await getActivityLogByTaskId(taskId, session.user.id, limit, offset)
       : await getAllActivityLogs(session.user.id, limit, offset);
-      
+
     return NextResponse.json(logs);
   } catch (error) {
     logger.error('Error fetching activity logs', { error });
