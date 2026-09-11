@@ -60,15 +60,21 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const validatedData = TaskListSchema.parse(body);
-    const list = await createList(validatedData as Omit<TaskList, 'createdAt' | 'updatedAt'>, session.user.id);
-    
+    const list = await createList(
+      validatedData as Omit<TaskList, 'createdAt' | 'updatedAt'>,
+      session.user.id
+    );
+
     // Log activity
     await logListActivity(list.id, 'created', session.user.id);
-    
+
     return NextResponse.json(list, { status: 201 });
   } catch (error) {
     if (error instanceof ZodError) {
-      return NextResponse.json({ error: 'Validation failed', details: error.issues }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.issues },
+        { status: 400 }
+      );
     }
     logger.error('Error creating list', { error });
     return NextResponse.json({ error: 'Failed to create list' }, { status: 500 });
