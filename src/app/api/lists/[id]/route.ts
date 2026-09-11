@@ -59,10 +59,7 @@ import { logger } from '@/lib/logger';
  *         description: List not found.
  */
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -81,10 +78,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -94,21 +88,24 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
     const validatedData = UpdateTaskListSchema.parse(body);
-    
+
     const existingList = await getListById(id, session.user.id);
     if (!existingList) {
       return NextResponse.json({ error: 'List not found' }, { status: 404 });
     }
 
     const updatedList = await updateList(id, session.user.id, validatedData as Partial<TaskList>);
-    
+
     // Log activity
     await logListUpdate(id, validatedData, existingList, session.user.id);
-    
+
     return NextResponse.json(updatedList);
   } catch (error) {
     if (error instanceof ZodError) {
-      return NextResponse.json({ error: 'Validation failed', details: error.issues }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.issues },
+        { status: 400 }
+      );
     }
     logger.error('Error updating list', { error });
     return NextResponse.json({ error: 'Failed to update list' }, { status: 500 });
@@ -132,10 +129,10 @@ export async function DELETE(
     }
 
     await deleteList(id, session.user.id);
-    
+
     // Log activity
     await logListActivity(id, 'deleted', session.user.id);
-    
+
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     logger.error('Error deleting list', { error });
