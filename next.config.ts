@@ -1,10 +1,10 @@
-import type { NextConfig } from "next";
-import { withSentryConfig } from "@sentry/nextjs";
-import withPWAInit from "@ducanh2912/next-pwa";
+import type { NextConfig } from 'next';
+import { withSentryConfig } from '@sentry/nextjs';
+import withPWAInit from '@ducanh2912/next-pwa';
 
 const withPWA = withPWAInit({
-  dest: "public",
-  disable: process.env.NODE_ENV === "development",
+  dest: 'public',
+  disable: process.env.NODE_ENV === 'development',
   register: true,
 });
 
@@ -12,13 +12,13 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   reactCompiler: true,
   compiler: {
-    removeConsole: { exclude: ["error", "warn"] },
+    removeConsole: { exclude: ['error', 'warn'] },
   },
   images: {
-    formats: ["image/avif", "image/webp"],
+    formats: ['image/avif', 'image/webp'],
   },
   experimental: {
-    optimizePackageImports: ["lucide-react"],
+    optimizePackageImports: ['lucide-react'],
   },
   async headers() {
     return [
@@ -57,8 +57,8 @@ export default withSentryConfig(config, {
   // For all available options, see:
   // https://github.com/getsentry/sentry-webpack-plugin#options
 
-  org: "n0rd",
-  project: "daily-task-planner",
+  org: 'n0rd',
+  project: 'daily-task-planner',
 
   // Only print logs for uploading source maps in CI
   silent: !process.env.CI,
@@ -71,7 +71,7 @@ export default withSentryConfig(config, {
 
   // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
   // This can increase your server load as well as your Sentry bill.
-  tunnelRoute: "/monitoring",
+  tunnelRoute: '/monitoring',
 
   // Automatically tree-shake Sentry logger statements to reduce bundle size
   // disableLogger: true,
