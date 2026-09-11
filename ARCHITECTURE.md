@@ -47,6 +47,7 @@ The database consists of the following core tables:
 - **`activity_log`**: A chronological record of all modifications (created, updated, deleted).
 
 ### Relationships
+
 - `tasks` belongs to a `task_list`.
 - `tasks` can have multiple `labels` (and vice-versa).
 - `tasks` can have many `subtasks`, `reminders`, and `attachments`.
@@ -56,14 +57,18 @@ The database consists of the following core tables:
 ## 🧠 State Management (Zustand)
 
 ### Task Store (`taskStore.ts`)
+
 Manages tasks, lists, labels, and the current view filters.
+
 - **`tasks`**: Array of all loaded tasks.
 - **`lists`**: Array of available task lists.
 - **`labels`**: Array of available tags.
 - **`selectedView`**: Current filter (Today, Upcoming, All, etc.).
 
 ### Theme Store (`themeStore.ts`)
+
 Manages the visual appearance of the application.
+
 - **`theme`**: `'light'`, `'dark'`, or `'system'`.
 - **`isDarkMode`**: Boolean reflecting the actual applied mode.
 - **Reactivity**: Automatically listens to OS-level theme changes when set to `system`.
@@ -73,6 +78,7 @@ Manages the visual appearance of the application.
 ## 📝 Activity Logging
 
 The application maintains a detailed audit trail. Every significant change (CRUD operations) is logged with:
+
 - `taskId`, `listId`, or `labelId`
 - `action` (e.g., "created", "updated", "deleted")
 - `field` (if an update)
@@ -92,4 +98,5 @@ The project uses **Bun Test** for unit and integration testing.
 - **E2E Tests**: Located in `tests/`, these use **Playwright** to test the full application flow in the browser.
 
 ### Test Database Environment
+
 To run database tests, ensure you have a `.env` file with a valid `DATABASE_URL` pointing to a PostgreSQL instance. The tests will automatically manage the schema using Drizzle.
