@@ -12,7 +12,6 @@ import {
   reminders,
   taskDependencies,
 } from '@/db/schema';
-import { eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 
 const ImportDataSchema = z.object({
@@ -95,10 +94,7 @@ export async function POST(request: NextRequest) {
 
     const parsed = ImportDataSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.issues[0].message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
     }
 
     const { data } = parsed.data;
@@ -117,13 +113,16 @@ export async function POST(request: NextRequest) {
       // Import lists
       if (data.lists && data.lists.length > 0) {
         for (const list of data.lists) {
-          await tx.insert(taskLists).values({
-            ...list,
-            userId,
-          }).onConflictDoUpdate({
-            target: taskLists.id,
-            set: { name: list.name, color: list.color, emoji: list.emoji },
-          });
+          await tx
+            .insert(taskLists)
+            .values({
+              ...list,
+              userId,
+            })
+            .onConflictDoUpdate({
+              target: taskLists.id,
+              set: { name: list.name, color: list.color, emoji: list.emoji },
+            });
           imported.lists++;
         }
       }
@@ -131,13 +130,16 @@ export async function POST(request: NextRequest) {
       // Import labels
       if (data.labels && data.labels.length > 0) {
         for (const label of data.labels) {
-          await tx.insert(labels).values({
-            ...label,
-            userId,
-          }).onConflictDoUpdate({
-            target: labels.id,
-            set: { name: label.name, color: label.color, icon: label.icon },
-          });
+          await tx
+            .insert(labels)
+            .values({
+              ...label,
+              userId,
+            })
+            .onConflictDoUpdate({
+              target: labels.id,
+              set: { name: label.name, color: label.color, icon: label.icon },
+            });
           imported.labels++;
         }
       }
@@ -145,21 +147,24 @@ export async function POST(request: NextRequest) {
       // Import tasks
       if (data.tasks && data.tasks.length > 0) {
         for (const task of data.tasks) {
-          await tx.insert(tasks).values({
-            ...task,
-            userId,
-          }).onConflictDoUpdate({
-            target: tasks.id,
-            set: {
-              name: task.name,
-              description: task.description,
-              completed: task.completed,
-              priority: task.priority,
-              deadline: task.deadline,
-              date: task.date,
-              order: task.order,
-            },
-          });
+          await tx
+            .insert(tasks)
+            .values({
+              ...task,
+              userId,
+            })
+            .onConflictDoUpdate({
+              target: tasks.id,
+              set: {
+                name: task.name,
+                description: task.description,
+                completed: task.completed,
+                priority: task.priority,
+                deadline: task.deadline,
+                date: task.date,
+                order: task.order,
+              },
+            });
           imported.tasks++;
         }
       }
@@ -167,10 +172,13 @@ export async function POST(request: NextRequest) {
       // Import subtasks
       if (data.subtasks && data.subtasks.length > 0) {
         for (const subtask of data.subtasks) {
-          await tx.insert(subtasks).values(subtask).onConflictDoUpdate({
-            target: subtasks.id,
-            set: { name: subtask.name, completed: subtask.completed, order: subtask.order },
-          });
+          await tx
+            .insert(subtasks)
+            .values(subtask)
+            .onConflictDoUpdate({
+              target: subtasks.id,
+              set: { name: subtask.name, completed: subtask.completed, order: subtask.order },
+            });
           imported.subtasks++;
         }
       }
@@ -186,19 +194,22 @@ export async function POST(request: NextRequest) {
       // Import templates
       if (data.taskTemplates && data.taskTemplates.length > 0) {
         for (const template of data.taskTemplates) {
-          await tx.insert(taskTemplates).values({
-            ...template,
-            userId,
-          }).onConflictDoUpdate({
-            target: taskTemplates.id,
-            set: {
-              name: template.name,
-              description: template.description,
-              priority: template.priority,
-              estimate: template.estimate,
-              listId: template.listId,
-            },
-          });
+          await tx
+            .insert(taskTemplates)
+            .values({
+              ...template,
+              userId,
+            })
+            .onConflictDoUpdate({
+              target: taskTemplates.id,
+              set: {
+                name: template.name,
+                description: template.description,
+                priority: template.priority,
+                estimate: template.estimate,
+                listId: template.listId,
+              },
+            });
           imported.templates++;
         }
       }
