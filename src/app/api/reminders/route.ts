@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { getRemindersByTaskId, createReminder, deleteReminder } from '@/lib/api';
 import { db } from '@/db';
-import { reminders, tasks } from '@/db/schema';
+import { tasks } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -142,10 +142,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const parsed = CreateReminderSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.issues[0].message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
     }
 
     const { taskId, reminderTime } = parsed.data;
@@ -180,10 +177,7 @@ export async function DELETE(request: NextRequest) {
     const body = await request.json();
     const parsed = DeleteReminderSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.issues[0].message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
     }
 
     const { taskId, reminderTime } = parsed.data;
