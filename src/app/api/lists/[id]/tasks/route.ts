@@ -37,10 +37,7 @@ import { auth } from '@/lib/auth';
  *         description: Server error.
  */
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -48,7 +45,7 @@ export async function GET(
     }
 
     const { id } = await params;
-    
+
     // Verify list exists and belongs to user
     const list = await getListById(id, session.user.id);
     if (!list) {
@@ -58,7 +55,7 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined;
     const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : undefined;
-    
+
     const tasks = await getTasksByListId(id, session.user.id, limit, offset);
     return NextResponse.json(tasks);
   } catch (error) {
