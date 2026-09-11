@@ -14,26 +14,32 @@ const db = drizzle(pool, { schema });
 
 async function seed() {
   console.log('Seeding user...');
-  await db.insert(schema.users).values({
-    id: 'test-user-id',
-    name: 'Test User',
-    email: 'test@example.com',
-    password: hashPassword('password123'),
-  }).onConflictDoNothing();
-  
+  await db
+    .insert(schema.users)
+    .values({
+      id: 'test-user-id',
+      name: 'Test User',
+      email: 'test@example.com',
+      password: hashPassword('password123'),
+    })
+    .onConflictDoNothing();
+
   // Create a default list for the user
-  await db.insert(schema.taskLists).values({
-    id: 'default-list-id',
-    name: 'Inbox',
-    userId: 'test-user-id',
-    isDefault: true,
-  }).onConflictDoNothing();
+  await db
+    .insert(schema.taskLists)
+    .values({
+      id: 'default-list-id',
+      name: 'Inbox',
+      userId: 'test-user-id',
+      isDefault: true,
+    })
+    .onConflictDoNothing();
 
   console.log('User seeded!');
   process.exit(0);
 }
 
-seed().catch(err => {
+seed().catch((err) => {
   console.error(err);
   process.exit(1);
 });
