@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { db } from '@/db';
@@ -33,7 +33,7 @@ import { eq, inArray } from 'drizzle-orm';
  *       401:
  *         description: Unauthorized.
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -44,34 +44,27 @@ export async function GET(request: NextRequest) {
 
     // Fetch user's tasks first to get IDs for filtering relation tables
     const tasksRows = await db.select().from(tasks).where(eq(tasks.userId, userId));
-    const taskIds = tasksRows.map(t => t.id);
+    const taskIds = tasksRows.map((t) => t.id);
 
     // Fetch all user data in parallel
-    const [
-      lists,
-      labelRows,
-      subtaskRows,
-      taskLabelRows,
-      templateRows,
-      reminderRows,
-      depRows,
-    ] = await Promise.all([
-      db.select().from(taskLists).where(eq(taskLists.userId, userId)),
-      db.select().from(labels).where(eq(labels.userId, userId)),
-      taskIds.length > 0
-        ? db.select().from(subtasks).where(inArray(subtasks.taskId, taskIds))
-        : Promise.resolve([]),
-      taskIds.length > 0
-        ? db.select().from(taskLabels).where(inArray(taskLabels.taskId, taskIds))
-        : Promise.resolve([]),
-      db.select().from(taskTemplates).where(eq(taskTemplates.userId, userId)),
-      taskIds.length > 0
-        ? db.select().from(reminders).where(inArray(reminders.taskId, taskIds))
-        : Promise.resolve([]),
-      taskIds.length > 0
-        ? db.select().from(taskDependencies).where(inArray(taskDependencies.taskId, taskIds))
-        : Promise.resolve([]),
-    ]);
+    const [lists, labelRows, subtaskRows, taskLabelRows, templateRows, reminderRows, depRows] =
+      await Promise.all([
+        db.select().from(taskLists).where(eq(taskLists.userId, userId)),
+        db.select().from(labels).where(eq(labels.userId, userId)),
+        taskIds.length > 0
+          ? db.select().from(subtasks).where(inArray(subtasks.taskId, taskIds))
+          : Promise.resolve([]),
+        taskIds.length > 0
+          ? db.select().from(taskLabels).where(inArray(taskLabels.taskId, taskIds))
+          : Promise.resolve([]),
+        db.select().from(taskTemplates).where(eq(taskTemplates.userId, userId)),
+        taskIds.length > 0
+          ? db.select().from(reminders).where(inArray(reminders.taskId, taskIds))
+          : Promise.resolve([]),
+        taskIds.length > 0
+          ? db.select().from(taskDependencies).where(inArray(taskDependencies.taskId, taskIds))
+          : Promise.resolve([]),
+      ]);
 
     const exportData = {
       version: '1.0',
