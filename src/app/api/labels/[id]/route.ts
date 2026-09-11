@@ -59,10 +59,7 @@ import { logger } from '@/lib/logger';
  *         description: Label not found.
  */
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -81,10 +78,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -94,21 +88,24 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
     const validatedData = UpdateLabelSchema.parse(body);
-    
+
     const existingLabel = await getLabelById(id, session.user.id);
     if (!existingLabel) {
       return NextResponse.json({ error: 'Label not found' }, { status: 404 });
     }
 
     const updatedLabel = await updateLabel(id, session.user.id, validatedData as Partial<Label>);
-    
+
     // Log activity
     await logLabelUpdate(id, validatedData, existingLabel, session.user.id);
-    
+
     return NextResponse.json(updatedLabel);
   } catch (error) {
     if (error instanceof ZodError) {
-      return NextResponse.json({ error: 'Validation failed', details: error.issues }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.issues },
+        { status: 400 }
+      );
     }
     logger.error('Error updating label', { error });
     return NextResponse.json({ error: 'Failed to update label' }, { status: 500 });
@@ -132,10 +129,10 @@ export async function DELETE(
     }
 
     await deleteLabel(id, session.user.id);
-    
+
     // Log activity
     await logLabelActivity(id, 'deleted', session.user.id);
-    
+
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     logger.error('Error deleting label', { error });
