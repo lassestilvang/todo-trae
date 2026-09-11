@@ -77,17 +77,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const parsed = BulkActionSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.issues[0].message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
     }
 
     const { action, taskIds, listId, labelIds, priority } = parsed.data;
 
     switch (action) {
       case 'complete':
-        await bulkUpdateTasks(session.user.id, taskIds, { completed: true, completedAt: new Date() });
+        await bulkUpdateTasks(session.user.id, taskIds, {
+          completed: true,
+          completedAt: new Date(),
+        });
         logger.info('Bulk complete tasks', { count: taskIds.length, userId: session.user.id });
         break;
 
@@ -103,26 +103,47 @@ export async function POST(request: NextRequest) {
 
       case 'move':
         if (!listId) {
-          return NextResponse.json({ error: 'listId is required for move action' }, { status: 400 });
+          return NextResponse.json(
+            { error: 'listId is required for move action' },
+            { status: 400 }
+          );
         }
         await bulkUpdateTasks(session.user.id, taskIds, { listId });
-        logger.info('Bulk move tasks', { count: taskIds.length, toListId: listId, userId: session.user.id });
+        logger.info('Bulk move tasks', {
+          count: taskIds.length,
+          toListId: listId,
+          userId: session.user.id,
+        });
         break;
 
       case 'assignLabels':
         if (!labelIds) {
-          return NextResponse.json({ error: 'labelIds is required for assignLabels action' }, { status: 400 });
+          return NextResponse.json(
+            { error: 'labelIds is required for assignLabels action' },
+            { status: 400 }
+          );
         }
         await bulkAssignLabels(session.user.id, taskIds, labelIds);
-        logger.info('Bulk assign labels', { count: taskIds.length, labelCount: labelIds.length, userId: session.user.id });
+        logger.info('Bulk assign labels', {
+          count: taskIds.length,
+          labelCount: labelIds.length,
+          userId: session.user.id,
+        });
         break;
 
       case 'setPriority':
         if (!priority) {
-          return NextResponse.json({ error: 'priority is required for setPriority action' }, { status: 400 });
+          return NextResponse.json(
+            { error: 'priority is required for setPriority action' },
+            { status: 400 }
+          );
         }
         await bulkUpdateTasks(session.user.id, taskIds, { priority });
-        logger.info('Bulk set priority', { count: taskIds.length, priority, userId: session.user.id });
+        logger.info('Bulk set priority', {
+          count: taskIds.length,
+          priority,
+          userId: session.user.id,
+        });
         break;
 
       default:
