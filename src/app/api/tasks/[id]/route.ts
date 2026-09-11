@@ -6,7 +6,7 @@ import { ZodError } from 'zod';
 import { Task } from '@/types';
 import { auth } from '@/lib/auth';
 import { logger } from '@/lib/logger';
-import { createTask, calculateNextRecurringDate, generateNextRecurringTask } from '@/lib/api';
+import { generateNextRecurringTask } from '@/lib/api';
 
 /**
  * @swagger
@@ -60,10 +60,7 @@ import { createTask, calculateNextRecurringDate, generateNextRecurringTask } fro
  *         description: Task not found.
  */
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
     const session = await auth();
@@ -82,10 +79,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -119,7 +113,10 @@ export async function PUT(
     return NextResponse.json(updatedTask);
   } catch (error) {
     if (error instanceof ZodError) {
-      return NextResponse.json({ error: 'Validation failed', details: error.issues }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.issues },
+        { status: 400 }
+      );
     }
     logger.error('Error updating task', { error });
     return NextResponse.json({ error: 'Failed to update task' }, { status: 500 });
@@ -143,10 +140,10 @@ export async function DELETE(
     }
 
     await deleteTask(id, session.user.id);
-    
+
     // Log activity
     await logTaskActivity(id, 'deleted', session.user.id);
-    
+
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     logger.error('Error deleting task', { error });
