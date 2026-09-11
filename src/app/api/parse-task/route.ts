@@ -73,17 +73,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const parsed = ParseTaskSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.issues[0].message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
     }
 
     const { text } = parsed.data;
     const labels = await getAllLabels(session.user.id);
 
     const result = parseNaturalLanguage(text, {
-      availableLabels: labels.map(l => ({ id: l.id, name: l.name })),
+      availableLabels: labels.map((l) => ({ id: l.id, name: l.name })),
       defaultPriority: 'none',
     });
 
