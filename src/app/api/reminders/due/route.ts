@@ -40,7 +40,7 @@ export async function GET(request: Request) {
 
     // Default: check for reminders due in the last 1 minute to next 5 minutes
     let since = new Date(now.getTime() - 60_000);
-    let until = new Date(now.getTime() + 5 * 60_000);
+    const until = new Date(now.getTime() + 5 * 60_000);
 
     if (sinceParam) {
       since = new Date(sinceParam);
