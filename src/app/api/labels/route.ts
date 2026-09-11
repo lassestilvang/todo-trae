@@ -60,15 +60,21 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const validatedData = LabelSchema.parse(body);
-    const label = await createLabel(validatedData as Omit<Label, 'createdAt' | 'updatedAt'>, session.user.id);
-    
+    const label = await createLabel(
+      validatedData as Omit<Label, 'createdAt' | 'updatedAt'>,
+      session.user.id
+    );
+
     // Log activity
     await logLabelActivity(label.id, 'created', session.user.id);
-    
+
     return NextResponse.json(label, { status: 201 });
   } catch (error) {
     if (error instanceof ZodError) {
-      return NextResponse.json({ error: 'Validation failed', details: error.issues }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.issues },
+        { status: 400 }
+      );
     }
     logger.error('Error creating label', { error });
     return NextResponse.json({ error: 'Failed to create label' }, { status: 500 });
