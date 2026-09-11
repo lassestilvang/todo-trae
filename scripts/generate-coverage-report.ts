@@ -1,5 +1,5 @@
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
-import { resolve } from "path";
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+import { resolve } from 'path';
 
 type FileCoverage = {
   file: string;
@@ -12,13 +12,13 @@ type FileCoverage = {
 };
 
 function parseLCOV(lcovPath: string): FileCoverage[] {
-  const text = readFileSync(lcovPath, "utf-8");
+  const text = readFileSync(lcovPath, 'utf-8');
   const lines = text.split(/\r?\n/);
   const result: FileCoverage[] = [];
 
   let current: FileCoverage | null = null;
   for (const line of lines) {
-    if (line.startsWith("SF:")) {
+    if (line.startsWith('SF:')) {
       if (current) result.push(current);
       current = {
         file: line.slice(3).trim(),
@@ -29,19 +29,19 @@ function parseLCOV(lcovPath: string): FileCoverage[] {
         branchesFound: 0,
         branchesHit: 0,
       };
-    } else if (line.startsWith("LF:")) {
-      current && (current.linesFound = parseInt(line.slice(3).trim(), 10) || 0);
-    } else if (line.startsWith("LH:")) {
-      current && (current.linesHit = parseInt(line.slice(3).trim(), 10) || 0);
-    } else if (line.startsWith("FNF:")) {
-      current && (current.funcsFound = parseInt(line.slice(4).trim(), 10) || 0);
-    } else if (line.startsWith("FNH:")) {
-      current && (current.funcsHit = parseInt(line.slice(4).trim(), 10) || 0);
-    } else if (line.startsWith("BRF:")) {
-      current && (current.branchesFound = parseInt(line.slice(4).trim(), 10) || 0);
-    } else if (line.startsWith("BRH:")) {
-      current && (current.branchesHit = parseInt(line.slice(4).trim(), 10) || 0);
-    } else if (line.startsWith("end_of_record")) {
+    } else if (line.startsWith('LF:')) {
+      if (current) current.linesFound = parseInt(line.slice(3).trim(), 10) || 0;
+    } else if (line.startsWith('LH:')) {
+      if (current) current.linesHit = parseInt(line.slice(3).trim(), 10) || 0;
+    } else if (line.startsWith('FNF:')) {
+      if (current) current.funcsFound = parseInt(line.slice(4).trim(), 10) || 0;
+    } else if (line.startsWith('FNH:')) {
+      if (current) current.funcsHit = parseInt(line.slice(4).trim(), 10) || 0;
+    } else if (line.startsWith('BRF:')) {
+      if (current) current.branchesFound = parseInt(line.slice(4).trim(), 10) || 0;
+    } else if (line.startsWith('BRH:')) {
+      if (current) current.branchesHit = parseInt(line.slice(4).trim(), 10) || 0;
+    } else if (line.startsWith('end_of_record')) {
       if (current) {
         result.push(current);
         current = null;
@@ -73,15 +73,15 @@ function pct(hit: number, found: number) {
 }
 
 function colorForPct(value: number) {
-  if (value >= 90) return "#2e7d32";
-  if (value >= 80) return "#558b2f";
-  if (value >= 70) return "#f9a825";
-  if (value >= 50) return "#f57c00";
-  return "#c62828";
+  if (value >= 90) return '#2e7d32';
+  if (value >= 80) return '#558b2f';
+  if (value >= 70) return '#f9a825';
+  if (value >= 50) return '#f57c00';
+  return '#c62828';
 }
 
 function escapeHtml(s: string) {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 function generateTable(title: string, files: FileCoverage[]) {
@@ -103,7 +103,7 @@ function generateTable(title: string, files: FileCoverage[]) {
         <td>${branchCell}</td>
       </tr>`;
     })
-    .join("\n");
+    .join('\n');
 
   return `<h3>${escapeHtml(title)}</h3>
   <table class="coverage">
@@ -116,7 +116,18 @@ function generateTable(title: string, files: FileCoverage[]) {
   </table>`;
 }
 
-function generateSummaryBlock(label: string, totals: { linesFound: number; linesHit: number; funcsFound: number; funcsHit: number; branchesFound: number; branchesHit: number }, benchmarks: { lines: number; funcs: number; branches: number }) {
+function generateSummaryBlock(
+  label: string,
+  totals: {
+    linesFound: number;
+    linesHit: number;
+    funcsFound: number;
+    funcsHit: number;
+    branchesFound: number;
+    branchesHit: number;
+  },
+  benchmarks: { lines: number; funcs: number; branches: number }
+) {
   const lp = pct(totals.linesHit, totals.linesFound);
   const fp = pct(totals.funcsHit, totals.funcsFound);
   const bp = totals.branchesFound > 0 ? pct(totals.branchesHit, totals.branchesFound) : NaN;
@@ -128,27 +139,27 @@ function generateSummaryBlock(label: string, totals: { linesFound: number; lines
     <div class="summary-item">
       <div class="label">${escapeHtml(label)} — Lines</div>
       <div class="value" style="color:${colorForPct(lp)}">${lp}%</div>
-      <div class="bench ${lineOK ? "ok" : "bad"}">Benchmark ${benchmarks.lines}%</div>
+      <div class="bench ${lineOK ? 'ok' : 'bad'}">Benchmark ${benchmarks.lines}%</div>
     </div>
     <div class="summary-item">
       <div class="label">${escapeHtml(label)} — Functions</div>
       <div class="value" style="color:${colorForPct(fp)}">${fp}%</div>
-      <div class="bench ${funcOK ? "ok" : "bad"}">Benchmark ${benchmarks.funcs}%</div>
+      <div class="bench ${funcOK ? 'ok' : 'bad'}">Benchmark ${benchmarks.funcs}%</div>
     </div>
     <div class="summary-item">
       <div class="label">${escapeHtml(label)} — Branches</div>
-      <div class="value">${isNaN(bp) ? "N/A" : bp + "%"}</div>
-      <div class="bench ${branchOK ? "ok" : "bad"}">Benchmark ${benchmarks.branches}%</div>
+      <div class="value">${isNaN(bp) ? 'N/A' : bp + '%'}</div>
+      <div class="bench ${branchOK ? 'ok' : 'bad'}">Benchmark ${benchmarks.branches}%</div>
     </div>
   </div>`;
 }
 
 function buildReport() {
   const root = process.cwd();
-  const covDir = resolve(root, "coverage");
-  const unitPath = resolve(covDir, "unit.lcov.info");
-  const intPath = resolve(covDir, "integration.lcov.info");
-  const allPath = resolve(covDir, "all.lcov.info");
+  const covDir = resolve(root, 'coverage');
+  const unitPath = resolve(covDir, 'unit.lcov.info');
+  const intPath = resolve(covDir, 'integration.lcov.info');
+  const allPath = resolve(covDir, 'all.lcov.info');
 
   const unitFiles = existsSync(unitPath) ? parseLCOV(unitPath) : [];
   const intFiles = existsSync(intPath) ? parseLCOV(intPath) : [];
@@ -158,13 +169,26 @@ function buildReport() {
   const intTotals = sumCoverage(intFiles);
   const allTotals = sumCoverage(allFiles);
 
-  const e2eTotals = { linesFound: 0, linesHit: 0, funcsFound: 0, funcsHit: 0, branchesFound: 0, branchesHit: 0 };
+  const e2eTotals = {
+    linesFound: 0,
+    linesHit: 0,
+    funcsFound: 0,
+    funcsHit: 0,
+    branchesFound: 0,
+    branchesHit: 0,
+  };
 
   const unitBench = { lines: 80, funcs: 80, branches: 80 };
   const intBench = { lines: 70, funcs: 70, branches: 70 };
   const e2eBench = { lines: 50, funcs: 50, branches: 50 };
 
-  const criticalPatterns = ["src/lib/api.ts", "src/lib/database.ts", "src/stores/taskStore.ts", "src/stores/themeStore.ts", "src/components/"];
+  const criticalPatterns = [
+    'src/lib/api.ts',
+    'src/lib/database.ts',
+    'src/stores/taskStore.ts',
+    'src/stores/themeStore.ts',
+    'src/components/',
+  ];
   const criticalFiles = allFiles.filter((f) => criticalPatterns.some((p) => f.file.includes(p)));
   const insufficient = criticalFiles.filter((f) => pct(f.linesHit, f.linesFound) < 80);
 
@@ -203,31 +227,31 @@ function buildReport() {
 
       <div class="section">
         <h2>Coverage Summary</h2>
-        ${generateSummaryBlock("Unit", unitTotals, unitBench)}
-        ${generateSummaryBlock("Integration", intTotals, intBench)}
-        ${generateSummaryBlock("End-to-End", e2eTotals, e2eBench)}
-        ${generateSummaryBlock("Overall", allTotals, { lines: 80, funcs: 80, branches: 80 })}
+        ${generateSummaryBlock('Unit', unitTotals, unitBench)}
+        ${generateSummaryBlock('Integration', intTotals, intBench)}
+        ${generateSummaryBlock('End-to-End', e2eTotals, e2eBench)}
+        ${generateSummaryBlock('Overall', allTotals, { lines: 80, funcs: 80, branches: 80 })}
       </div>
 
       <div class="section">
         <h2>Unit Files</h2>
-        ${generateTable("Per-file Unit Coverage", unitFiles)}
+        ${generateTable('Per-file Unit Coverage', unitFiles)}
       </div>
 
       <div class="section">
         <h2>Integration Files</h2>
-        ${generateTable("Per-file Integration Coverage", intFiles)}
+        ${generateTable('Per-file Integration Coverage', intFiles)}
       </div>
 
       <div class="section">
         <h2>Overall Heat Map</h2>
-        ${generateTable("All Covered Files", allFiles)}
+        ${generateTable('All Covered Files', allFiles)}
       </div>
 
       <div class="section">
         <h2>Critical Modules With Insufficient Coverage</h2>
-        ${insufficient.length === 0 ? "<p>All critical modules meet coverage benchmarks.</p>" : ""}
-        ${insufficient.length > 0 ? generateTable("Needs Attention", insufficient) : ""}
+        ${insufficient.length === 0 ? '<p>All critical modules meet coverage benchmarks.</p>' : ''}
+        ${insufficient.length > 0 ? generateTable('Needs Attention', insufficient) : ''}
         <div class="callout">
           Branch coverage is not available from Bun's built-in reporter; consider adding an additional coverage tool if branch metrics are required.
         </div>
@@ -247,23 +271,25 @@ function buildReport() {
     </body>
   </html>`;
 
-  const reportsDir = resolve(root, "reports");
+  const reportsDir = resolve(root, 'reports');
   if (!existsSync(reportsDir)) mkdirSync(reportsDir, { recursive: true });
-  const outPath = resolve(reportsDir, "coverage-report.html");
-  writeFileSync(outPath, html, "utf-8");
+  const outPath = resolve(reportsDir, 'coverage-report.html');
+  writeFileSync(outPath, html, 'utf-8');
   console.log(`Coverage report generated at ${outPath}`);
 
   const jsonSummary = {
     unit: {
       linesPct: pct(unitTotals.linesHit, unitTotals.linesFound),
       funcsPct: pct(unitTotals.funcsHit, unitTotals.funcsFound),
-      branchesPct: unitTotals.branchesFound > 0 ? pct(unitTotals.branchesHit, unitTotals.branchesFound) : null,
+      branchesPct:
+        unitTotals.branchesFound > 0 ? pct(unitTotals.branchesHit, unitTotals.branchesFound) : null,
       lines: unitTotals,
     },
     integration: {
       linesPct: pct(intTotals.linesHit, intTotals.linesFound),
       funcsPct: pct(intTotals.funcsHit, intTotals.funcsFound),
-      branchesPct: intTotals.branchesFound > 0 ? pct(intTotals.branchesHit, intTotals.branchesFound) : null,
+      branchesPct:
+        intTotals.branchesFound > 0 ? pct(intTotals.branchesHit, intTotals.branchesFound) : null,
       lines: intTotals,
     },
     e2e: {
@@ -275,11 +301,16 @@ function buildReport() {
     overall: {
       linesPct: pct(allTotals.linesHit, allTotals.linesFound),
       funcsPct: pct(allTotals.funcsHit, allTotals.funcsFound),
-      branchesPct: allTotals.branchesFound > 0 ? pct(allTotals.branchesHit, allTotals.branchesFound) : null,
+      branchesPct:
+        allTotals.branchesFound > 0 ? pct(allTotals.branchesHit, allTotals.branchesFound) : null,
       lines: allTotals,
     },
   };
-  writeFileSync(resolve(reportsDir, "coverage-report.json"), JSON.stringify(jsonSummary, null, 2), "utf-8");
+  writeFileSync(
+    resolve(reportsDir, 'coverage-report.json'),
+    JSON.stringify(jsonSummary, null, 2),
+    'utf-8'
+  );
 }
 
 buildReport();
