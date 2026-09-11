@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useRef } from 'react';
 import { useTaskStore } from '@/stores/taskStore';
 import { useUIStore } from '@/stores/uiStore';
 import { logger } from '@/lib/logger';
@@ -13,6 +13,7 @@ import { Plus, GripVertical, CheckSquare, Square } from 'lucide-react';
 import { BulkOperationsBar } from '@/components/BulkOperationsBar';
 
 import { AnimatePresence, motion } from 'framer-motion';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   DndContext,
   closestCenter,
@@ -31,8 +32,11 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+// Threshold: only virtualize when there are more than this many tasks
+const VIRTUALIZATION_THRESHOLD = 50;
+
 // Sortable wrapper for Task component
-function SortableTask({ task }: { task: import('@/types').Task }) {
+function SortableTask({ task, virtualStyle }: { task: import('@/types').Task; virtualStyle?: React.CSSProperties }) {
   const { selectedTaskIds, selectTask, deselectTask, isTaskSelected } = useTaskStore();
   const {
     attributes,
@@ -43,7 +47,7 @@ function SortableTask({ task }: { task: import('@/types').Task }) {
     isDragging,
   } = useSortable({ id: task.id });
 
-  const style = {
+  const dndStyle: React.CSSProperties = {
     transform: transform ? CSS.Transform.toString(transform) : undefined,
     transition,
     opacity: isDragging ? 0.5 : 1,
@@ -55,7 +59,7 @@ function SortableTask({ task }: { task: import('@/types').Task }) {
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={{ ...dndStyle, ...virtualStyle }}
       {...attributes}
       className="relative group"
     >
@@ -253,12 +257,22 @@ export function TaskList() {
     }
   }, [filteredTasks, reorderTasks, selectedListId]);
 
+  // Set up virtualizer for large task lists
+  const listContainerRef = useRef<HTMLDivElement>(null);
+  const rowVirtualizer = useVirtualizer({
+    count: filteredTasks.length,
+    getScrollElement: () => listContainerRef.current,
+    estimateSize: () => 80, // Approximate row height
+    overscan: 5,
+  });
+  const shouldVirtualize = filteredTasks.length > VIRTUALIZATION_THRESHOLD;
+
   return (
     <>
       <div className="flex-1 flex flex-col h-full">
         <TaskHeader title={getViewTitle()} taskCount={activeTaskCount} />
 
-        <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="flex-1 min-h-0 overflow-y-auto" ref={listContainerRef}>
           {selectedTaskIds.size > 0 && (
             <BulkOperationsBar
               listId={selectedListId}
@@ -326,6 +340,34 @@ export function TaskList() {
                       <span className="text-muted-foreground font-medium">Create Task</span>
                     </button>
                   </div>
+                </div>
+              ) : shouldVirtualize ? (
+                // Virtualized list for large datasets
+                <div
+                  className="relative px-2"
+                  role="list"
+                  aria-label={`Tasks (virtualized, ${filteredTasks.length} items)`}
+                  style={{ height: rowVirtualizer.getTotalSize() }}
+                >
+                  {rowVirtualizer.getVirtualItems().map((virtualItem) => (
+                    <div
+                      key={virtualItem.key}
+                      role="listitem"
+                      className="absolute top-0 left-0 w-full px-4 py-1"
+                      style={{
+                        height: `${virtualItem.size}px`,
+                        transform: `translateY(${virtualItem.start}px)`,
+                      }}
+                    >
+                      <SortableTask
+                        task={filteredTasks[virtualItem.index]}
+                        virtualStyle={{
+                          height: `${virtualItem.size}px`,
+                          transform: `translateY(${virtualItem.start}px)`,
+                        }}
+                      />
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <div className="px-2" role="list" aria-label="Tasks">
