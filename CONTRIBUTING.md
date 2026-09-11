@@ -5,17 +5,21 @@ Thank you for your interest in contributing to the Daily Task Planner! This docu
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - [Node.js](https://nodejs.org/) (v18 or higher)
 - [Bun](https://bun.sh/) (v1.1 or higher) - Preferred for speed and built-in SQLite support
 
 ### Setup
+
 1.  **Clone the repository**:
+
     ```bash
     git clone https://github.com/your-username/todo-trae-main.git
     cd todo-trae-main
     ```
 
 2.  **Install dependencies**:
+
     ```bash
     bun install
     # or
@@ -23,6 +27,7 @@ Thank you for your interest in contributing to the Daily Task Planner! This docu
     ```
 
 3.  **Run the development server**:
+
     ```bash
     bun dev
     # or
@@ -37,22 +42,25 @@ Thank you for your interest in contributing to the Daily Task Planner! This docu
 ## 🛠️ Development Workflow
 
 ### Branching Strategy
+
 - `main`: Production-ready code.
 - `develop`: Ongoing integration (if applicable).
 - `feature/*`: New features or improvements.
 - `bugfix/*`: Critical bug fixes.
 
 ### Coding Standards
+
 - **TypeScript**: Use strict typing. Avoid `any` unless absolutely necessary.
 - **Components**: Follow the atomic design principles. Keep components small and focused.
 - **Styling**: Use Tailwind CSS utility classes. Prefer CSS variables for theme-specific colors.
 - **State**: Use Zustand for global state. Use React `useState` for local component state.
-- **Naming**: 
+- **Naming**:
   - Components: `PascalCase`
   - Functions/Variables: `camelCase`
   - Files: `kebab-case` (except for Next.js convention files like `page.tsx`).
 
 ### Testing
+
 - **Unit Tests**: Run `bun test` or `npm test`.
 - **E2E Tests**: Run `npx playwright test`.
 - Always add tests for new features or bug fixes.
@@ -80,6 +88,7 @@ Thank you for your interest in contributing to the Daily Task Planner! This docu
 ## 🐞 Reporting Issues
 
 If you find a bug or have a feature request, please open an [Issue](https://github.com/your-username/todo-trae-main/issues) with:
+
 - A clear title and description.
 - Steps to reproduce the bug.
 - Expected vs actual behavior.
@@ -88,4 +97,5 @@ If you find a bug or have a feature request, please open an [Issue](https://gith
 ---
 
 ## 📜 License
+
 This project is licensed under the MIT License.
