@@ -17,20 +17,20 @@ A full-featured task management web application built with Next.js 16, React 19,
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | Next.js 16 (App Router) |
-| UI | React 19, Radix UI, Framer Motion |
-| Styling | Tailwind CSS 4 |
-| State | Zustand 5 (persisted) |
-| Database | PostgreSQL via Drizzle ORM |
-| Auth | NextAuth.js 5 (GitHub + Credentials) |
-| Real-time | Socket.io 4 |
-| Charts | Recharts |
-| Validation | Zod |
-| Error Tracking | Sentry |
-| Search | Fuse.js + React Virtuoso |
-| PWA | @ducanh2912/next-pwa |
+| Layer          | Technology                           |
+| -------------- | ------------------------------------ |
+| Framework      | Next.js 16 (App Router)              |
+| UI             | React 19, Radix UI, Framer Motion    |
+| Styling        | Tailwind CSS 4                       |
+| State          | Zustand 5 (persisted)                |
+| Database       | PostgreSQL via Drizzle ORM           |
+| Auth           | NextAuth.js 5 (GitHub + Credentials) |
+| Real-time      | Socket.io 4                          |
+| Charts         | Recharts                             |
+| Validation     | Zod                                  |
+| Error Tracking | Sentry                               |
+| Search         | Fuse.js + React Virtuoso             |
+| PWA            | @ducanh2912/next-pwa                 |
 
 ## Getting Started
 
@@ -57,6 +57,7 @@ cp .env.example .env.local
 ```
 
 Required environment variables:
+
 - `DATABASE_URL` — PostgreSQL connection string
 - `NEXTAUTH_URL` — App URL (localhost:3000 for dev)
 - `NEXTAUTH_SECRET` — Generate with `openssl rand -base64 32`
