@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { getAnalyticsData } from '@/lib/analytics';
 import { logger } from '@/lib/logger';
@@ -15,7 +15,7 @@ import { logger } from '@/lib/logger';
  *       401:
  *         description: Unauthorized.
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await auth();
     if (!session?.user?.id) {
