@@ -55,7 +55,10 @@ const CreateTemplateSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
   description: z.string().optional(),
   priority: z.enum(['high', 'medium', 'low', 'none']).default('none'),
-  estimate: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  estimate: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .optional(),
   listId: z.string().optional(),
 });
 
@@ -89,10 +92,7 @@ export async function POST(request: NextRequest) {
     const parsed = CreateTemplateSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.issues[0].message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
     }
 
     const { name, description, priority, estimate, listId } = parsed.data;
