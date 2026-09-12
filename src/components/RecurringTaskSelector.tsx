@@ -85,8 +85,8 @@ export function RecurringTaskSelector({ value, endDate, onChange }: RecurringTas
                   className="w-4.5 h-4.5 rounded-lg border-border/40 bg-background/40 text-primary focus:ring-primary/20 transition-all cursor-pointer hover:border-primary/40"
                 />
               </div>
-              <label 
-                htmlFor="has-end-date" 
+              <label
+                htmlFor="has-end-date"
                 className="text-xs font-bold text-muted-foreground uppercase tracking-wider group-hover/check:text-primary transition-colors cursor-pointer"
               >
                 End on a specific date
@@ -104,7 +104,13 @@ export function RecurringTaskSelector({ value, endDate, onChange }: RecurringTas
                 >
                   <Input
                     type="date"
-                    value={endDate ? (endDate instanceof Date ? endDate.toISOString().split('T')[0] : '') : ''}
+                    value={
+                      endDate
+                        ? endDate instanceof Date
+                          ? endDate.toISOString().split('T')[0]
+                          : ''
+                        : ''
+                    }
                     onChange={(e) => handleEndDateChange(e.target.value)}
                     min={new Date().toISOString().split('T')[0]}
                     className="text-sm bg-background/40 backdrop-blur-md border-border/30 focus:bg-background/60 hover:border-primary/30 transition-all max-w-[200px] rounded-xl h-10 font-medium"
