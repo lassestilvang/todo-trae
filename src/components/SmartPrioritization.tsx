@@ -23,19 +23,23 @@ export function SmartPrioritization() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'text-red-500';
-      case 'medium': return 'text-amber-500';
-      case 'low': return 'text-blue-500';
-      default: return 'text-gray-400';
+      case 'high':
+        return 'text-red-500';
+      case 'medium':
+        return 'text-amber-500';
+      case 'low':
+        return 'text-blue-500';
+      default:
+        return 'text-gray-400';
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           className="gap-2 bg-primary/10 border-primary/20 hover:bg-primary/20 text-primary rounded-xl"
         >
           <Sparkles className="w-4 h-4" />
@@ -56,14 +60,14 @@ export function SmartPrioritization() {
         <div className="grid gap-4 py-4">
           {topTasks.length > 0 ? (
             topTasks.map((task, index) => (
-              <div 
-                key={task.id} 
+              <div
+                key={task.id}
                 className="group relative flex flex-col gap-2 p-4 rounded-2xl bg-accent/30 border border-border/50 hover:border-primary/50 transition-all hover:shadow-lg hover:shadow-primary/5"
               >
                 <div className="absolute -top-2 -left-2 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shadow-lg">
                   {index + 1}
                 </div>
-                
+
                 <div className="flex items-start justify-between gap-4">
                   <h3 className="font-semibold text-foreground leading-tight group-hover:text-primary transition-colors">
                     {task.name}
@@ -74,9 +78,7 @@ export function SmartPrioritization() {
                 </div>
 
                 {task.description && (
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {task.description}
-                  </p>
+                  <p className="text-sm text-muted-foreground line-clamp-2">{task.description}</p>
                 )}
 
                 <div className="flex items-center gap-3 mt-1">
@@ -104,11 +106,7 @@ export function SmartPrioritization() {
         </div>
 
         <div className="flex justify-center pt-2">
-          <Button 
-            type="button"
-            className="w-full rounded-xl" 
-            onClick={() => setIsOpen(false)}
-          >
+          <Button type="button" className="w-full rounded-xl" onClick={() => setIsOpen(false)}>
             I&apos;m on it!
           </Button>
         </div>
