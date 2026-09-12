@@ -120,10 +120,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const parsed = AddDependencySchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.issues[0].message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
     }
 
     const { taskId, dependsOnTaskId } = parsed.data;
@@ -149,10 +146,7 @@ export async function DELETE(request: NextRequest) {
     const body = await request.json();
     const parsed = RemoveDependencySchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.issues[0].message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
     }
 
     const { taskId, dependsOnTaskId } = parsed.data;
