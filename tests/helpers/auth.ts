@@ -17,4 +17,3 @@ export async function loginAsTestUser(page: Page): Promise<void> {
   // Wait for the app to finish loading data and stabilize
   await page.waitForLoadState('networkidle', { timeout: 10000 });
 }
-
