@@ -3,7 +3,7 @@ import { loginAsTestUser } from './helpers/auth';
 
 test.describe('List and Label Management', () => {
   test.beforeEach(async ({ page }) => {
-    page.on('console', msg => {
+    page.on('console', (msg) => {
       if (msg.type() === 'error') console.log(`BROWSER ERROR: ${msg.text()}`);
     });
     await loginAsTestUser(page);
@@ -25,7 +25,9 @@ test.describe('List and Label Management', () => {
     await page.getByRole('button', { name: 'Create List' }).click();
 
     // Verify list is created in the sidebar
-    await expect(page.getByRole('button', { name: new RegExp(listName) })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('button', { name: new RegExp(listName) })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test('should create a new label', async ({ page }) => {
@@ -57,7 +59,7 @@ test.describe('List and Label Management', () => {
 
     // Click on a label to filter
     const labelButton = page.getByRole('button').filter({ hasText: 'Design' }).first();
-    if (await labelButton.count() > 0) {
+    if ((await labelButton.count()) > 0) {
       await labelButton.click();
       // Verify the list header changes to indicate label filter
       await expect(page.getByRole('heading', { name: 'All Tasks' })).toBeVisible();
