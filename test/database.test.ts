@@ -23,14 +23,26 @@ describe('Database Operations', () => {
     await db.delete(labels);
 
     // Ensure test users exist (foreign key requirement)
-    const testUser = await db.select().from(usersTable).where(eq(usersTable.id, TEST_USER_ID)).limit(1);
+    const testUser = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.id, TEST_USER_ID))
+      .limit(1);
     if (testUser.length === 0) {
-      await db.insert(usersTable).values({ id: TEST_USER_ID, email: 'test@example.com', name: 'Test User' });
+      await db
+        .insert(usersTable)
+        .values({ id: TEST_USER_ID, email: 'test@example.com', name: 'Test User' });
     }
 
-    const otherUser = await db.select().from(usersTable).where(eq(usersTable.id, OTHER_USER_ID)).limit(1);
+    const otherUser = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.id, OTHER_USER_ID))
+      .limit(1);
     if (otherUser.length === 0) {
-      await db.insert(usersTable).values({ id: OTHER_USER_ID, email: 'other@example.com', name: 'Other User' });
+      await db
+        .insert(usersTable)
+        .values({ id: OTHER_USER_ID, email: 'other@example.com', name: 'Other User' });
     }
 
     // Ensure default inbox exists for test user
@@ -178,7 +190,7 @@ describe('Database Operations', () => {
         reminders: [],
       };
 
-      await expect(createTask(taskData as any)).rejects.toThrow('userId is required');
+      await expect(createTask(taskData)).rejects.toThrow('userId is required');
     });
   });
 
@@ -252,19 +264,17 @@ describe('Database Operations', () => {
       }
 
       // Create task as OTHER user
-      await createTask(
-        {
-          id: 'cross-user-task',
-          listId: 'default-inbox-other',
-          userId: OTHER_USER_ID,
-          name: 'Other User Task',
-          priority: 'none' as const,
-          completed: false,
-          order: 0,
-          labels: [],
-          reminders: [],
-        }
-      );
+      await createTask({
+        id: 'cross-user-task',
+        listId: 'default-inbox-other',
+        userId: OTHER_USER_ID,
+        name: 'Other User Task',
+        priority: 'none' as const,
+        completed: false,
+        order: 0,
+        labels: [],
+        reminders: [],
+      });
 
       // Should not be able to retrieve it as TEST_USER
       const task = await getTaskById('cross-user-task', TEST_USER_ID);
