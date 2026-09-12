@@ -34,7 +34,7 @@ export function TimeTracker({ estimate, actualTime, onTimeUpdate }: TimeTrackerP
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
-    
+
     if (hours > 0) {
       return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
@@ -63,7 +63,9 @@ export function TimeTracker({ estimate, actualTime, onTimeUpdate }: TimeTrackerP
       const totalElapsed = elapsedTime;
       const previousMinutes = parseTimeToMinutes(manualTime);
       const newTotalMinutes = previousMinutes + Math.floor(totalElapsed / 60000);
-      const newTime = `${Math.floor(newTotalMinutes / 60).toString().padStart(2, '0')}:${(newTotalMinutes % 60).toString().padStart(2, '0')}`;
+      const newTime = `${Math.floor(newTotalMinutes / 60)
+        .toString()
+        .padStart(2, '0')}:${(newTotalMinutes % 60).toString().padStart(2, '0')}`;
       setManualTime(newTime);
       onTimeUpdate(newTime);
       setStartTime(null);
@@ -108,7 +110,9 @@ export function TimeTracker({ estimate, actualTime, onTimeUpdate }: TimeTrackerP
               onChange={(e) => handleManualTimeChange(e.target.value)}
               placeholder="00:00"
               className={`font-mono text-center text-lg h-11 bg-background/40 backdrop-blur-md border-border/30 focus:bg-background/60 transition-all rounded-xl ${
-                isTracking ? 'text-primary border-primary/40 shadow-[0_0_15px_-3px_rgba(var(--primary),0.2)]' : ''
+                isTracking
+                  ? 'text-primary border-primary/40 shadow-[0_0_15px_-3px_rgba(var(--primary),0.2)]'
+                  : ''
               }`}
               disabled={isTracking}
               aria-label="Current time tracking display"
@@ -117,15 +121,15 @@ export function TimeTracker({ estimate, actualTime, onTimeUpdate }: TimeTrackerP
               <motion.div
                 layoutId="timer-glow"
                 className="absolute inset-0 rounded-xl bg-primary/10 -z-10 blur-md"
-                animate={{ 
+                animate={{
                   opacity: [0.3, 0.6, 0.3],
-                  scale: [1, 1.05, 1]
+                  scale: [1, 1.05, 1],
                 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
               />
             )}
           </div>
-          
+
           <div className="flex gap-2">
             <AnimatePresence mode="wait">
               {!isTracking ? (
@@ -200,7 +204,8 @@ export function TimeTracker({ estimate, actualTime, onTimeUpdate }: TimeTrackerP
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                 </span>
-                Session started at {startTime?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                Session started at{' '}
+                {startTime?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>
             </motion.div>
           )}
