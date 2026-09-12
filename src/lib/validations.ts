@@ -1,7 +1,14 @@
 import { z } from 'zod';
 
 export const PrioritySchema = z.enum(['high', 'medium', 'low', 'none']);
-export const RecurringTypeSchema = z.enum(['daily', 'weekly', 'weekday', 'monthly', 'yearly', 'custom']);
+export const RecurringTypeSchema = z.enum([
+  'daily',
+  'weekly',
+  'weekday',
+  'monthly',
+  'yearly',
+  'custom',
+]);
 
 export const LabelSchema = z.object({
   id: z.string(),
@@ -34,8 +41,14 @@ export const TaskSchema = z.object({
   date: z.coerce.date().optional(),
   deadline: z.coerce.date().optional(),
   reminders: z.array(z.coerce.date()).default([]),
-  estimate: z.string().regex(/^\d{2}:\d{2}$/).optional(),
-  actualTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  estimate: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .optional(),
+  actualTime: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .optional(),
   priority: PrioritySchema.default('none'),
   completed: z.boolean().default(false),
   completedAt: z.coerce.date().optional(),
