@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Bell, X, Clock, CheckCircle2 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Bell, X, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
@@ -19,7 +19,7 @@ export function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false);
   const [lastCheck, setLastCheck] = useState<Date>(new Date());
 
-  const fetchDueReminders = async () => {
+  const fetchDueReminders = useCallback(async () => {
     try {
       const response = await fetch(`/api/reminders/due?since=${lastCheck.toISOString()}`);
       if (!response.ok) return;
@@ -33,8 +33,8 @@ export function NotificationCenter() {
         taskDeadline?: string;
       }> = await response.json();
 
-      dueReminders.forEach(r => {
-        const existing = notifications.find(n => n.id === r.reminderId);
+      dueReminders.forEach((r) => {
+        const existing = notifications.find((n) => n.id === r.reminderId);
         if (!existing) {
           const notification: Notification = {
             id: r.reminderId,
@@ -44,7 +44,7 @@ export function NotificationCenter() {
             taskPriority: r.taskPriority,
           };
 
-          setNotifications(prev => [notification, ...prev].slice(0, 20));
+          setNotifications((prev) => [notification, ...prev].slice(0, 20));
 
           // Browser notification
           if (Notification.permission === 'granted') {
@@ -72,17 +72,17 @@ export function NotificationCenter() {
     } finally {
       setLastCheck(new Date());
     }
-  };
+  }, [notifications, lastCheck]);
 
   // Poll for reminders every 30 seconds
   useEffect(() => {
     fetchDueReminders();
     const interval = setInterval(fetchDueReminders, 30_000);
     return () => clearInterval(interval);
-  }, [lastCheck]);
+  }, [fetchDueReminders]);
 
   const dismissNotification = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
   const clearAll = () => {
@@ -162,7 +162,9 @@ export function NotificationCenter() {
                     className="p-4 border-b border-border/10 last:border-0 hover:bg-accent/20 transition-colors"
                   >
                     <div className="flex items-start gap-3">
-                      <Clock className={`w-4 h-4 mt-0.5 ${priorityColors[notification.taskPriority as keyof typeof priorityColors] || priorityColors.none}`} />
+                      <Clock
+                        className={`w-4 h-4 mt-0.5 ${priorityColors[notification.taskPriority as keyof typeof priorityColors] || priorityColors.none}`}
+                      />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">
                           {notification.taskName}
