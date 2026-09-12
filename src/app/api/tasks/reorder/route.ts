@@ -51,10 +51,7 @@ export async function POST(request: NextRequest) {
     const parsed = ReorderTasksSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.issues[0].message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
     }
 
     const { listId, orderedIds } = parsed.data;
@@ -69,7 +66,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof ZodError) {
       logger.warn('Reorder validation failed', { error: error.issues });
-      return NextResponse.json({ error: 'Validation failed', details: error.issues }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.issues },
+        { status: 400 }
+      );
     }
     logger.error('Error reordering tasks', { error });
     return NextResponse.json({ error: 'Failed to reorder tasks' }, { status: 500 });
