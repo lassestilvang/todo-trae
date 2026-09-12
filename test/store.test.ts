@@ -52,7 +52,9 @@ describe('Store Tests', () => {
         reminders: [],
       });
 
-      useTaskStore.getState().updateTask('test-task-2', { name: 'Updated Task', priority: 'high' as const });
+      useTaskStore
+        .getState()
+        .updateTask('test-task-2', { name: 'Updated Task', priority: 'high' as const });
 
       const store = useTaskStore.getState();
       expect(store.tasks[0].name).toBe('Updated Task');
@@ -133,7 +135,7 @@ describe('Store Tests', () => {
         },
       ];
 
-      tasks.forEach(task => useTaskStore.getState().addTask(task));
+      tasks.forEach((task) => useTaskStore.getState().addTask(task));
 
       useTaskStore.getState().setSearchQuery('groceries');
 
@@ -199,10 +201,50 @@ describe('Store Tests', () => {
     test('should reorder tasks within a list', () => {
       useTaskStore.setState({
         tasks: [
-          { id: 'task-1', listId: 'list-1', name: 'Task 1', priority: 'none' as const, completed: false, order: 0, createdAt: new Date(), updatedAt: new Date(), reminders: [] },
-          { id: 'task-2', listId: 'list-1', name: 'Task 2', priority: 'none' as const, completed: false, order: 1, createdAt: new Date(), updatedAt: new Date(), reminders: [] },
-          { id: 'task-3', listId: 'list-1', name: 'Task 3', priority: 'none' as const, completed: false, order: 2, createdAt: new Date(), updatedAt: new Date(), reminders: [] },
-          { id: 'task-4', listId: 'list-2', name: 'Task 4', priority: 'none' as const, completed: false, order: 0, createdAt: new Date(), updatedAt: new Date(), reminders: [] },
+          {
+            id: 'task-1',
+            listId: 'list-1',
+            name: 'Task 1',
+            priority: 'none' as const,
+            completed: false,
+            order: 0,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            reminders: [],
+          },
+          {
+            id: 'task-2',
+            listId: 'list-1',
+            name: 'Task 2',
+            priority: 'none' as const,
+            completed: false,
+            order: 1,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            reminders: [],
+          },
+          {
+            id: 'task-3',
+            listId: 'list-1',
+            name: 'Task 3',
+            priority: 'none' as const,
+            completed: false,
+            order: 2,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            reminders: [],
+          },
+          {
+            id: 'task-4',
+            listId: 'list-2',
+            name: 'Task 4',
+            priority: 'none' as const,
+            completed: false,
+            order: 0,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            reminders: [],
+          },
         ],
         lists: [],
         labels: [],
@@ -221,16 +263,16 @@ describe('Store Tests', () => {
       useTaskStore.getState().reorderTasks('list-1', ['task-3', 'task-1', 'task-2']);
 
       const store = useTaskStore.getState();
-      const tasksInList = store.tasks.filter(t => t.listId === 'list-1');
-      const task3 = tasksInList.find(t => t.id === 'task-3');
-      const task1 = tasksInList.find(t => t.id === 'task-1');
-      const task2 = tasksInList.find(t => t.id === 'task-2');
+      const tasksInList = store.tasks.filter((t) => t.listId === 'list-1');
+      const task3 = tasksInList.find((t) => t.id === 'task-3');
+      const task1 = tasksInList.find((t) => t.id === 'task-1');
+      const task2 = tasksInList.find((t) => t.id === 'task-2');
 
       expect(task3?.order).toBe(0);
       expect(task1?.order).toBe(1);
       expect(task2?.order).toBe(2);
       // Task 4 in list-2 should be unchanged
-      const task4 = store.tasks.find(t => t.id === 'task-4');
+      const task4 = store.tasks.find((t) => t.id === 'task-4');
       expect(task4?.order).toBe(0);
     });
 
@@ -238,20 +280,90 @@ describe('Store Tests', () => {
       // Add a list with tasks, subtasks, and attachments
       useTaskStore.setState({
         tasks: [
-          { id: 'task-1', listId: 'list-to-delete', name: 'Task 1', priority: 'none', completed: false, order: 0, createdAt: new Date(), updatedAt: new Date(), reminders: [] },
-          { id: 'task-2', listId: 'other-list', name: 'Task 2', priority: 'none', completed: false, order: 0, createdAt: new Date(), updatedAt: new Date(), reminders: [] },
-          { id: 'task-3', listId: 'list-to-delete', name: 'Task 3', priority: 'none', completed: false, order: 1, createdAt: new Date(), updatedAt: new Date(), reminders: [] },
+          {
+            id: 'task-1',
+            listId: 'list-to-delete',
+            name: 'Task 1',
+            priority: 'none',
+            completed: false,
+            order: 0,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            reminders: [],
+          },
+          {
+            id: 'task-2',
+            listId: 'other-list',
+            name: 'Task 2',
+            priority: 'none',
+            completed: false,
+            order: 0,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            reminders: [],
+          },
+          {
+            id: 'task-3',
+            listId: 'list-to-delete',
+            name: 'Task 3',
+            priority: 'none',
+            completed: false,
+            order: 1,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            reminders: [],
+          },
         ],
         lists: [
-          { id: 'list-to-delete', name: 'Delete Me', color: '#3B82F6', emoji: '📋', isDefault: false, createdAt: new Date(), updatedAt: new Date() },
-          { id: 'other-list', name: 'Keep Me', color: '#EF4444', emoji: '📝', isDefault: false, createdAt: new Date(), updatedAt: new Date() },
+          {
+            id: 'list-to-delete',
+            name: 'Delete Me',
+            color: '#3B82F6',
+            emoji: '📋',
+            isDefault: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          {
+            id: 'other-list',
+            name: 'Keep Me',
+            color: '#EF4444',
+            emoji: '📝',
+            isDefault: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
         ],
         subtasks: [
-          { id: 'sub-1', taskId: 'task-1', name: 'Subtask 1', completed: false, order: 0, createdAt: new Date(), updatedAt: new Date() },
-          { id: 'sub-2', taskId: 'task-2', name: 'Subtask 2', completed: false, order: 0, createdAt: new Date(), updatedAt: new Date() },
+          {
+            id: 'sub-1',
+            taskId: 'task-1',
+            name: 'Subtask 1',
+            completed: false,
+            order: 0,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          {
+            id: 'sub-2',
+            taskId: 'task-2',
+            name: 'Subtask 2',
+            completed: false,
+            order: 0,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
         ],
         attachments: [
-          { id: 'att-1', taskId: 'task-1', filename: 'file.txt', filePath: '/tmp/file.txt', fileSize: 100, mimeType: 'text/plain', createdAt: new Date() },
+          {
+            id: 'att-1',
+            taskId: 'task-1',
+            filename: 'file.txt',
+            filePath: '/tmp/file.txt',
+            fileSize: 100,
+            mimeType: 'text/plain',
+            createdAt: new Date(),
+          },
         ],
         selectedListId: null,
         selectedLabelId: null,
@@ -352,8 +464,28 @@ describe('Store Tests', () => {
       useTaskStore.setState({
         selectedTaskIds: new Set(['task-1', 'task-2']),
         tasks: [
-          { id: 'task-1', listId: 'list-1', name: 'Task 1', priority: 'none', completed: false, order: 0, createdAt: new Date(), updatedAt: new Date(), reminders: [] },
-          { id: 'task-2', listId: 'list-1', name: 'Task 2', priority: 'none', completed: false, order: 1, createdAt: new Date(), updatedAt: new Date(), reminders: [] },
+          {
+            id: 'task-1',
+            listId: 'list-1',
+            name: 'Task 1',
+            priority: 'none',
+            completed: false,
+            order: 0,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            reminders: [],
+          },
+          {
+            id: 'task-2',
+            listId: 'list-1',
+            name: 'Task 2',
+            priority: 'none',
+            completed: false,
+            order: 1,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            reminders: [],
+          },
         ],
       });
 
@@ -389,7 +521,17 @@ describe('Store Tests', () => {
       useTaskStore.setState({
         selectedTaskIds: new Set(['task-1']),
         tasks: [
-          { id: 'task-1', listId: 'list-1', name: 'Task 1', priority: 'none', completed: false, order: 0, createdAt: new Date(), updatedAt: new Date(), reminders: [] },
+          {
+            id: 'task-1',
+            listId: 'list-1',
+            name: 'Task 1',
+            priority: 'none',
+            completed: false,
+            order: 0,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            reminders: [],
+          },
         ],
       });
 
@@ -403,8 +545,28 @@ describe('Store Tests', () => {
       useTaskStore.setState({
         selectedTaskIds: new Set(['task-1']),
         tasks: [
-          { id: 'task-1', listId: 'list-1', name: 'Task 1', priority: 'none', completed: false, order: 0, createdAt: new Date(), updatedAt: new Date(), reminders: [] },
-          { id: 'task-2', listId: 'list-1', name: 'Task 2', priority: 'none', completed: false, order: 1, createdAt: new Date(), updatedAt: new Date(), reminders: [] },
+          {
+            id: 'task-1',
+            listId: 'list-1',
+            name: 'Task 1',
+            priority: 'none',
+            completed: false,
+            order: 0,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            reminders: [],
+          },
+          {
+            id: 'task-2',
+            listId: 'list-1',
+            name: 'Task 2',
+            priority: 'none',
+            completed: false,
+            order: 1,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            reminders: [],
+          },
         ],
       });
 
