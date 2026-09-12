@@ -24,7 +24,7 @@ describe('Store Tests', () => {
   describe('Task Store', () => {
     test('should have initial state', () => {
       const store = useTaskStore.getState();
-      
+
       expect(store.tasks).toEqual([]);
       expect(store.lists).toEqual([]);
       expect(store.labels).toEqual([]);
@@ -65,7 +65,7 @@ describe('Store Tests', () => {
 
       useTaskStore.setState({ tasks: mockTasks });
       const store = useTaskStore.getState();
-      
+
       expect(store.tasks).toHaveLength(2);
       expect(store.tasks[0].name).toBe('Test Task 1');
       expect(store.tasks[1].name).toBe('Test Task 2');
@@ -74,7 +74,7 @@ describe('Store Tests', () => {
     test('should add a task', () => {
       // Reset state
       useTaskStore.setState({ tasks: [] });
-      
+
       const newTask = {
         id: 'task-3',
         listId: 'default-inbox',
@@ -89,7 +89,7 @@ describe('Store Tests', () => {
 
       useTaskStore.getState().addTask(newTask);
       const store = useTaskStore.getState();
-      
+
       expect(store.tasks).toHaveLength(1);
       expect(store.tasks[0].name).toBe('New Task');
       expect(store.tasks[0].priority).toBe('low');
@@ -113,21 +113,21 @@ describe('Store Tests', () => {
       useTaskStore.setState({ tasks: mockTasks });
       useTaskStore.getState().deleteTask('task-4');
       const store = useTaskStore.getState();
-      
+
       expect(store.tasks).toHaveLength(0);
     });
 
     test('should update selected view', () => {
       useTaskStore.getState().setSelectedView('next7days');
       const store = useTaskStore.getState();
-      
+
       expect(store.selectedView).toBe('next7days');
     });
 
     test('should update search query', () => {
       useTaskStore.getState().setSearchQuery('test search');
       const store = useTaskStore.getState();
-      
+
       expect(store.searchQuery).toBe('test search');
     });
   });
@@ -135,7 +135,7 @@ describe('Store Tests', () => {
   describe('Theme Store', () => {
     test('should have initial state', () => {
       const store = useThemeStore.getState();
-      
+
       expect(store.theme).toBe('system');
       expect(store.isDarkMode).toBe(false);
     });
@@ -143,13 +143,13 @@ describe('Store Tests', () => {
     test('should set theme', () => {
       useThemeStore.getState().setTheme('dark');
       const store = useThemeStore.getState();
-      
+
       expect(store.theme).toBe('dark');
       expect(store.isDarkMode).toBe(true);
 
       useThemeStore.getState().setTheme('light');
       const updatedStore = useThemeStore.getState();
-      
+
       expect(updatedStore.theme).toBe('light');
       expect(updatedStore.isDarkMode).toBe(false);
     });
