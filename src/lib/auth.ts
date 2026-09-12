@@ -5,7 +5,7 @@ import Credentials from 'next-auth/providers/credentials';
 import { db } from '@/db';
 import * as schema from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { verifyPassword, hashPassword } from '@/lib/password';
+import { verifyPassword } from '@/lib/password';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db, {
