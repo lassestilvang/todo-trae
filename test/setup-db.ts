@@ -1,7 +1,16 @@
 import { db } from '../src/db';
 import {
-  users, taskLists, labels, tasks, subtasks, taskLabels, reminders,
-  taskDependencies, attachments, activityLog, taskTemplates
+  users,
+  taskLists,
+  labels,
+  tasks,
+  subtasks,
+  taskLabels,
+  reminders,
+  taskDependencies,
+  attachments,
+  activityLog,
+  taskTemplates,
 } from '../src/db/schema';
 import { eq, ne } from 'drizzle-orm';
 
@@ -25,12 +34,16 @@ export async function setupTestDatabase() {
   // Ensure test users exist
   const testUser = await db.select().from(users).where(eq(users.id, TEST_USER_ID)).limit(1);
   if (testUser.length === 0) {
-    await db.insert(users).values({ id: TEST_USER_ID, email: 'test@example.com', name: 'Test User' });
+    await db
+      .insert(users)
+      .values({ id: TEST_USER_ID, email: 'test@example.com', name: 'Test User' });
   }
 
   const otherUser = await db.select().from(users).where(eq(users.id, OTHER_USER_ID)).limit(1);
   if (otherUser.length === 0) {
-    await db.insert(users).values({ id: OTHER_USER_ID, email: 'other@example.com', name: 'Other User' });
+    await db
+      .insert(users)
+      .values({ id: OTHER_USER_ID, email: 'other@example.com', name: 'Other User' });
   }
 
   // Ensure default inbox exists for test user
