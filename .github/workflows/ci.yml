@@ -9,6 +9,20 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: todo_user
+          POSTGRES_PASSWORD: todo_password
+          POSTGRES_DB: todo_trae
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U todo_user -d todo_trae"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - uses: actions/checkout@v4
@@ -21,11 +35,22 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Type Check
+        run: bunx tsc --noEmit
+
       - name: Lint
-        run: bun run lint
+        run: bunx eslint .
+
+      - name: Format Check
+        run: bunx prettier --check .
+
+      - name: Security Audit
+        run: npm audit --audit-level=critical
 
       - name: Run tests
-        run: bun run test
+        run: bun test test/*.test.ts
+        env:
+          DATABASE_URL: postgresql://todo_user:todo_password@localhost:5432/todo_trae
 
       - name: Build
-        run: bun run build
+        run: bunx next build
