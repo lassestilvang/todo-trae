@@ -1,13 +1,15 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
-async function setTheme(page: any, theme: 'light' | 'dark' | 'system') {
+async function setTheme(page: Page, theme: 'light' | 'dark' | 'system') {
   await page.addInitScript((t: string) => {
-    try { localStorage.setItem('theme', t); } catch {}
+    try {
+      localStorage.setItem('theme', t);
+    } catch {}
   }, theme);
 }
 
 test.describe('Visual smoke', () => {
-test('Home light and dark screenshots', async ({ page, browserName }) => {
+  test('Home light and dark screenshots', async ({ page, browserName }) => {
     const dir = process.env.SCREENSHOT_DIR || 'screenshots';
     await setTheme(page, 'light');
     await page.goto('/');
