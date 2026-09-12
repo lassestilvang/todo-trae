@@ -242,12 +242,9 @@ describe('AI Edge Case Tests', () => {
 
   describe('parseNaturalLanguage - Combined Complex Inputs', () => {
     it('should parse deadline + priority + estimate + labels', () => {
-      const result = parseNaturalLanguage(
-        'Submit report #work by Friday high priority 2 hours',
-        {
-          availableLabels: [{ id: 'lbl-work', name: 'work' }],
-        }
-      );
+      const result = parseNaturalLanguage('Submit report #work by Friday high priority 2 hours', {
+        availableLabels: [{ id: 'lbl-work', name: 'work' }],
+      });
       expect(result.name).toContain('Submit report');
       expect(result.priority).toBe('high');
       expect(result.estimate).toBe('02:00');
@@ -319,7 +316,10 @@ describe('AI Edge Case Tests', () => {
 
     it('should handle input with only label tags', () => {
       const result = parseNaturalLanguage('#work #personal', {
-        availableLabels: [{ id: 'l1', name: 'work' }, { id: 'l2', name: 'personal' }],
+        availableLabels: [
+          { id: 'l1', name: 'work' },
+          { id: 'l2', name: 'personal' },
+        ],
       });
       expect(result.name).toBe('Untitled task');
       expect(result.labelIds).toContain('l1');
@@ -428,9 +428,7 @@ describe('AI Edge Case Tests', () => {
     });
 
     it('should handle count of 0', () => {
-      const tasks = [
-        createMockTask({ id: '1', priority: 'high' }),
-      ];
+      const tasks = [createMockTask({ id: '1', priority: 'high' })];
       const result = suggestTopTasks(tasks, 0);
       expect(result).toHaveLength(0);
     });
