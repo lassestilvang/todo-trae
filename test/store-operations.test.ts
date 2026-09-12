@@ -40,7 +40,11 @@ const createMockLabel = (id: string, overrides: Partial<Label> = {}): Label => (
 });
 
 // Helper to create a mock subtask
-const createMockSubtask = (id: string, taskId: string, overrides: Partial<Subtask> = {}): Subtask => ({
+const createMockSubtask = (
+  id: string,
+  taskId: string,
+  overrides: Partial<Subtask> = {}
+): Subtask => ({
   id,
   taskId,
   name: `Subtask ${id}`,
@@ -52,7 +56,11 @@ const createMockSubtask = (id: string, taskId: string, overrides: Partial<Subtas
 });
 
 // Helper to create a mock attachment
-const createMockAttachment = (id: string, taskId: string, overrides: Partial<Attachment> = {}): Attachment => ({
+const createMockAttachment = (
+  id: string,
+  taskId: string,
+  overrides: Partial<Attachment> = {}
+): Attachment => ({
   id,
   taskId,
   filename: 'file.txt',
@@ -124,13 +132,8 @@ describe('Store Operations - Comprehensive Tests', () => {
     it('should delete associated subtasks and attachments with task', () => {
       useTaskStore.setState({
         tasks: [createMockTask('task-1')],
-        subtasks: [
-          createMockSubtask('sub-1', 'task-1'),
-          createMockSubtask('sub-2', 'task-1'),
-        ],
-        attachments: [
-          createMockAttachment('att-1', 'task-1'),
-        ],
+        subtasks: [createMockSubtask('sub-1', 'task-1'), createMockSubtask('sub-2', 'task-1')],
+        attachments: [createMockAttachment('att-1', 'task-1')],
       });
 
       useTaskStore.getState().deleteTask('task-1');
@@ -145,14 +148,12 @@ describe('Store Operations - Comprehensive Tests', () => {
       useTaskStore.getState().addTask(createMockTask('old-1'));
       useTaskStore.getState().addTask(createMockTask('old-2'));
 
-      useTaskStore.getState().setTasks([
-        createMockTask('new-1'),
-        createMockTask('new-2'),
-        createMockTask('new-3'),
-      ]);
+      useTaskStore
+        .getState()
+        .setTasks([createMockTask('new-1'), createMockTask('new-2'), createMockTask('new-3')]);
 
       expect(useTaskStore.getState().tasks).toHaveLength(3);
-      expect(useTaskStore.getState().tasks.map(t => t.id)).toEqual(['new-1', 'new-2', 'new-3']);
+      expect(useTaskStore.getState().tasks.map((t) => t.id)).toEqual(['new-1', 'new-2', 'new-3']);
     });
   });
 
@@ -178,7 +179,9 @@ describe('Store Operations - Comprehensive Tests', () => {
     });
 
     it('should toggle subtask completion', () => {
-      useTaskStore.getState().addSubtask(createMockSubtask('sub-1', 'task-1', { completed: false }));
+      useTaskStore
+        .getState()
+        .addSubtask(createMockSubtask('sub-1', 'task-1', { completed: false }));
       useTaskStore.getState().toggleSubtaskComplete('sub-1');
       expect(useTaskStore.getState().subtasks[0].completed).toBe(true);
     });
@@ -252,10 +255,7 @@ describe('Store Operations - Comprehensive Tests', () => {
 
     it('should delete a list and its tasks', () => {
       useTaskStore.setState({
-        lists: [
-          createMockList('list-1'),
-          createMockList('list-2'),
-        ],
+        lists: [createMockList('list-1'), createMockList('list-2')],
         tasks: [
           createMockTask('task-1', { listId: 'list-1' }),
           createMockTask('task-2', { listId: 'list-1' }),
@@ -288,10 +288,7 @@ describe('Store Operations - Comprehensive Tests', () => {
       useTaskStore.setState({
         lists: [createMockList('list-1')],
         tasks: [createMockTask('task-1', { listId: 'list-1' })],
-        subtasks: [
-          createMockSubtask('sub-1', 'task-1'),
-          createMockSubtask('sub-2', 'task-1'),
-        ],
+        subtasks: [createMockSubtask('sub-1', 'task-1'), createMockSubtask('sub-2', 'task-1')],
       });
 
       useTaskStore.getState().deleteList('list-1');
@@ -327,9 +324,9 @@ describe('Store Operations - Comprehensive Tests', () => {
       useTaskStore.getState().reorderTasks('list-1', ['task-3', 'task-1', 'task-2']);
 
       const tasks = useTaskStore.getState().tasks;
-      expect(tasks.find(t => t.id === 'task-3')?.order).toBe(0);
-      expect(tasks.find(t => t.id === 'task-1')?.order).toBe(1);
-      expect(tasks.find(t => t.id === 'task-2')?.order).toBe(2);
+      expect(tasks.find((t) => t.id === 'task-3')?.order).toBe(0);
+      expect(tasks.find((t) => t.id === 'task-1')?.order).toBe(1);
+      expect(tasks.find((t) => t.id === 'task-2')?.order).toBe(2);
     });
 
     it('should not reorder tasks in other lists', () => {
@@ -344,9 +341,9 @@ describe('Store Operations - Comprehensive Tests', () => {
       useTaskStore.getState().reorderTasks('list-1', ['task-2', 'task-1']);
 
       const tasks = useTaskStore.getState().tasks;
-      expect(tasks.find(t => t.id === 'task-3')?.order).toBe(0);
-      expect(tasks.find(t => t.id === 'task-2')?.order).toBe(0);
-      expect(tasks.find(t => t.id === 'task-1')?.order).toBe(1);
+      expect(tasks.find((t) => t.id === 'task-3')?.order).toBe(0);
+      expect(tasks.find((t) => t.id === 'task-2')?.order).toBe(0);
+      expect(tasks.find((t) => t.id === 'task-1')?.order).toBe(1);
     });
 
     it('should handle reordering with task not in list (no-op for that task)', () => {
@@ -361,7 +358,7 @@ describe('Store Operations - Comprehensive Tests', () => {
       useTaskStore.getState().reorderTasks('list-1', ['task-1', 'task-2']);
 
       // task-3 should not be affected since it's in list-2
-      const task3 = useTaskStore.getState().tasks.find(t => t.id === 'task-3');
+      const task3 = useTaskStore.getState().tasks.find((t) => t.id === 'task-3');
       expect(task3?.order).toBe(0);
     });
 
@@ -373,7 +370,7 @@ describe('Store Operations - Comprehensive Tests', () => {
       useTaskStore.getState().reorderTasks('list-1', []);
 
       // No crash, task order unchanged since the new Set is empty
-      expect(useTaskStore.getState().tasks.find(t => t.id === 'task-1')?.order).toBe(5);
+      expect(useTaskStore.getState().tasks.find((t) => t.id === 'task-1')?.order).toBe(5);
     });
   });
 
@@ -508,11 +505,13 @@ describe('Store Operations - Comprehensive Tests', () => {
     });
 
     it('should preserve task fields when updating with partial data', () => {
-      useTaskStore.getState().addTask(createMockTask('task-1', {
-        name: 'Original',
-        priority: 'high',
-        completed: false,
-      }));
+      useTaskStore.getState().addTask(
+        createMockTask('task-1', {
+          name: 'Original',
+          priority: 'high',
+          completed: false,
+        })
+      );
 
       useTaskStore.getState().updateTask('task-1', { name: 'Updated' });
 
