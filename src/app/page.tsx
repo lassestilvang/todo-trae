@@ -16,14 +16,22 @@ import { Task } from '@/types';
 
 function HomeContent() {
   const searchParams = useSearchParams();
-  const { 
-    setTasks, setLists, setLabels, setSubtasks, setAttachments, setActivityLogs, 
-    setIsLoading, selectedListId, setSelectedListId, addTask, updateTask, deleteTask,
-    setSelectedView
+  const {
+    setTasks,
+    setLists,
+    setLabels,
+    setSubtasks,
+    setAttachments,
+    setActivityLogs,
+    setIsLoading,
+    selectedListId,
+    setSelectedListId,
+    addTask,
+    updateTask,
+    deleteTask,
+    setSelectedView,
   } = useTaskStore();
-  const { 
-    setTaskFormOpen, setSearchFocused, toggleFocusMode 
-  } = useUIStore();
+  const { setTaskFormOpen, setSearchFocused, toggleFocusMode } = useUIStore();
   const { theme } = useThemeStore();
   const prevListId = useRef<string | null>(null);
 
@@ -86,9 +94,9 @@ function HomeContent() {
   useEffect(() => {
     // Socket.io event listeners
     const socket = getSocket();
-    
+
     socket.on('task-updated', (data: { type: string; task: Task }) => {
-        logger.debug('Received socket update', { type: data.type, taskId: data.task?.id });
+      logger.debug('Received socket update', { type: data.type, taskId: data.task?.id });
       switch (data.type) {
         case 'add':
           addTask(data.task);
@@ -113,7 +121,7 @@ function HomeContent() {
     if (prevListId.current) {
       leaveListRoom(prevListId.current);
     }
-    
+
     if (selectedListId) {
       joinListRoom(selectedListId);
       prevListId.current = selectedListId;
@@ -129,9 +137,9 @@ function HomeContent() {
         const [tasksResponse, listsResponse, labelsResponse] = await Promise.all([
           fetch('/api/tasks'),
           fetch('/api/lists'),
-          fetch('/api/labels')
+          fetch('/api/labels'),
         ]);
-        
+
         if (!tasksResponse.ok || !listsResponse.ok || !labelsResponse.ok) {
           throw new Error('Failed to fetch data from the server');
         }
@@ -139,9 +147,9 @@ function HomeContent() {
         const [tasksData, listsData, labelsData] = await Promise.all([
           tasksResponse.json(),
           listsResponse.json(),
-          labelsResponse.json()
+          labelsResponse.json(),
         ]);
-        
+
         setTasks(tasksData);
         setLists(listsData);
         setLabels(labelsData);
@@ -163,7 +171,11 @@ function HomeContent() {
     <div className="mx-auto max-w-7xl p-6 h-screen">
       <div className="flex h-full rounded-2xl glass overflow-hidden">
         <Sidebar />
-        <main id="main-content" className="flex-1 flex flex-col bg-transparent outline-none" tabIndex={-1}>
+        <main
+          id="main-content"
+          className="flex-1 flex flex-col bg-transparent outline-none"
+          tabIndex={-1}
+        >
           <TaskList />
         </main>
       </div>
@@ -175,7 +187,11 @@ function HomeContent() {
 export default function Home() {
   return (
     <ErrorBoundary>
-      <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center">Loading...</div>}>
+      <Suspense
+        fallback={
+          <div className="h-screen w-screen flex items-center justify-center">Loading...</div>
+        }
+      >
         <HomeContent />
       </Suspense>
     </ErrorBoundary>
