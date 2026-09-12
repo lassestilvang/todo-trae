@@ -1,7 +1,20 @@
 'use client';
 
 import { useTaskStore } from '@/stores/taskStore';
-import { MoreHorizontal, MessageCircle, Grid3X3, Layers, List, Calendar, Eye, EyeClosed, CheckCircle2, TrendingUp, HelpCircle, Settings } from 'lucide-react';
+import {
+  MoreHorizontal,
+  MessageCircle,
+  Grid3X3,
+  Layers,
+  List,
+  Calendar,
+  Eye,
+  EyeClosed,
+  CheckCircle2,
+  TrendingUp,
+  HelpCircle,
+  Settings,
+} from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import {
   DropdownMenu,
@@ -20,7 +33,8 @@ interface TaskHeaderProps {
 }
 
 export function TaskHeader({ title, taskCount }: TaskHeaderProps) {
-  const { showCompleted, setShowCompleted, showCompletedOnly, setShowCompletedOnly, activityLogs } = useTaskStore();
+  const { showCompleted, setShowCompleted, showCompletedOnly, setShowCompletedOnly, activityLogs } =
+    useTaskStore();
 
   // Get recent activity (last 5 logs)
   const recentActivity = activityLogs.slice(0, 5);
@@ -34,7 +48,9 @@ export function TaskHeader({ title, taskCount }: TaskHeaderProps) {
           </h1>
           <div className="flex items-center gap-2 mt-1">
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{taskCount} active tasks</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              {taskCount} active tasks
+            </p>
           </div>
         </div>
 
@@ -45,7 +61,12 @@ export function TaskHeader({ title, taskCount }: TaskHeaderProps) {
           {/* Messages / Activity feed */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl hover:bg-accent/50 transition-all" aria-label="Messages">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 w-9 p-0 rounded-xl hover:bg-accent/50 transition-all"
+                aria-label="Messages"
+              >
                 <MessageCircle className="w-4 h-4" />
                 {recentActivity.length > 0 && (
                   <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-white text-[8px] flex items-center justify-center">
@@ -65,12 +86,18 @@ export function TaskHeader({ title, taskCount }: TaskHeaderProps) {
                 </DropdownMenuItem>
               ) : (
                 recentActivity.map((log) => (
-                  <DropdownMenuItem key={log.id} className="flex flex-col items-start gap-1 py-2 cursor-default">
+                  <DropdownMenuItem
+                    key={log.id}
+                    className="flex flex-col items-start gap-1 py-2 cursor-default"
+                  >
                     <span className="text-xs text-foreground">
                       {log.taskId ? `Task ${log.action}` : `List ${log.action}`}
                     </span>
                     <span className="text-[10px] text-muted-foreground">
-                      {new Date(log.createdAt || new Date()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(log.createdAt || new Date()).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </span>
                   </DropdownMenuItem>
                 ))
@@ -81,7 +108,12 @@ export function TaskHeader({ title, taskCount }: TaskHeaderProps) {
           {/* View options */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl hover:bg-accent/50 transition-all" aria-label="View options">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 w-9 p-0 rounded-xl hover:bg-accent/50 transition-all"
+                aria-label="View options"
+              >
                 <Grid3X3 className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -122,20 +154,34 @@ export function TaskHeader({ title, taskCount }: TaskHeaderProps) {
           {/* More options */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl hover:bg-accent/50 transition-all" aria-label="More options">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 w-9 p-0 rounded-xl hover:bg-accent/50 transition-all"
+                aria-label="More options"
+              >
                 <MoreHorizontal className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => window.location.href = '/analytics'}>
+              <DropdownMenuItem
+                className="gap-2 cursor-pointer"
+                onClick={() => (window.location.href = '/analytics')}
+              >
                 <TrendingUp className="w-4 h-4" />
                 <span>Analytics</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => window.location.href = '/api-docs'}>
+              <DropdownMenuItem
+                className="gap-2 cursor-pointer"
+                onClick={() => (window.location.href = '/api-docs')}
+              >
                 <HelpCircle className="w-4 h-4" />
                 <span>API Docs</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => window.location.href = '/settings'}>
+              <DropdownMenuItem
+                className="gap-2 cursor-pointer"
+                onClick={() => (window.location.href = '/settings')}
+              >
                 <Settings className="w-4 h-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
@@ -146,7 +192,10 @@ export function TaskHeader({ title, taskCount }: TaskHeaderProps) {
 
       <div className="px-8 pb-4">
         <div className="flex items-center gap-4">
-          <label htmlFor="show-completed" className="flex items-center gap-2 text-sm cursor-pointer group">
+          <label
+            htmlFor="show-completed"
+            className="flex items-center gap-2 text-sm cursor-pointer group"
+          >
             <div className="relative flex items-center">
               <input
                 id="show-completed"
