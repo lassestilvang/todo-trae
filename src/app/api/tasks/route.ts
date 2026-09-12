@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined;
     const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : undefined;
-    
+
     const tasks = await getAllTasks(session.user.id, limit, offset);
     return NextResponse.json(tasks);
   } catch (error) {
@@ -78,19 +78,29 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = CreateTaskSchema.parse(body);
     const task = await createTask({
-      ...(validatedData as unknown as Omit<Task, 'createdAt' | 'updatedAt' | 'subtasks' | 'attachments'> & { labelIds?: string[] }),
-      userId: session.user.id
+      ...(validatedData as unknown as Omit<
+        Task,
+        'createdAt' | 'updatedAt' | 'subtasks' | 'attachments'
+      > & { labelIds?: string[] }),
+      userId: session.user.id,
     });
-    
+
     // Log activity
     await logTaskActivity(task.id, 'created', session.user.id);
-    logger.info('Task created successfully', { taskId: task.id, name: task.name, userId: session.user.id });
-    
+    logger.info('Task created successfully', {
+      taskId: task.id,
+      name: task.name,
+      userId: session.user.id,
+    });
+
     return NextResponse.json(task, { status: 201 });
   } catch (error) {
     if (error instanceof ZodError) {
       logger.warn('Task validation failed', { error: error.issues });
-      return NextResponse.json({ error: 'Validation failed', details: error.issues }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.issues },
+        { status: 400 }
+      );
     }
     logger.error('Error creating task', { error });
     return NextResponse.json({ error: 'Failed to create task' }, { status: 500 });
