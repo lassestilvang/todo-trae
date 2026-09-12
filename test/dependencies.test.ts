@@ -44,8 +44,24 @@ describe('Task Dependencies', () => {
           createMockTask('task-3', { listId: 'list-2', completed: false }),
         ],
         lists: [
-          { id: 'list-1', name: 'Work', color: '#3B82F6', emoji: '💼', isDefault: true, createdAt: new Date(), updatedAt: new Date() },
-          { id: 'list-2', name: 'Personal', color: '#EF4444', emoji: '🏠', isDefault: false, createdAt: new Date(), updatedAt: new Date() },
+          {
+            id: 'list-1',
+            name: 'Work',
+            color: '#3B82F6',
+            emoji: '💼',
+            isDefault: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          {
+            id: 'list-2',
+            name: 'Personal',
+            color: '#EF4444',
+            emoji: '🏠',
+            isDefault: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
         ],
         labels: [],
         subtasks: [],
@@ -64,16 +80,16 @@ describe('Task Dependencies', () => {
     it('should filter tasks by list ID', () => {
       useTaskStore.getState().setSelectedListId('list-1');
       const store = useTaskStore.getState();
-      const filtered = store.tasks.filter(t => t.listId === store.selectedListId);
+      const filtered = store.tasks.filter((t) => t.listId === store.selectedListId);
       expect(filtered).toHaveLength(2);
     });
 
     it('should filter out completed when showCompleted is false', () => {
       useTaskStore.getState().setShowCompleted(false);
       const store = useTaskStore.getState();
-      const filtered = store.tasks.filter(t => showCompleted(store.showCompleted, t));
+      const filtered = store.tasks.filter((t) => showCompleted(store.showCompleted, t));
       expect(filtered).toHaveLength(2);
-      expect(filtered.every(t => !t.completed)).toBe(true);
+      expect(filtered.every((t) => !t.completed)).toBe(true);
     });
   });
 });
