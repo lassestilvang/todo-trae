@@ -40,11 +40,16 @@ class Logger {
 
   private getColor(level: LogLevel): string {
     switch (level) {
-      case 'info': return 'color: #3b82f6';
-      case 'warn': return 'color: #f59e0b';
-      case 'error': return 'color: #ef4444';
-      case 'debug': return 'color: #6b7280';
-      default: return 'color: inherit';
+      case 'info':
+        return 'color: #3b82f6';
+      case 'warn':
+        return 'color: #f59e0b';
+      case 'error':
+        return 'color: #ef4444';
+      case 'debug':
+        return 'color: #6b7280';
+      default:
+        return 'color: inherit';
     }
   }
 
