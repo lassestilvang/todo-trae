@@ -30,7 +30,12 @@ const mockDeleteReminder = mock(async () => {});
 const mockDeleteAllRemindersForTask = mock(async () => {});
 const mockGetRemindersByTaskId = mock(async () => []);
 const mockGetTaskDependencies = mock(async () => []);
-const mockAddTaskDependency = mock(async () => ({ id: 'dep-1', taskId: 't1', dependsOnTaskId: 't2', createdAt: new Date() }));
+const mockAddTaskDependency = mock(async () => ({
+  id: 'dep-1',
+  taskId: 't1',
+  dependsOnTaskId: 't2',
+  createdAt: new Date(),
+}));
 const mockRemoveTaskDependency = mock(async () => {});
 const mockGetDependentTasks = mock(async () => []);
 const mockRemoveAllTaskDependencies = mock(async () => {});
@@ -40,7 +45,11 @@ const mockBulkDeleteTasks = mock(async () => {});
 const mockBulkAssignLabels = mock(async () => {});
 const mockGetAllActivityLogs = mock(async () => []);
 const mockGetActivityLogByTaskId = mock(async () => []);
-const mockCreateActivityLog = mock(async () => ({ id: 'log-1', action: 'created', createdAt: new Date() }));
+const mockCreateActivityLog = mock(async () => ({
+  id: 'log-1',
+  action: 'created',
+  createdAt: new Date(),
+}));
 
 // Mock the activity log module
 const mockLogTaskActivity = mock(async () => {});
@@ -57,7 +66,8 @@ function createQueryBuilderMock(initialResult: any = []) {
     offset: mock(() => chainable),
   };
   // The .then() makes it a thenable so await works on the chainable object
-  (chainable as any).then = (resolve: any, reject?: any) => Promise.resolve(initialResult).then(resolve, reject);
+  (chainable as any).then = (resolve: any, reject?: any) =>
+    Promise.resolve(initialResult).then(resolve, reject);
   return chainable;
 }
 
@@ -172,7 +182,11 @@ mock.module('@/lib/password', () => ({
 }));
 
 mock.module('@/lib/validations', () => ({
-  TaskSchema: { safeParse: (data: any) => ({ success: true, data }), partial: () => ({ safeParse: (d: any) => ({ success: true, data: d }) }), parse: (d: any) => d },
+  TaskSchema: {
+    safeParse: (data: any) => ({ success: true, data }),
+    partial: () => ({ safeParse: (d: any) => ({ success: true, data: d }) }),
+    parse: (d: any) => d,
+  },
   TaskListSchema: { safeParse: (data: any) => ({ success: true, data }), partial: () => ({}) },
   LabelSchema: { safeParse: (data: any) => ({ success: true, data }), partial: () => ({}) },
   ReorderTasksSchema: {
@@ -181,7 +195,10 @@ mock.module('@/lib/validations', () => ({
         return { success: false, error: { issues: [{ message: 'listId is required' }] } };
       }
       if (!Array.isArray(data.orderedIds) || data.orderedIds.length < 1) {
-        return { success: false, error: { issues: [{ message: 'At least one task ID is required' }] } };
+        return {
+          success: false,
+          error: { issues: [{ message: 'At least one task ID is required' }] },
+        };
       }
       return { success: true, data };
     },
@@ -214,11 +231,23 @@ mock.module('drizzle-orm', () => ({
 // Now import the route handlers
 const { POST: parseTaskPOST } = await import('../src/app/api/parse-task/route');
 const { POST: bulkPOST } = await import('../src/app/api/tasks/bulk/route');
-const { GET: depsGET, POST: depsPOST, DELETE: depsDELETE } = await import('../src/app/api/tasks/dependencies/route');
+const {
+  GET: depsGET,
+  POST: depsPOST,
+  DELETE: depsDELETE,
+} = await import('../src/app/api/tasks/dependencies/route');
 const { POST: reorderPOST } = await import('../src/app/api/tasks/reorder/route');
-const { GET: remindersGET, POST: remindersPOST, DELETE: remindersDELETE } = await import('../src/app/api/reminders/route');
+const {
+  GET: remindersGET,
+  POST: remindersPOST,
+  DELETE: remindersDELETE,
+} = await import('../src/app/api/reminders/route');
 const { POST: registerPOST } = await import('../src/app/api/register/route');
-const { GET: tasksGET, PUT: tasksPUT, DELETE: tasksDELETE } = await import('../src/app/api/tasks/[id]/route');
+const {
+  GET: tasksGET,
+  PUT: tasksPUT,
+  DELETE: tasksDELETE,
+} = await import('../src/app/api/tasks/[id]/route');
 
 // Helper to create a mock NextRequest
 function mockRequest(body: any, url: string = 'http://localhost:3000/api/test') {
@@ -322,8 +351,15 @@ describe('API Route Handler Tests', () => {
 
     it('should return 200 with task when found', async () => {
       mockGetTaskById.mockResolvedValueOnce({
-        id: 'task-1', name: 'Test', listId: 'list-1', priority: 'none',
-        completed: false, order: 0, reminders: [], createdAt: new Date(), updatedAt: new Date()
+        id: 'task-1',
+        name: 'Test',
+        listId: 'list-1',
+        priority: 'none',
+        completed: false,
+        order: 0,
+        reminders: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
       const request = mockGetRequest('http://localhost:3000/api/tasks/task-1');
       const response = await tasksGET(request, { params: Promise.resolve({ id: 'task-1' }) });
@@ -354,14 +390,23 @@ describe('API Route Handler Tests', () => {
     it('should return 404 for DELETE when task not found', async () => {
       mockGetTaskById.mockResolvedValueOnce(null);
       const request = mockRequest({});
-      const response = await tasksDELETE(request, { params: Promise.resolve({ id: 'nonexistent' }) });
+      const response = await tasksDELETE(request, {
+        params: Promise.resolve({ id: 'nonexistent' }),
+      });
       expect(response.status).toBe(404);
     });
 
     it('should return 204 for valid DELETE', async () => {
       mockGetTaskById.mockResolvedValueOnce({
-        id: 'task-1', name: 'Test', listId: 'list-1', priority: 'none',
-        completed: false, order: 0, reminders: [], createdAt: new Date(), updatedAt: new Date()
+        id: 'task-1',
+        name: 'Test',
+        listId: 'list-1',
+        priority: 'none',
+        completed: false,
+        order: 0,
+        reminders: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
       const request = mockRequest({});
       const response = await tasksDELETE(request, { params: Promise.resolve({ id: 'task-1' }) });
@@ -445,7 +490,11 @@ describe('API Route Handler Tests', () => {
     });
 
     it('should return 200 for valid assignLabels action', async () => {
-      const request = mockRequest({ action: 'assignLabels', taskIds: ['task-1'], labelIds: ['label-1'] });
+      const request = mockRequest({
+        action: 'assignLabels',
+        taskIds: ['task-1'],
+        labelIds: ['label-1'],
+      });
       const response = await bulkPOST(request);
       expect(response.status).toBe(200);
     });
@@ -692,14 +741,24 @@ describe('API Route Handler Tests', () => {
 
     it('should return 400 when name exceeds max length', async () => {
       mockDb.select.mockImplementationOnce(() => createQueryBuilderMock([]));
-      const request = mockRequest({ name: 'a'.repeat(101), email: 'test@example.com', password: 'password123' });
+      const request = mockRequest({
+        name: 'a'.repeat(101),
+        email: 'test@example.com',
+        password: 'password123',
+      });
       const response = await registerPOST(request);
       expect(response.status).toBe(400);
     });
 
     it('should return 409 when user already exists', async () => {
-      mockDb.select.mockImplementationOnce(() => createQueryBuilderMock([{ id: 'existing', email: 'test@example.com' }]));
-      const request = mockRequest({ name: 'Test', email: 'test@example.com', password: 'password123' });
+      mockDb.select.mockImplementationOnce(() =>
+        createQueryBuilderMock([{ id: 'existing', email: 'test@example.com' }])
+      );
+      const request = mockRequest({
+        name: 'Test',
+        email: 'test@example.com',
+        password: 'password123',
+      });
       const response = await registerPOST(request);
       expect(response.status).toBe(409);
       const data = await response.json();
@@ -708,7 +767,11 @@ describe('API Route Handler Tests', () => {
 
     it('should return 201 for valid registration', async () => {
       mockDb.select.mockImplementationOnce(() => createQueryBuilderMock([]));
-      const request = mockRequest({ name: 'Test', email: 'test@example.com', password: 'password123' });
+      const request = mockRequest({
+        name: 'Test',
+        email: 'test@example.com',
+        password: 'password123',
+      });
       const response = await registerPOST(request);
       expect(response.status).toBe(201);
       const data = await response.json();
