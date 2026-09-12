@@ -8,8 +8,9 @@ export function calculateNextRecurringDate(
   date: Date | undefined,
   deadline: Date | undefined,
   recurring: RecurringType | undefined,
-  recurringEndDate?: Date | undefined,
+  recurringEndDate?: Date | undefined
 ): Date | null {
+  void recurringEndDate;
   const baseDate = date || deadline;
   if (!baseDate) return null;
 
