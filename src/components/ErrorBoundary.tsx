@@ -53,13 +53,13 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div className="flex h-screen w-full items-center justify-center bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-background to-background p-6">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="glass-card max-w-md w-full p-10 text-center rounded-3xl border-border/30 shadow-2xl"
           >
             <div className="relative mx-auto w-24 h-24 mb-8">
-              <motion.div 
+              <motion.div
                 animate={{ scale: [1, 1.1, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
                 className="absolute inset-0 bg-destructive/10 rounded-full blur-xl"
@@ -72,23 +72,24 @@ export class ErrorBoundary extends Component<Props, State> {
             <h1 className="text-3xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/60">
               Oops! Something broke
             </h1>
-            
+
             <p className="text-muted-foreground mb-10 leading-relaxed font-medium">
-              {this.state.error?.message || 'An unexpected error occurred. Our engineers are probably already panicking.'}
+              {this.state.error?.message ||
+                'An unexpected error occurred. Our engineers are probably already panicking.'}
             </p>
 
             <div className="flex flex-col gap-3">
-              <Button 
-                onClick={this.handleReset} 
+              <Button
+                onClick={this.handleReset}
                 className="w-full h-12 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
                 <RefreshCw size={18} />
                 Try Refreshing
               </Button>
-              
-              <Button 
-                variant="outline" 
-                onClick={this.handleGoHome} 
+
+              <Button
+                variant="outline"
+                onClick={this.handleGoHome}
                 className="w-full h-12 rounded-xl font-bold flex items-center justify-center gap-2 border-border/40 hover:bg-muted/40 transition-all"
               >
                 <Home size={18} />
