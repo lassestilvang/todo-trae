@@ -100,7 +100,9 @@ export function AttachmentManager({ taskId, attachments }: AttachmentManagerProp
             aria-label="Upload attachment"
           >
             <Upload className="w-3.5 h-3.5 mr-2" />
-            <span className="text-xs font-bold uppercase tracking-tight">{isUploading ? 'Uploading...' : 'Add File'}</span>
+            <span className="text-xs font-bold uppercase tracking-tight">
+              {isUploading ? 'Uploading...' : 'Add File'}
+            </span>
           </Button>
         </motion.div>
       </div>
@@ -128,17 +130,24 @@ export function AttachmentManager({ taskId, attachments }: AttachmentManagerProp
                 className="flex items-center gap-3 p-3 rounded-2xl glass-card group hover:bg-white/10 hover:border-primary/30 transition-all border border-border/30 shadow-sm focus-within:ring-2 focus-within:ring-primary/50"
                 aria-label={`Attachment: ${attachment.filename}`}
               >
-                <div className="p-2.5 rounded-xl bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors shadow-inner" aria-hidden="true">
-                  <span className="text-xl leading-none" role="img">{getFileIcon(attachment.mimeType)}</span>
+                <div
+                  className="p-2.5 rounded-xl bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors shadow-inner"
+                  aria-hidden="true"
+                >
+                  <span className="text-xl leading-none" role="img">
+                    {getFileIcon(attachment.mimeType)}
+                  </span>
                 </div>
-                
+
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold truncate text-foreground/90 group-hover:text-primary transition-colors">{attachment.filename}</p>
+                  <p className="text-sm font-bold truncate text-foreground/90 group-hover:text-primary transition-colors">
+                    {attachment.filename}
+                  </p>
                   <p className="text-[10px] font-medium text-muted-foreground/70 uppercase tracking-tight mt-0.5">
                     {formatFileSize(attachment.fileSize)}
                   </p>
                 </div>
-                
+
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
                   <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                     <Button
@@ -170,7 +179,7 @@ export function AttachmentManager({ taskId, attachments }: AttachmentManagerProp
       )}
 
       {attachments.length === 0 && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           className="text-center py-10 rounded-2xl border-2 border-dashed border-border/20 bg-muted/5 flex flex-col items-center justify-center group hover:border-primary/20 transition-colors"
@@ -179,7 +188,9 @@ export function AttachmentManager({ taskId, attachments }: AttachmentManagerProp
             <File className="w-8 h-8 text-muted-foreground/40 group-hover:text-primary/40" />
           </div>
           <p className="text-sm font-bold text-muted-foreground/80">No attachments yet</p>
-          <p className="text-xs text-muted-foreground/50 mt-1 uppercase tracking-widest font-medium">Click &quot;Add&quot; to upload files</p>
+          <p className="text-xs text-muted-foreground/50 mt-1 uppercase tracking-widest font-medium">
+            Click &quot;Add&quot; to upload files
+          </p>
         </motion.div>
       )}
     </div>
