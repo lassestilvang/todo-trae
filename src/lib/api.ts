@@ -1,6 +1,26 @@
 import { db } from '@/db';
-import { taskLists, tasks, labels, subtasks, taskLabels, activityLog, reminders, taskDependencies, attachments } from '@/db/schema';
-import { Task, TaskList, Label, Subtask, ActivityLog, Priority, RecurringType, TaskDependency, Attachment } from '@/types';
+import {
+  taskLists,
+  tasks,
+  labels,
+  subtasks,
+  taskLabels,
+  activityLog,
+  reminders,
+  taskDependencies,
+  attachments,
+} from '@/db/schema';
+import {
+  Task,
+  TaskList,
+  Label,
+  Subtask,
+  ActivityLog,
+  Priority,
+  RecurringType,
+  TaskDependency,
+  Attachment,
+} from '@/types';
 import { logger } from './logger';
 import { eq, and, isNull, asc, desc, inArray, or } from 'drizzle-orm';
 import { calculateNextRecurringDate as _calculateNextRecurringDate } from './recurring';
@@ -50,7 +70,10 @@ export async function getListById(id: string, userId: string): Promise<TaskList 
   return mapTaskList(results[0]);
 }
 
-export async function createList(list: Omit<TaskList, 'createdAt' | 'updatedAt'>, userId: string): Promise<TaskList> {
+export async function createList(
+  list: Omit<TaskList, 'createdAt' | 'updatedAt'>,
+  userId: string
+): Promise<TaskList> {
   try {
     await db.insert(taskLists).values({
       id: list.id,
@@ -68,7 +91,11 @@ export async function createList(list: Omit<TaskList, 'createdAt' | 'updatedAt'>
   }
 }
 
-export async function updateList(id: string, userId: string, updates: Partial<TaskList>): Promise<TaskList> {
+export async function updateList(
+  id: string,
+  userId: string,
+  updates: Partial<TaskList>
+): Promise<TaskList> {
   const dbUpdates: Partial<typeof taskLists.$inferInsert> = {};
   if (updates.name !== undefined) dbUpdates.name = updates.name;
   if (updates.color !== undefined) dbUpdates.color = updates.color;
@@ -85,9 +112,7 @@ export async function updateList(id: string, userId: string, updates: Partial<Ta
 
 export async function deleteList(id: string, userId: string): Promise<void> {
   try {
-    await db
-      .delete(taskLists)
-      .where(and(eq(taskLists.id, id), eq(taskLists.userId, userId)));
+    await db.delete(taskLists).where(and(eq(taskLists.id, id), eq(taskLists.userId, userId)));
     logger.info('Task list deleted', { listId: id, userId });
   } catch (error) {
     logger.error('Failed to delete task list', { error, listId: id, userId });
@@ -106,12 +131,19 @@ export async function getAllLabels(userId: string): Promise<Label[]> {
 }
 
 export async function getLabelById(id: string, userId: string): Promise<Label | null> {
-  const results = await db.select().from(labels).where(and(eq(labels.id, id), eq(labels.userId, userId))).limit(1);
+  const results = await db
+    .select()
+    .from(labels)
+    .where(and(eq(labels.id, id), eq(labels.userId, userId)))
+    .limit(1);
   if (results.length === 0) return null;
   return mapLabel(results[0]);
 }
 
-export async function createLabel(label: Omit<Label, 'createdAt' | 'updatedAt'>, userId: string): Promise<Label> {
+export async function createLabel(
+  label: Omit<Label, 'createdAt' | 'updatedAt'>,
+  userId: string
+): Promise<Label> {
   await db.insert(labels).values({
     id: label.id,
     userId,
@@ -122,12 +154,19 @@ export async function createLabel(label: Omit<Label, 'createdAt' | 'updatedAt'>,
   return (await getLabelById(label.id, userId))!;
 }
 
-export async function updateLabel(id: string, userId: string, updates: Partial<Label>): Promise<Label> {
+export async function updateLabel(
+  id: string,
+  userId: string,
+  updates: Partial<Label>
+): Promise<Label> {
   const dbUpdates: Partial<typeof labels.$inferInsert> = {
     ...updates,
     updatedAt: new Date(),
   };
-  await db.update(labels).set(dbUpdates).where(and(eq(labels.id, id), eq(labels.userId, userId)));
+  await db
+    .update(labels)
+    .set(dbUpdates)
+    .where(and(eq(labels.id, id), eq(labels.userId, userId)));
   return (await getLabelById(id, userId))!;
 }
 
@@ -136,7 +175,11 @@ export async function deleteLabel(id: string, userId: string): Promise<void> {
 }
 
 // Task operations
-export async function getAllTasks(userId: string, limit?: number, offset?: number): Promise<Task[]> {
+export async function getAllTasks(
+  userId: string,
+  limit?: number,
+  offset?: number
+): Promise<Task[]> {
   const results = await db.query.tasks.findMany({
     where: eq(tasks.userId, userId),
     with: {
@@ -154,7 +197,7 @@ export async function getAllTasks(userId: string, limit?: number, offset?: numbe
   if (results.length === 0) return [];
 
   // Batch-fetch all reminders for all tasks in a single query (avoids N+1)
-  const taskIds = results.map(r => r.id);
+  const taskIds = results.map((r) => r.id);
   const reminderResults = await db
     .select()
     .from(reminders)
@@ -168,7 +211,7 @@ export async function getAllTasks(userId: string, limit?: number, offset?: numbe
     remindersByTaskId.get(r.taskId)!.push(r.reminderTime);
   }
 
-  return results.map(row => ({
+  return results.map((row) => ({
     ...row,
     createdAt: row.createdAt || new Date(),
     updatedAt: row.updatedAt || new Date(),
@@ -185,12 +228,17 @@ export async function getAllTasks(userId: string, limit?: number, offset?: numbe
     order: row.order || 0,
     priority: (row.priority || 'none') as Priority,
     recurring: (row.recurring || undefined) as RecurringType | undefined,
-    labels: row.taskLabels.map(tl => mapLabel(tl.label)),
+    labels: row.taskLabels.map((tl) => mapLabel(tl.label)),
     reminders: remindersByTaskId.get(row.id) || [],
   }));
 }
 
-export async function getTasksByListId(listId: string, userId: string, limit?: number, offset?: number): Promise<Task[]> {
+export async function getTasksByListId(
+  listId: string,
+  userId: string,
+  limit?: number,
+  offset?: number
+): Promise<Task[]> {
   const results = await db.query.tasks.findMany({
     where: and(eq(tasks.listId, listId), eq(tasks.userId, userId), isNull(tasks.parentTaskId)),
     with: {
@@ -208,7 +256,7 @@ export async function getTasksByListId(listId: string, userId: string, limit?: n
   if (results.length === 0) return [];
 
   // Batch-fetch all reminders (avoids N+1 query pattern)
-  const taskIds = results.map(r => r.id);
+  const taskIds = results.map((r) => r.id);
   const reminderResults = await db
     .select()
     .from(reminders)
@@ -222,7 +270,7 @@ export async function getTasksByListId(listId: string, userId: string, limit?: n
     remindersByTaskId.get(r.taskId)!.push(r.reminderTime);
   }
 
-  return results.map(row => ({
+  return results.map((row) => ({
     ...row,
     createdAt: row.createdAt || new Date(),
     updatedAt: row.updatedAt || new Date(),
@@ -239,7 +287,7 @@ export async function getTasksByListId(listId: string, userId: string, limit?: n
     order: row.order || 0,
     priority: (row.priority || 'none') as Priority,
     recurring: (row.recurring || undefined) as RecurringType | undefined,
-    labels: row.taskLabels.map(tl => mapLabel(tl.label)),
+    labels: row.taskLabels.map((tl) => mapLabel(tl.label)),
     reminders: remindersByTaskId.get(row.id) || [],
   }));
 }
@@ -278,13 +326,15 @@ export async function getTaskById(id: string, userId: string): Promise<Task | nu
     order: row.order || 0,
     priority: (row.priority || 'none') as Priority,
     recurring: (row.recurring || undefined) as RecurringType | undefined,
-    labels: row.taskLabels.map(tl => mapLabel(tl.label)),
+    labels: row.taskLabels.map((tl) => mapLabel(tl.label)),
     reminders: taskReminders,
     dependencies: taskDeps,
   };
 }
 
-export async function createTask(task: Omit<Task, 'createdAt' | 'updatedAt' | 'subtasks' | 'attachments'> & { labelIds?: string[] }): Promise<Task> {
+export async function createTask(
+  task: Omit<Task, 'createdAt' | 'updatedAt' | 'subtasks' | 'attachments'> & { labelIds?: string[] }
+): Promise<Task> {
   if (!task.userId) throw new Error('userId is required to create a task');
 
   await db.insert(tasks).values({
@@ -305,10 +355,10 @@ export async function createTask(task: Omit<Task, 'createdAt' | 'updatedAt' | 's
     order: task.order,
   });
 
-  const labelIds = task.labelIds || (task.labels as Label[])?.map(l => l.id) || [];
+  const labelIds = task.labelIds || (task.labels as Label[])?.map((l) => l.id) || [];
   if (labelIds.length > 0) {
     await db.insert(taskLabels).values(
-      labelIds.map(labelId => ({
+      labelIds.map((labelId) => ({
         taskId: task.id,
         labelId,
       }))
@@ -318,9 +368,13 @@ export async function createTask(task: Omit<Task, 'createdAt' | 'updatedAt' | 's
   return (await getTaskById(task.id, task.userId))!;
 }
 
-export async function updateTask(id: string, userId: string, updates: Partial<Task> & { labelIds?: string[] }): Promise<Task> {
+export async function updateTask(
+  id: string,
+  userId: string,
+  updates: Partial<Task> & { labelIds?: string[] }
+): Promise<Task> {
   const dbUpdates: Partial<typeof tasks.$inferInsert> = {};
-  
+
   if (updates.listId !== undefined) dbUpdates.listId = updates.listId;
   if (updates.name !== undefined) dbUpdates.name = updates.name;
   if (updates.description !== undefined) dbUpdates.description = updates.description;
@@ -337,19 +391,22 @@ export async function updateTask(id: string, userId: string, updates: Partial<Ta
   if (updates.recurringEndDate !== undefined) dbUpdates.recurringEndDate = updates.recurringEndDate;
   if (updates.parentTaskId !== undefined) dbUpdates.parentTaskId = updates.parentTaskId;
   if (updates.order !== undefined) dbUpdates.order = updates.order;
-  
+
   dbUpdates.updatedAt = new Date();
 
   if (Object.keys(dbUpdates).length > 0) {
-    await db.update(tasks).set(dbUpdates).where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
+    await db
+      .update(tasks)
+      .set(dbUpdates)
+      .where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
   }
 
-  const labelIds = updates.labelIds || updates.labels?.map(l => l.id);
+  const labelIds = updates.labelIds || updates.labels?.map((l) => l.id);
   if (labelIds) {
     await db.delete(taskLabels).where(eq(taskLabels.taskId, id));
     if (labelIds.length > 0) {
       await db.insert(taskLabels).values(
-        labelIds.map(labelId => ({
+        labelIds.map((labelId) => ({
           taskId: id,
           labelId,
         }))
@@ -379,13 +436,8 @@ export async function toggleTaskComplete(id: string, userId: string): Promise<Ta
       // Calculate next deadline maintaining the same time offset from base date
       let nextDeadline: Date | undefined;
       if (task.deadline) {
-        const deadlineTime = task.deadline.getHours() * 60 + task.deadline.getMinutes();
         nextDeadline = new Date(nextDateWithTime);
-        nextDeadline.setHours(
-          task.deadline.getHours(),
-          task.deadline.getMinutes(),
-          0, 0
-        );
+        nextDeadline.setHours(task.deadline.getHours(), task.deadline.getMinutes(), 0, 0);
       }
 
       await createTask({
@@ -403,7 +455,7 @@ export async function toggleTaskComplete(id: string, userId: string): Promise<Ta
         parentTaskId: undefined,
         order: task.order,
         userId,
-        labelIds: task.labels?.map(l => l.id) || [],
+        labelIds: task.labels?.map((l) => l.id) || [],
         reminders: [],
       });
     }
@@ -426,14 +478,18 @@ export function calculateNextRecurringDate(task: Task): Date | null {
     task.date,
     task.deadline,
     task.recurring,
-    task.recurringEndDate,
+    task.recurringEndDate
   );
 }
 
 // Subtask operations
 export async function getSubtasksByTaskId(taskId: string): Promise<Subtask[]> {
-  const results = await db.select().from(subtasks).where(eq(subtasks.taskId, taskId)).orderBy(asc(subtasks.order));
-  return results.map(row => ({
+  const results = await db
+    .select()
+    .from(subtasks)
+    .where(eq(subtasks.taskId, taskId))
+    .orderBy(asc(subtasks.order));
+  return results.map((row) => ({
     ...row,
     completed: !!row.completed,
     order: row.order || 0,
@@ -455,7 +511,9 @@ export async function getSubtaskById(id: string): Promise<Subtask | null> {
   };
 }
 
-export async function createSubtask(subtask: Omit<Subtask, 'createdAt' | 'updatedAt'>): Promise<Subtask> {
+export async function createSubtask(
+  subtask: Omit<Subtask, 'createdAt' | 'updatedAt'>
+): Promise<Subtask> {
   await db.insert(subtasks).values({
     id: subtask.id,
     taskId: subtask.taskId,
@@ -481,14 +539,20 @@ export async function deleteSubtask(id: string): Promise<void> {
 
 // Attachment operations
 export async function getAttachmentsByTaskId(taskId: string): Promise<Attachment[]> {
-  const results = await db.select().from(attachments).where(eq(attachments.taskId, taskId)).orderBy(asc(attachments.createdAt));
-  return results.map(row => ({
+  const results = await db
+    .select()
+    .from(attachments)
+    .where(eq(attachments.taskId, taskId))
+    .orderBy(asc(attachments.createdAt));
+  return results.map((row) => ({
     ...row,
     createdAt: row.createdAt || new Date(),
   }));
 }
 
-export async function createAttachment(attachment: Omit<Attachment, 'createdAt'>): Promise<Attachment> {
+export async function createAttachment(
+  attachment: Omit<Attachment, 'createdAt'>
+): Promise<Attachment> {
   await db.insert(attachments).values({
     id: attachment.id,
     taskId: attachment.taskId,
@@ -514,7 +578,11 @@ export function getAttachmentUrl(filePath: string): string {
 }
 
 // Batch task reordering
-export async function reorderTasks(userId: string, listId: string, orderedIds: string[]): Promise<void> {
+export async function reorderTasks(
+  userId: string,
+  listId: string,
+  orderedIds: string[]
+): Promise<void> {
   const updates = orderedIds.map((taskId, order) => ({
     id: taskId,
     order,
@@ -537,7 +605,7 @@ export async function getRemindersByTaskId(taskId: string): Promise<Date[]> {
     .from(reminders)
     .where(eq(reminders.taskId, taskId))
     .orderBy(asc(reminders.reminderTime));
-  return results.map(r => r.reminderTime);
+  return results.map((r) => r.reminderTime);
 }
 
 export async function createReminder(taskId: string, reminderTime: Date): Promise<void> {
@@ -580,21 +648,32 @@ export async function bulkDeleteTasks(userId: string, taskIds: string[]): Promis
   logger.info('Bulk deleted tasks', { count: taskIds.length, userId });
 }
 
-export async function bulkAssignLabels(userId: string, taskIds: string[], labelIds: string[]): Promise<void> {
+export async function bulkAssignLabels(
+  userId: string,
+  taskIds: string[],
+  labelIds: string[]
+): Promise<void> {
   for (const taskId of taskIds) {
     await updateTask(taskId, userId, { labelIds });
   }
-  logger.info('Bulk assigned labels', { count: taskIds.length, labelCount: labelIds.length, userId });
+  logger.info('Bulk assigned labels', {
+    count: taskIds.length,
+    labelCount: labelIds.length,
+    userId,
+  });
 }
 
 // Task dependency operations
-export async function getTaskDependencies(taskId: string, userId: string): Promise<TaskDependency[]> {
+export async function getTaskDependencies(
+  taskId: string,
+  userId: string
+): Promise<TaskDependency[]> {
   const results = await db
     .select()
     .from(taskDependencies)
     .where(and(eq(taskDependencies.taskId, taskId), eq(tasks.userId, userId)))
     .innerJoin(tasks, eq(taskDependencies.dependsOnTaskId, tasks.id));
-  return results.map(r => ({
+  return results.map((r) => ({
     id: r.task_dependencies.id,
     taskId: r.task_dependencies.taskId,
     dependsOnTaskId: r.task_dependencies.dependsOnTaskId,
@@ -609,7 +688,7 @@ export async function getDependentTasks(taskId: string, userId: string): Promise
     .from(taskDependencies)
     .where(eq(taskDependencies.dependsOnTaskId, taskId));
   // Filter to only the ones owned by the user
-  const taskIds = results.map(r => r.taskId);
+  const taskIds = results.map((r) => r.taskId);
   if (taskIds.length === 0) return [];
   const rawTasks = await db.query.tasks.findMany({
     where: and(inArray(tasks.id, taskIds), eq(tasks.userId, userId)),
@@ -631,7 +710,7 @@ export async function getDependentTasks(taskId: string, userId: string): Promise
     remindersByTaskId.get(r.taskId)!.push(r.reminderTime);
   }
 
-  return rawTasks.map(row => ({
+  return rawTasks.map((row) => ({
     ...row,
     createdAt: row.createdAt || new Date(),
     updatedAt: row.updatedAt || new Date(),
@@ -648,12 +727,16 @@ export async function getDependentTasks(taskId: string, userId: string): Promise
     order: row.order || 0,
     priority: (row.priority || 'none') as Priority,
     recurring: (row.recurring || undefined) as RecurringType | undefined,
-    labels: row.taskLabels.map(tl => mapLabel(tl.label)),
+    labels: row.taskLabels.map((tl) => mapLabel(tl.label)),
     reminders: remindersByTaskId.get(row.id) || [],
   }));
 }
 
-export async function addTaskDependency(taskId: string, dependsOnTaskId: string, userId: string): Promise<TaskDependency> {
+export async function addTaskDependency(
+  taskId: string,
+  dependsOnTaskId: string,
+  userId: string
+): Promise<TaskDependency> {
   // Verify both tasks belong to the user
   const userTasks = await db
     .select({ id: tasks.id })
@@ -671,7 +754,7 @@ export async function addTaskDependency(taskId: string, dependsOnTaskId: string,
   // Check for circular dependency: if taskId already (transitively) depends on
   // dependsOnTaskId, then adding taskId → dependsOnTaskId would create a cycle.
   // We start from dependsOnTaskId and follow the chain to see if we reach taskId.
-  if (await hasCircularDependency(taskId, dependsOnTaskId, userId)) {
+  if (await hasCircularDependency(taskId, dependsOnTaskId)) {
     throw new Error('Circular dependency detected');
   }
 
@@ -686,7 +769,11 @@ export async function addTaskDependency(taskId: string, dependsOnTaskId: string,
   return { id, taskId, dependsOnTaskId, createdAt: new Date() };
 }
 
-export async function removeTaskDependency(taskId: string, dependsOnTaskId: string, userId: string): Promise<void> {
+export async function removeTaskDependency(
+  taskId: string,
+  dependsOnTaskId: string,
+  userId: string
+): Promise<void> {
   await db
     .delete(taskDependencies)
     .where(
@@ -724,7 +811,10 @@ export async function generateNextRecurringTask(task: Task, userId: string): Pro
     listId: task.listId,
     date: nextDateWithTime,
     deadline: task.deadline
-      ? new Date(nextDateWithTime.getTime() + (task.deadline.getTime() - (task.date?.getTime() || task.deadline.getTime())))
+      ? new Date(
+          nextDateWithTime.getTime() +
+            (task.deadline.getTime() - (task.date?.getTime() || task.deadline.getTime()))
+        )
       : undefined,
     estimate: task.estimate,
     actualTime: undefined,
@@ -736,7 +826,7 @@ export async function generateNextRecurringTask(task: Task, userId: string): Pro
     parentTaskId: undefined,
     order: task.order,
     userId,
-    labelIds: task.labels?.map(l => l.id) || [],
+    labelIds: task.labels?.map((l) => l.id) || [],
     createdAt: undefined as Date | undefined,
     updatedAt: undefined as Date | undefined,
     reminders: [] as Date[],
@@ -759,12 +849,12 @@ export async function removeAllTaskDependencies(taskId: string, userId: string):
   if (taskCheck.length === 0) return;
 
   // Remove dependencies where this task is the dependent or the prerequisite
-  await db.delete(taskDependencies).where(
-    or(eq(taskDependencies.taskId, taskId), eq(taskDependencies.dependsOnTaskId, taskId))
-  );
+  await db
+    .delete(taskDependencies)
+    .where(or(eq(taskDependencies.taskId, taskId), eq(taskDependencies.dependsOnTaskId, taskId)));
 }
 
-async function hasCircularDependency(fromTaskId: string, toTaskId: string, userId: string): Promise<boolean> {
+async function hasCircularDependency(fromTaskId: string, toTaskId: string): Promise<boolean> {
   // Check if toTaskId can reach fromTaskId through dependency chain
   const visited = new Set<string>();
   const queue: string[] = [toTaskId];
@@ -787,7 +877,11 @@ async function hasCircularDependency(fromTaskId: string, toTaskId: string, userI
 }
 
 // Activity log operations
-export async function getAllActivityLogs(userId: string, limit?: number, offset?: number): Promise<ActivityLog[]> {
+export async function getAllActivityLogs(
+  userId: string,
+  limit?: number,
+  offset?: number
+): Promise<ActivityLog[]> {
   const results = await db
     .select()
     .from(activityLog)
@@ -795,7 +889,7 @@ export async function getAllActivityLogs(userId: string, limit?: number, offset?
     .orderBy(desc(activityLog.createdAt))
     .limit(limit || 100)
     .offset(offset || 0);
-  return results.map(row => ({
+  return results.map((row) => ({
     ...row,
     action: row.action as ActivityLog['action'],
     taskId: row.taskId || undefined,
@@ -809,7 +903,12 @@ export async function getAllActivityLogs(userId: string, limit?: number, offset?
   }));
 }
 
-export async function getActivityLogByTaskId(taskId: string, userId: string, limit?: number, offset?: number): Promise<ActivityLog[]> {
+export async function getActivityLogByTaskId(
+  taskId: string,
+  userId: string,
+  limit?: number,
+  offset?: number
+): Promise<ActivityLog[]> {
   const results = await db
     .select()
     .from(activityLog)
@@ -817,7 +916,7 @@ export async function getActivityLogByTaskId(taskId: string, userId: string, lim
     .orderBy(desc(activityLog.createdAt))
     .limit(limit || 100)
     .offset(offset || 0);
-  return results.map(row => ({
+  return results.map((row) => ({
     ...row,
     action: row.action as ActivityLog['action'],
     taskId: row.taskId || undefined,
