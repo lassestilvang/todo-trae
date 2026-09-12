@@ -78,13 +78,20 @@ export function FocusMode() {
 
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
+
       // Draw background gradient
       const gradient = ctx.createRadialGradient(
-        canvas.width / 2, canvas.height / 2, 0,
-        canvas.width / 2, canvas.height / 2, canvas.width / 1.5
+        canvas.width / 2,
+        canvas.height / 2,
+        0,
+        canvas.width / 2,
+        canvas.height / 2,
+        canvas.width / 1.5
       );
-      gradient.addColorStop(0, mode === 'work' ? 'rgba(59, 130, 246, 0.05)' : 'rgba(16, 185, 129, 0.05)');
+      gradient.addColorStop(
+        0,
+        mode === 'work' ? 'rgba(59, 130, 246, 0.05)' : 'rgba(16, 185, 129, 0.05)'
+      );
       gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -100,7 +107,7 @@ export function FocusMode() {
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fillStyle = p.color + '22'; // low opacity
         ctx.fill();
-        
+
         // Add glow
         ctx.shadowBlur = 15;
         ctx.shadowColor = p.color;
@@ -158,11 +165,8 @@ export function FocusMode() {
 
       {isActive && (
         <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background select-none">
-          <canvas
-            ref={canvasRef}
-            className="absolute inset-0 pointer-events-none"
-          />
-          
+          <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />
+
           <Button
             variant="ghost"
             size="sm"
@@ -174,10 +178,12 @@ export function FocusMode() {
 
           <div className="relative z-10 flex flex-col items-center gap-8 text-center">
             <div className="space-y-2">
-              <h2 className={cn(
-                "text-2xl font-medium tracking-widest uppercase",
-                mode === 'work' ? "text-primary" : "text-emerald-500"
-              )}>
+              <h2
+                className={cn(
+                  'text-2xl font-medium tracking-widest uppercase',
+                  mode === 'work' ? 'text-primary' : 'text-emerald-500'
+                )}
+              >
                 {mode === 'work' ? 'Focus Time' : 'Break Time'}
               </h2>
               <div className="text-9xl font-thin tracking-tighter tabular-nums">
@@ -200,8 +206,10 @@ export function FocusMode() {
                 size="lg"
                 onClick={() => setIsTimerRunning(!isTimerRunning)}
                 className={cn(
-                  "rounded-full w-24 h-24 p-0 shadow-2xl transition-transform hover:scale-105 active:scale-95",
-                  mode === 'work' ? "bg-primary text-primary-foreground" : "bg-emerald-500 text-white"
+                  'rounded-full w-24 h-24 p-0 shadow-2xl transition-transform hover:scale-105 active:scale-95',
+                  mode === 'work'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-emerald-500 text-white'
                 )}
               >
                 {isTimerRunning ? (
