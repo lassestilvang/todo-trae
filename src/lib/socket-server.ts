@@ -7,9 +7,9 @@ const io = new Server(httpServer, {
   cors: {
     // Allow requests from the Next.js frontend (the browser origin),
     // not the socket.io server's own address
-    origin: process.env.NEXTAUTH_URL || "http://localhost:3000",
-    methods: ["GET", "POST"]
-  }
+    origin: process.env.NEXTAUTH_URL || 'http://localhost:3000',
+    methods: ['GET', 'POST'],
+  },
 });
 
 io.on('connection', (socket) => {
