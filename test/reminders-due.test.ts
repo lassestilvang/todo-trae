@@ -27,10 +27,21 @@ mock.module('@/db', () => ({ db: mockDb }));
 mock.module('@/db/schema', () => ({
   taskLists: { id: { name: 'id' }, userId: { name: 'user_id' } },
   labels: { id: { name: 'id' }, userId: { name: 'user_id' } },
-  tasks: { id: { name: 'id' }, listId: { name: 'list_id' }, userId: { name: 'user_id' }, name: { name: 'name' }, priority: { name: 'priority' }, deadline: { name: 'deadline' } },
+  tasks: {
+    id: { name: 'id' },
+    listId: { name: 'list_id' },
+    userId: { name: 'user_id' },
+    name: { name: 'name' },
+    priority: { name: 'priority' },
+    deadline: { name: 'deadline' },
+  },
   subtasks: {},
   taskLabels: {},
-  reminders: { id: { name: 'id' }, taskId: { name: 'task_id' }, reminderTime: { name: 'reminder_time' } },
+  reminders: {
+    id: { name: 'id' },
+    taskId: { name: 'task_id' },
+    reminderTime: { name: 'reminder_time' },
+  },
   taskDependencies: {},
   activityLog: {},
   attachments: {},
@@ -41,7 +52,12 @@ mock.module('@/db/schema', () => ({
   verificationTokens: {},
 }));
 mock.module('@/lib/logger', () => ({
-  logger: { info: mock(() => {}), error: mock(() => {}), warn: mock(() => {}), debug: mock(() => {}) },
+  logger: {
+    info: mock(() => {}),
+    error: mock(() => {}),
+    warn: mock(() => {}),
+    debug: mock(() => {}),
+  },
 }));
 mock.module('drizzle-orm', () => ({
   eq: mock(() => 'eq-mock'),
