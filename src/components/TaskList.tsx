@@ -12,7 +12,7 @@ import Fuse from 'fuse.js';
 import { Plus, GripVertical, CheckSquare, Square } from 'lucide-react';
 import { BulkOperationsBar } from '@/components/BulkOperationsBar';
 
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   DndContext,
@@ -36,16 +36,17 @@ import { CSS } from '@dnd-kit/utilities';
 const VIRTUALIZATION_THRESHOLD = 50;
 
 // Sortable wrapper for Task component
-function SortableTask({ task, virtualStyle }: { task: import('@/types').Task; virtualStyle?: React.CSSProperties }) {
-  const { selectedTaskIds, selectTask, deselectTask, isTaskSelected } = useTaskStore();
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: task.id });
+function SortableTask({
+  task,
+  virtualStyle,
+}: {
+  task: import('@/types').Task;
+  virtualStyle?: React.CSSProperties;
+}) {
+  const { selectTask, deselectTask, isTaskSelected } = useTaskStore();
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: task.id,
+  });
 
   const dndStyle: React.CSSProperties = {
     transform: transform ? CSS.Transform.toString(transform) : undefined,
@@ -82,11 +83,7 @@ function SortableTask({ task, virtualStyle }: { task: import('@/types').Task; vi
             }`}
             aria-label={isSelected ? 'Deselect task' : 'Select task'}
           >
-            {isSelected ? (
-              <CheckSquare className="w-4 h-4" />
-            ) : (
-              <Square className="w-4 h-4" />
-            )}
+            {isSelected ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
           </button>
         )}
         <div
@@ -105,7 +102,20 @@ function SortableTask({ task, virtualStyle }: { task: import('@/types').Task; vi
 }
 
 export function TaskList() {
-  const { tasks, labels, lists, selectedListId, selectedLabelId, selectedView, searchQuery, showCompleted, showCompletedOnly, setShowCompletedOnly, setSelectedLabelId, reorderTasks, selectedTaskIds, clearSelection } = useTaskStore();
+  const {
+    tasks,
+    labels,
+    lists,
+    selectedListId,
+    selectedLabelId,
+    selectedView,
+    searchQuery,
+    showCompleted,
+    showCompletedOnly,
+    reorderTasks,
+    selectedTaskIds,
+    clearSelection,
+  } = useTaskStore();
   const { isTaskFormOpen: taskFormOpen, setTaskFormOpen: setTaskFormOpen } = useUIStore();
 
   const filteredTasks = useMemo(() => {
@@ -113,13 +123,13 @@ export function TaskList() {
 
     // Filter by list
     if (selectedListId) {
-      filtered = filtered.filter(task => task.listId === selectedListId);
+      filtered = filtered.filter((task) => task.listId === selectedListId);
     }
 
     // Filter by label
     if (selectedLabelId) {
-      filtered = filtered.filter(task => {
-        const labelIds = task.labels?.map(l => l.id) || [];
+      filtered = filtered.filter((task) => {
+        const labelIds = task.labels?.map((l) => l.id) || [];
         return labelIds.includes(selectedLabelId);
       });
     }
@@ -127,27 +137,23 @@ export function TaskList() {
     // Filter by view
     if (selectedView !== 'all' && !selectedListId && !selectedLabelId) {
       const today = startOfDay(new Date());
-      
+
       switch (selectedView) {
         case 'today':
-          filtered = filtered.filter(task => 
-            task.date && isToday(new Date(task.date))
-          );
+          filtered = filtered.filter((task) => task.date && isToday(new Date(task.date)));
           break;
-          
+
         case 'next7days':
           const nextWeek = addDays(today, 7);
-          filtered = filtered.filter(task => {
+          filtered = filtered.filter((task) => {
             if (!task.date) return false;
             const taskDate = startOfDay(new Date(task.date));
             return isWithinInterval(taskDate, { start: today, end: nextWeek });
           });
           break;
-          
+
         case 'upcoming':
-          filtered = filtered.filter(task => 
-            task.date && new Date(task.date) >= today
-          );
+          filtered = filtered.filter((task) => task.date && new Date(task.date) >= today);
           break;
       }
     }
@@ -155,10 +161,10 @@ export function TaskList() {
     // Filter by completion status
     if (showCompletedOnly) {
       // Show only completed tasks
-      filtered = filtered.filter(task => task.completed);
+      filtered = filtered.filter((task) => task.completed);
     } else if (!showCompleted) {
       // Hide completed tasks
-      filtered = filtered.filter(task => !task.completed);
+      filtered = filtered.filter((task) => !task.completed);
     }
 
     // Search functionality
@@ -168,9 +174,9 @@ export function TaskList() {
         threshold: 0.3,
         includeScore: true,
       });
-      
+
       const searchResults = fuse.search(searchQuery);
-      filtered = searchResults.map(result => result.item);
+      filtered = searchResults.map((result) => result.item);
     }
 
     // Sort tasks
@@ -179,16 +185,16 @@ export function TaskList() {
       if (a.completed !== b.completed) {
         return a.completed ? 1 : -1;
       }
-      
+
       // Sort by date
       if (a.date && b.date) {
         return new Date(a.date).getTime() - new Date(b.date).getTime();
       }
-      
+
       // Tasks with dates come before tasks without dates
       if (a.date && !b.date) return -1;
       if (!a.date && b.date) return 1;
-      
+
       // Sort by priority
       const priorityOrder = { high: 0, medium: 1, low: 2, none: 3 };
       if (a.priority !== b.priority) {
@@ -200,24 +206,37 @@ export function TaskList() {
       const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return bTime - aTime;
     });
-  }, [tasks, selectedView, selectedListId, searchQuery, showCompleted, showCompletedOnly]);
+  }, [
+    tasks,
+    selectedView,
+    selectedListId,
+    selectedLabelId,
+    searchQuery,
+    showCompleted,
+    showCompletedOnly,
+  ]);
 
   const activeTaskCount = useMemo(() => {
-    return filteredTasks.filter(task => !task.completed).length;
+    return filteredTasks.filter((task) => !task.completed).length;
   }, [filteredTasks]);
 
   const getViewTitle = () => {
     if (selectedListId) {
-      const list = lists.find(l => l.id === selectedListId);
+      const list = lists.find((l) => l.id === selectedListId);
       return list ? list.name : 'List';
     }
 
     switch (selectedView) {
-      case 'today': return 'Today';
-      case 'next7days': return 'Next 7 Days';
-      case 'upcoming': return 'Upcoming';
-      case 'all': return 'All Tasks';
-      default: return 'Tasks';
+      case 'today':
+        return 'Today';
+      case 'next7days':
+        return 'Next 7 Days';
+      case 'upcoming':
+        return 'Upcoming';
+      case 'all':
+        return 'All Tasks';
+      default:
+        return 'Tasks';
     }
   };
 
@@ -230,35 +249,39 @@ export function TaskList() {
     })
   );
 
-  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id !== over.id) {
-      const oldIndex = filteredTasks.findIndex(t => t.id === active.id);
-      const newIndex = filteredTasks.findIndex(t => t.id === over!.id);
-      const newOrder = arrayMove(
-        filteredTasks.map(t => t.id),
-        oldIndex,
-        newIndex
-      );
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id !== over.id) {
+        const oldIndex = filteredTasks.findIndex((t) => t.id === active.id);
+        const newIndex = filteredTasks.findIndex((t) => t.id === over!.id);
+        const newOrder = arrayMove(
+          filteredTasks.map((t) => t.id),
+          oldIndex,
+          newIndex
+        );
 
-      const targetListId = selectedListId || (filteredTasks[0]?.listId) || '';
-      reorderTasks(targetListId, newOrder);
+        const targetListId = selectedListId || filteredTasks[0]?.listId || '';
+        reorderTasks(targetListId, newOrder);
 
-      // Persist reorder to API
-      try {
-        await fetch('/api/tasks/reorder', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ listId: targetListId, orderedIds: newOrder }),
-        });
-      } catch (error) {
-        logger.error('Failed to persist task reorder', { error });
+        // Persist reorder to API
+        try {
+          await fetch('/api/tasks/reorder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ listId: targetListId, orderedIds: newOrder }),
+          });
+        } catch (error) {
+          logger.error('Failed to persist task reorder', { error });
+        }
       }
-    }
-  }, [filteredTasks, reorderTasks, selectedListId]);
+    },
+    [filteredTasks, reorderTasks, selectedListId]
+  );
 
   // Set up virtualizer for large task lists
   const listContainerRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual's useVirtualizer returns functions that React Compiler cannot safely memoize; this is a known limitation
   const rowVirtualizer = useVirtualizer({
     count: filteredTasks.length,
     getScrollElement: () => listContainerRef.current,
@@ -276,8 +299,8 @@ export function TaskList() {
           {selectedTaskIds.size > 0 && (
             <BulkOperationsBar
               listId={selectedListId}
-              labels={labels.map(l => ({ id: l.id, name: l.name, color: l.color }))}
-              lists={lists.map(l => ({ id: l.id, name: l.name, color: l.color }))}
+              labels={labels.map((l) => ({ id: l.id, name: l.name, color: l.color }))}
+              lists={lists.map((l) => ({ id: l.id, name: l.name, color: l.color }))}
               onBulkAction={clearSelection}
             />
           )}
@@ -287,7 +310,7 @@ export function TaskList() {
             onDragEnd={handleDragEnd}
           >
             <SortableContext
-              items={filteredTasks.map(t => t.id)}
+              items={filteredTasks.map((t) => t.id)}
               strategy={verticalListSortingStrategy}
             >
               {filteredTasks.length === 0 ? (
@@ -296,7 +319,10 @@ export function TaskList() {
                   <div className="space-y-4 mb-6">
                     <div className="glass-card rounded-xl p-5" role="note">
                       <div className="flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold" aria-hidden="true">
+                        <div
+                          className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold"
+                          aria-hidden="true"
+                        >
                           💡
                         </div>
                         <div>
@@ -304,7 +330,8 @@ export function TaskList() {
                             Yeah. Think of one simple habit to start… Add it as a recurring task 📕
                           </h3>
                           <p className="text-sm text-muted-foreground">
-                            For example, type: Read 30 pages every evening at 8PM. Run two miles every 3 days at 6PM.
+                            For example, type: Read 30 pages every evening at 8PM. Run two miles
+                            every 3 days at 6PM.
                           </p>
                         </div>
                       </div>
@@ -312,15 +339,20 @@ export function TaskList() {
 
                     <div className="glass-card rounded-xl p-5" role="note">
                       <div className="flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold" aria-hidden="true">
+                        <div
+                          className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold"
+                          aria-hidden="true"
+                        >
                           💡
                         </div>
                         <div>
                           <h3 className="font-medium text-foreground mb-1">
-                            Helpful hint: Set yourself up for success by taking just 15 minutes to plan the week ahead 📅
+                            Helpful hint: Set yourself up for success by taking just 15 minutes to
+                            plan the week ahead 📅
                           </h3>
                           <p className="text-sm text-muted-foreground">
-                            We&apos;re here to help: Start with this project template, watch this video, or read the full guide.
+                            We&apos;re here to help: Start with this project template, watch this
+                            video, or read the full guide.
                           </p>
                         </div>
                       </div>
@@ -334,7 +366,10 @@ export function TaskList() {
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-border hover:border-primary/50 hover:bg-accent/50 transition-colors mt-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                       aria-label="Create New Task"
                     >
-                      <div className="w-5 h-5 rounded-full border-2 border-border flex items-center justify-center" aria-hidden="true">
+                      <div
+                        className="w-5 h-5 rounded-full border-2 border-border flex items-center justify-center"
+                        aria-hidden="true"
+                      >
                         <Plus className="w-3 h-3 text-muted-foreground" />
                       </div>
                       <span className="text-muted-foreground font-medium">Create Task</span>
@@ -371,7 +406,7 @@ export function TaskList() {
                 </div>
               ) : (
                 <div className="px-2" role="list" aria-label="Tasks">
-                  {filteredTasks.map(task => (
+                  {filteredTasks.map((task) => (
                     <div key={task.id} className="px-4 py-1" role="listitem">
                       <SortableTask task={task} />
                     </div>
@@ -390,7 +425,10 @@ export function TaskList() {
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-border hover:border-primary/50 hover:bg-accent/50 transition-colors mt-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               aria-label="Create New Task"
             >
-              <div className="w-5 h-5 rounded-full border-2 border-border flex items-center justify-center" aria-hidden="true">
+              <div
+                className="w-5 h-5 rounded-full border-2 border-border flex items-center justify-center"
+                aria-hidden="true"
+              >
                 <Plus className="w-3 h-3 text-muted-foreground" />
               </div>
               <span className="text-muted-foreground font-medium">Create Task</span>
