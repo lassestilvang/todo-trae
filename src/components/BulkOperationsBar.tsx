@@ -1,4 +1,4 @@
-import { CheckCircle, Trash2, Archive, Tag, AlertCircle, X } from 'lucide-react';
+import { CheckCircle, Trash2, AlertCircle, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { useTaskStore } from '@/stores/taskStore';
@@ -12,7 +12,7 @@ interface BulkOperationsBarProps {
   onBulkAction: () => void;
 }
 
-export function BulkOperationsBar({ listId, labels, lists, onBulkAction }: BulkOperationsBarProps) {
+export function BulkOperationsBar({ listId, lists, onBulkAction }: BulkOperationsBarProps) {
   const { selectedTaskIds, clearSelection, tasks } = useTaskStore();
   const selectedCount = selectedTaskIds.size;
 
@@ -28,7 +28,7 @@ export function BulkOperationsBar({ listId, labels, lists, onBulkAction }: BulkO
       });
       if (!response.ok) throw new Error('Failed to complete tasks');
       const store = useTaskStore.getState();
-      selectedIds.forEach(id => {
+      selectedIds.forEach((id) => {
         store.updateTask(id, { completed: true, completedAt: new Date() });
       });
       clearSelection();
@@ -50,7 +50,7 @@ export function BulkOperationsBar({ listId, labels, lists, onBulkAction }: BulkO
       });
       if (!response.ok) throw new Error('Failed to update tasks');
       const store = useTaskStore.getState();
-      selectedIds.forEach(id => {
+      selectedIds.forEach((id) => {
         store.updateTask(id, { completed: false, completedAt: undefined });
       });
       clearSelection();
@@ -73,7 +73,7 @@ export function BulkOperationsBar({ listId, labels, lists, onBulkAction }: BulkO
       });
       if (!response.ok) throw new Error('Failed to delete tasks');
       const store = useTaskStore.getState();
-      selectedIds.forEach(id => store.deleteTask(id));
+      selectedIds.forEach((id) => store.deleteTask(id));
       clearSelection();
       onBulkAction();
       toast.success(`${selectedCount} task${selectedCount > 1 ? 's' : ''} deleted`);
@@ -97,7 +97,7 @@ export function BulkOperationsBar({ listId, labels, lists, onBulkAction }: BulkO
       });
       if (!response.ok) throw new Error('Failed to move tasks');
       const store = useTaskStore.getState();
-      selectedIds.forEach(id => {
+      selectedIds.forEach((id) => {
         store.updateTask(id, { listId: targetListId });
       });
       clearSelection();
@@ -119,11 +119,13 @@ export function BulkOperationsBar({ listId, labels, lists, onBulkAction }: BulkO
       });
       if (!response.ok) throw new Error('Failed to set priority');
       const store = useTaskStore.getState();
-      selectedIds.forEach(id => {
+      selectedIds.forEach((id) => {
         store.updateTask(id, { priority });
       });
       onBulkAction();
-      toast.success(`Priority set to ${priority} for ${selectedCount} task${selectedCount > 1 ? 's' : ''}`);
+      toast.success(
+        `Priority set to ${priority} for ${selectedCount} task${selectedCount > 1 ? 's' : ''}`
+      );
     } catch (error) {
       logger.error('Bulk set priority failed', { error });
       toast.error('Failed to set priority');
@@ -131,16 +133,14 @@ export function BulkOperationsBar({ listId, labels, lists, onBulkAction }: BulkO
   };
 
   const handleSelectAll = () => {
-    const listTasks = listId
-      ? tasks.filter(t => t.listId === listId)
-      : tasks;
-    const visibleTaskIds = listTasks.map(t => t.id);
-    const allSelected = visibleTaskIds.every(id => selectedTaskIds.has(id));
+    const listTasks = listId ? tasks.filter((t) => t.listId === listId) : tasks;
+    const visibleTaskIds = listTasks.map((t) => t.id);
+    const allSelected = visibleTaskIds.every((id) => selectedTaskIds.has(id));
 
     if (allSelected) {
       // Invert: deselect all visible tasks
       const newSelection = new Set(
-        Array.from(selectedTaskIds).filter(id => !visibleTaskIds.includes(id))
+        Array.from(selectedTaskIds).filter((id) => !visibleTaskIds.includes(id))
       );
       useTaskStore.setState({ selectedTaskIds: newSelection });
     } else {
@@ -149,20 +149,15 @@ export function BulkOperationsBar({ listId, labels, lists, onBulkAction }: BulkO
     }
   };
 
-  const listOptions = lists.map(l => ({ value: l.id, label: l.name }));
-  const visibleTasks = listId
-    ? tasks.filter(t => t.listId === listId)
-    : tasks;
-  const isAllSelected = visibleTasks.length > 0
-    ? visibleTasks.every(t => selectedTaskIds.has(t.id))
-    : false;
+  const listOptions = lists.map((l) => ({ value: l.id, label: l.name }));
+  const visibleTasks = listId ? tasks.filter((t) => t.listId === listId) : tasks;
+  const isAllSelected =
+    visibleTasks.length > 0 ? visibleTasks.every((t) => selectedTaskIds.has(t.id)) : false;
 
   return (
     <div className="glass-card p-4 rounded-2xl border-border/20 mb-4 animate-in fade-in slide-down-4">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-medium text-foreground">
-          {selectedCount} selected
-        </span>
+        <span className="text-sm font-medium text-foreground">{selectedCount} selected</span>
         <button
           type="button"
           onClick={clearSelection}
@@ -201,9 +196,13 @@ export function BulkOperationsBar({ listId, labels, lists, onBulkAction }: BulkO
           }}
           className="w-40 rounded-xl border-border/30 bg-background/40 backdrop-blur-md text-sm"
         >
-          <option value="" disabled>Move to...</option>
-          {listOptions.map(l => (
-            <option key={l.value} value={l.value}>{l.label}</option>
+          <option value="" disabled>
+            Move to...
+          </option>
+          {listOptions.map((l) => (
+            <option key={l.value} value={l.value}>
+              {l.label}
+            </option>
           ))}
         </Select>
 
@@ -214,7 +213,9 @@ export function BulkOperationsBar({ listId, labels, lists, onBulkAction }: BulkO
           }}
           className="w-40 rounded-xl border-border/30 bg-background/40 backdrop-blur-md text-sm"
         >
-          <option value="" disabled>Priority</option>
+          <option value="" disabled>
+            Priority
+          </option>
           <option value="low">Low Priority</option>
           <option value="medium">Medium Priority</option>
           <option value="high">High Priority</option>
@@ -230,12 +231,7 @@ export function BulkOperationsBar({ listId, labels, lists, onBulkAction }: BulkO
           Delete
         </Button>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleSelectAll}
-          className="rounded-xl text-xs"
-        >
+        <Button variant="ghost" size="sm" onClick={handleSelectAll} className="rounded-xl text-xs">
           {isAllSelected ? 'Deselect all' : 'Select all'}
         </Button>
       </div>
