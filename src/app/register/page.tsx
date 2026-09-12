@@ -47,7 +47,7 @@ export default function RegisterPage() {
 
       router.push('/');
       router.refresh();
-    } catch (err) {
+    } catch {
       setError('An error occurred during registration');
     } finally {
       setLoading(false);
