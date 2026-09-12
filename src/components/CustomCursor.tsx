@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react';
 import { motion, useSpring, useMotionValue } from 'framer-motion';
 
 export const CustomCursor = () => {
-  const [cursorVariant, setCursorVariant] = useState<'default' | 'hover' | 'click' | 'text'>('default');
+  const [cursorVariant, setCursorVariant] = useState<'default' | 'hover' | 'click' | 'text'>(
+    'default'
+  );
   const [isVisible, setIsVisible] = useState(false);
 
   const mouseX = useMotionValue(0);
@@ -24,7 +26,7 @@ export const CustomCursor = () => {
     const handleHoverStart = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       const cursorData = target.closest('[data-cursor]')?.getAttribute('data-cursor');
-      
+
       if (cursorData) {
         setCursorVariant(cursorData as 'default' | 'hover' | 'click' | 'text');
         return;
@@ -96,7 +98,7 @@ export const CustomCursor = () => {
       height: 32,
       borderWidth: '0px',
       borderRadius: '2px',
-    }
+    },
   };
 
   if (!isVisible) return null;
@@ -118,7 +120,7 @@ export const CustomCursor = () => {
           opacity: cursorVariant === 'text' ? 0 : 1,
         }}
       />
-      
+
       {/* Cursor Ring/Outer effect */}
       <motion.div
         className="fixed top-0 left-0 rounded-full border border-primary/40 pointer-events-none z-[9998] glass-effect overflow-hidden"
@@ -136,9 +138,14 @@ export const CustomCursor = () => {
         <motion.div
           className="absolute inset-0 bg-primary"
           animate={{
-            opacity: cursorVariant === 'hover' ? 0.1 : 
-                     cursorVariant === 'click' ? 0.3 : 
-                     cursorVariant === 'text' ? 0.5 : 0
+            opacity:
+              cursorVariant === 'hover'
+                ? 0.1
+                : cursorVariant === 'click'
+                  ? 0.3
+                  : cursorVariant === 'text'
+                    ? 0.5
+                    : 0,
           }}
           transition={{ duration: 0.2 }}
         />
