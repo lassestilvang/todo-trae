@@ -86,14 +86,14 @@ const UpdateTemplateSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   description: z.string().optional(),
   priority: z.enum(['high', 'medium', 'low', 'none']).optional(),
-  estimate: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  estimate: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .optional(),
   listId: z.string().optional(),
 });
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -118,10 +118,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -133,10 +130,7 @@ export async function PUT(
     const parsed = UpdateTemplateSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.issues[0].message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
     }
 
     const updates = {
