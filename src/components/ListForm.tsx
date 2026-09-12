@@ -41,7 +41,7 @@ export function ListForm({ open, onOpenChange, list }: ListFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       toast.error('List name is required');
       return;
@@ -57,7 +57,7 @@ export function ListForm({ open, onOpenChange, list }: ListFormProps) {
         });
 
         if (!response.ok) throw new Error('Failed to update list');
-        
+
         const updatedList = await response.json();
         updateList(list.id, updatedList);
         toast.success('List updated successfully');
@@ -74,7 +74,7 @@ export function ListForm({ open, onOpenChange, list }: ListFormProps) {
         });
 
         if (!response.ok) throw new Error('Failed to create list');
-        
+
         const newList = await response.json();
         addList(newList);
         toast.success('List created successfully');
@@ -97,7 +97,7 @@ export function ListForm({ open, onOpenChange, list }: ListFormProps) {
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="space-y-4">
             <div className="space-y-2">
-              <label 
+              <label
                 htmlFor="list-name"
                 className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest px-1"
               >
@@ -116,7 +116,7 @@ export function ListForm({ open, onOpenChange, list }: ListFormProps) {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label 
+                <label
                   htmlFor="list-emoji"
                   className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest px-1"
                 >
@@ -132,7 +132,7 @@ export function ListForm({ open, onOpenChange, list }: ListFormProps) {
               </div>
 
               <div className="space-y-2">
-                <label 
+                <label
                   htmlFor="list-color"
                   className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest px-1"
                 >
@@ -146,7 +146,9 @@ export function ListForm({ open, onOpenChange, list }: ListFormProps) {
                     onChange={(e) => setFormData({ ...formData, color: e.target.value })}
                     className="h-10 w-20 rounded-lg bg-background/40 border-border/30 cursor-pointer p-1"
                   />
-                  <span className="text-sm font-mono text-muted-foreground uppercase">{formData.color}</span>
+                  <span className="text-sm font-mono text-muted-foreground uppercase">
+                    {formData.color}
+                  </span>
                 </div>
               </div>
             </div>
