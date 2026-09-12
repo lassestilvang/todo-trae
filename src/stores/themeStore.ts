@@ -3,7 +3,7 @@ import { create } from 'zustand';
 interface ThemeStore {
   theme: 'light' | 'dark' | 'system';
   isDarkMode: boolean;
-  
+
   // Actions
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   toggleDarkMode: () => void;
@@ -13,11 +13,13 @@ interface ThemeStore {
 export const useThemeStore = create<ThemeStore>((set, get) => ({
   theme: 'system',
   isDarkMode: false,
-  
+
   setTheme: (theme) => {
     set({ theme });
     updateTheme(theme);
-    try { localStorage.setItem('theme', theme); } catch {}
+    try {
+      localStorage.setItem('theme', theme);
+    } catch {}
   },
 
   toggleDarkMode: () => {
@@ -28,14 +30,14 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
 
   initTheme: () => {
     if (typeof window === 'undefined') return;
-    
+
     // Prevent multiple initializations
     if ((window as unknown as { __THEME_INITIALIZED__?: boolean }).__THEME_INITIALIZED__) return;
     (window as unknown as { __THEME_INITIALIZED__?: boolean }).__THEME_INITIALIZED__ = true;
-    
+
     const storedTheme = localStorage.getItem('theme') as 'light' | 'dark' | 'system' | null;
     const initialTheme = storedTheme || 'system';
-    
+
     set({ theme: initialTheme });
     updateTheme(initialTheme);
 
@@ -48,7 +50,7 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
     };
 
     mediaQuery.addEventListener('change', handleChange);
-  }
+  },
 }));
 
 function updateTheme(theme: 'light' | 'dark' | 'system') {
