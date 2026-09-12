@@ -64,7 +64,8 @@ export function suggestTopTasks(tasks: Task[], count: number = 3): Task[] {
   // Sort by score descending, then by creation date (newest first) for tie-breaking
   return scoredTasks
     .sort((a, b) => {
-      const scoreDiff = (b as Task & { aiScore: number }).aiScore - (a as Task & { aiScore: number }).aiScore;
+      const scoreDiff =
+        (b as Task & { aiScore: number }).aiScore - (a as Task & { aiScore: number }).aiScore;
       if (scoreDiff !== 0) return scoreDiff;
       // Tie-break: newer tasks first
       // createdAt may be a string from the API/DB, not a Date object
@@ -98,18 +99,39 @@ const DATE_PATTERNS: { regex: RegExp; getValue: (match: RegExpMatchArray) => num
   { regex: /tomorrow/i, getValue: () => 1 },
   { regex: /in (\d+)\s*day/i, getValue: (m) => parseInt(m[1], 10) },
   { regex: /in (\d+)\s*week/i, getValue: (m) => parseInt(m[1], 10) * 7 },
-  { regex: /next\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday|week|month)/i, getValue: (m) => getNextWeekdayOffset(m[1]) },
-  { regex: /on\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday|friday)/i, getValue: (m) => getNextWeekdayOffset(m[1]) },
-  { regex: /this\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i, getValue: (m) => {
-    const day = m[1].toLowerCase();
-    return WEEKDAY_OFFSETS[day] - WEEKDAY_OFFSETS[new Date().toLocaleString('en-US', { weekday: 'long' }).toLowerCase()];
-  }},
-  { regex: /by\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i, getValue: (m) => getNextWeekdayOffset(m[1]) },
+  {
+    regex: /next\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday|week|month)/i,
+    getValue: (m) => getNextWeekdayOffset(m[1]),
+  },
+  {
+    regex: /on\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday|friday)/i,
+    getValue: (m) => getNextWeekdayOffset(m[1]),
+  },
+  {
+    regex: /this\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i,
+    getValue: (m) => {
+      const day = m[1].toLowerCase();
+      return (
+        WEEKDAY_OFFSETS[day] -
+        WEEKDAY_OFFSETS[new Date().toLocaleString('en-US', { weekday: 'long' }).toLowerCase()]
+      );
+    },
+  },
+  {
+    regex: /by\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i,
+    getValue: (m) => getNextWeekdayOffset(m[1]),
+  },
   { regex: /in (\d+)\s*hour/i, getValue: (m) => -parseInt(m[1], 10) / 24 }, // Special: time-only, not date offset
 ];
 
 const WEEKDAY_OFFSETS: Record<string, number> = {
-  monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6, sunday: 7,
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+  saturday: 6,
+  sunday: 7,
 };
 
 function getNextWeekdayOffset(weekday: string): number {
@@ -149,10 +171,7 @@ const DEADLINE_REGEX = /\b(by|due|deadline|ddl)\s+(\w+(?:\s+\w+)?)/i;
  * Example: "Buy milk @grocery #shopping tomorrow at 3pm" →
  *   { name: "Buy milk @grocery", labelIds: ["shopping"], date: new Date("tomorrow 15:00"), priority: "none" }
  */
-export function parseNaturalLanguage(
-  input: string,
-  options: ParseOptions = {}
-): ParsedTaskInput {
+export function parseNaturalLanguage(input: string, options: ParseOptions = {}): ParsedTaskInput {
   let text = input.trim();
   const labelIds: string[] = [];
   const labelNames: string[] = [];
@@ -262,11 +281,18 @@ export function parseNaturalLanguage(
   const name = text.replace(/\s+/g, ' ').trim();
 
   // If we found labels but didn't match to available labels, keep the names in description
-  const description = labelNames.length > 0 && labelNames.length !== labelIds.length
-    ? `Labels: ${labelNames.join(', ')}`
-    : undefined;
+  const description =
+    labelNames.length > 0 && labelNames.length !== labelIds.length
+      ? `Labels: ${labelNames.join(', ')}`
+      : undefined;
 
-  logger.debug('Natural language parsed', { name, priority, labelIds, date: date?.toISOString(), deadline: deadline?.toISOString() });
+  logger.debug('Natural language parsed', {
+    name,
+    priority,
+    labelIds,
+    date: date?.toISOString(),
+    deadline: deadline?.toISOString(),
+  });
 
   return {
     name: name || 'Untitled task',
@@ -279,7 +305,10 @@ export function parseNaturalLanguage(
   };
 }
 
-function parseDateExpression(text: string, parsedTime: { hours: number; minutes: number } | null): Date | null {
+function parseDateExpression(
+  text: string,
+  parsedTime: { hours: number; minutes: number } | null
+): Date | null {
   // Try each date pattern
   for (const pattern of DATE_PATTERNS) {
     if (pattern.regex.test(text)) {
@@ -307,7 +336,9 @@ function parseDateExpression(text: string, parsedTime: { hours: number; minutes:
   }
 
   // Try explicit date format: "on 2024-12-25" or "on Dec 25"
-  const explicitDateMatch = text.match(/\b(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4}|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2})\b/i);
+  const explicitDateMatch = text.match(
+    /\b(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4}|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2})\b/i
+  );
   if (explicitDateMatch) {
     try {
       const parsed = new Date(explicitDateMatch[1]);
