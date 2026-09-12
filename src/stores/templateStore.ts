@@ -5,7 +5,7 @@ import { logger } from '@/lib/logger';
 interface TemplateStore {
   templates: TaskTemplate[];
   isLoading: boolean;
-  
+
   setTemplates: (templates: TaskTemplate[]) => void;
   addTemplate: (template: TaskTemplate) => void;
   updateTemplate: (id: string, template: Partial<TaskTemplate>) => void;
@@ -16,23 +16,26 @@ interface TemplateStore {
 export const useTemplateStore = create<TemplateStore>((set) => ({
   templates: [],
   isLoading: false,
-  
+
   setTemplates: (templates) => set({ templates }),
-  
-  addTemplate: (template) => set((state) => ({ 
-    templates: [...state.templates, template] 
-  })),
-  
-  updateTemplate: (id, updatedTemplate) => set((state) => ({
-    templates: state.templates.map((t) => 
-      t.id === id ? { ...t, ...updatedTemplate, updatedAt: new Date() } : t
-    )
-  })),
-  
-  deleteTemplate: (id) => set((state) => ({
-    templates: state.templates.filter((t) => t.id !== id)
-  })),
-  
+
+  addTemplate: (template) =>
+    set((state) => ({
+      templates: [...state.templates, template],
+    })),
+
+  updateTemplate: (id, updatedTemplate) =>
+    set((state) => ({
+      templates: state.templates.map((t) =>
+        t.id === id ? { ...t, ...updatedTemplate, updatedAt: new Date() } : t
+      ),
+    })),
+
+  deleteTemplate: (id) =>
+    set((state) => ({
+      templates: state.templates.filter((t) => t.id !== id),
+    })),
+
   fetchTemplates: async () => {
     set({ isLoading: true });
     try {
@@ -46,5 +49,5 @@ export const useTemplateStore = create<TemplateStore>((set) => ({
     } finally {
       set({ isLoading: false });
     }
-  }
+  },
 }));
