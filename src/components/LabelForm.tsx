@@ -5,7 +5,7 @@ import { useTaskStore } from '@/stores/taskStore';
 import { Label } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/Dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 
@@ -41,7 +41,7 @@ export function LabelForm({ open, onOpenChange, label }: LabelFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       toast.error('Label name is required');
       return;
@@ -57,7 +57,7 @@ export function LabelForm({ open, onOpenChange, label }: LabelFormProps) {
         });
 
         if (!response.ok) throw new Error('Failed to update label');
-        
+
         const updatedLabel = await response.json();
         updateLabel(label.id, updatedLabel);
         toast.success('Label updated successfully');
@@ -73,7 +73,7 @@ export function LabelForm({ open, onOpenChange, label }: LabelFormProps) {
         });
 
         if (!response.ok) throw new Error('Failed to create label');
-        
+
         const newLabel = await response.json();
         addLabel(newLabel);
         toast.success('Label created successfully');
@@ -96,7 +96,7 @@ export function LabelForm({ open, onOpenChange, label }: LabelFormProps) {
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="space-y-4">
             <div className="space-y-2">
-              <label 
+              <label
                 htmlFor="label-name"
                 className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest px-1"
               >
@@ -115,7 +115,7 @@ export function LabelForm({ open, onOpenChange, label }: LabelFormProps) {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label 
+                <label
                   htmlFor="label-icon"
                   className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest px-1"
                 >
@@ -130,7 +130,7 @@ export function LabelForm({ open, onOpenChange, label }: LabelFormProps) {
                 />
               </div>
               <div className="space-y-2">
-                <label 
+                <label
                   htmlFor="label-color"
                   className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest px-1"
                 >
@@ -144,7 +144,9 @@ export function LabelForm({ open, onOpenChange, label }: LabelFormProps) {
                     onChange={(e) => setFormData({ ...formData, color: e.target.value })}
                     className="w-6 h-6 rounded-md overflow-hidden bg-transparent cursor-pointer"
                   />
-                  <span className="text-xs font-mono font-medium text-muted-foreground uppercase">{formData.color}</span>
+                  <span className="text-xs font-mono font-medium text-muted-foreground uppercase">
+                    {formData.color}
+                  </span>
                 </div>
               </div>
             </div>
