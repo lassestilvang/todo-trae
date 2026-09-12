@@ -78,7 +78,11 @@ export function SubtaskManager({ taskId, subtasks }: SubtaskManagerProps) {
                   type="button"
                   onClick={() => toggleSubtaskComplete(subtask.id)}
                   className="flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-full"
-                  aria-label={subtask.completed ? `Mark subtask "${subtask.name}" as incomplete` : `Mark subtask "${subtask.name}" as complete`}
+                  aria-label={
+                    subtask.completed
+                      ? `Mark subtask "${subtask.name}" as incomplete`
+                      : `Mark subtask "${subtask.name}" as complete`
+                  }
                 >
                   {subtask.completed ? (
                     <CheckCircle2 className="w-4 h-4 text-green-500" />
@@ -86,11 +90,13 @@ export function SubtaskManager({ taskId, subtasks }: SubtaskManagerProps) {
                     <Circle className="w-4 h-4 text-muted-foreground hover:text-primary" />
                   )}
                 </button>
-                
-                <span className={`flex-1 text-sm ${subtask.completed ? 'line-through text-muted-foreground' : ''}`}>
+
+                <span
+                  className={`flex-1 text-sm ${subtask.completed ? 'line-through text-muted-foreground' : ''}`}
+                >
                   {subtask.name}
                 </span>
-                
+
                 <Button
                   type="button"
                   variant="ghost"
