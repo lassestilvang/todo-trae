@@ -14,19 +14,18 @@ interface ActivityLogProps {
 
 export function ActivityLog({ task }: ActivityLogProps) {
   const { activityLogs, addActivityLog } = useTaskStore();
-  const [isLoading, setIsLoading] = useState(false);
-  const taskLogs = activityLogs.filter(log => log.taskId === task.id);
+  const taskLogs = activityLogs.filter((log) => log.taskId === task.id);
+  const [isLoading, setIsLoading] = useState(taskLogs.length === 0);
 
   useEffect(() => {
     // Fetch task-specific activity logs if we haven't already
     if (!taskLogs.length) {
-      setIsLoading(true);
       fetch(`/api/activity-logs?taskId=${task.id}`)
-        .then(res => res.json())
+        .then((res) => res.json())
         .then((logs: ActivityLogType[]) => {
-          logs.forEach(log => addActivityLog(log));
+          logs.forEach((log) => addActivityLog(log));
         })
-        .catch(error => {
+        .catch((error) => {
           logger.error('Failed to load activity logs', { error });
           toast.error('Failed to load activity history');
         })
@@ -36,12 +35,18 @@ export function ActivityLog({ task }: ActivityLogProps) {
 
   const getActionIcon = (action: ActivityLogType['action']) => {
     switch (action) {
-      case 'created': return <Plus className="w-4 h-4 text-green-500" />;
-      case 'updated': return <Edit3 className="w-4 h-4 text-blue-500" />;
-      case 'completed': return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'deleted': return <Trash2 className="w-4 h-4 text-red-500" />;
-      case 'moved': return <Move className="w-4 h-4 text-yellow-500" />;
-      default: return <History className="w-4 h-4 text-muted-foreground" />;
+      case 'created':
+        return <Plus className="w-4 h-4 text-green-500" />;
+      case 'updated':
+        return <Edit3 className="w-4 h-4 text-blue-500" />;
+      case 'completed':
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'deleted':
+        return <Trash2 className="w-4 h-4 text-red-500" />;
+      case 'moved':
+        return <Move className="w-4 h-4 text-yellow-500" />;
+      default:
+        return <History className="w-4 h-4 text-muted-foreground" />;
     }
   };
 
@@ -103,23 +108,25 @@ export function ActivityLog({ task }: ActivityLogProps) {
   }
 
   return (
-    <ul className="space-y-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar" role="log" aria-label="Task activity log">
+    <ul
+      className="space-y-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar"
+      role="log"
+      aria-label="Task activity log"
+    >
       {taskLogs.map((log) => (
         <li key={log.id} className="flex items-start gap-3 p-3 rounded-xl glass-card border-none">
           <div className="flex-shrink-0 mt-0.5 bg-background/50 p-1.5 rounded-lg">
             {getActionIcon(log.action)}
           </div>
-          
+
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-medium">
-                {getActionDescription(log)}
-              </p>
+              <p className="text-sm font-medium">{getActionDescription(log)}</p>
               <time className="text-xs text-muted-foreground" title={format(log.createdAt, 'PPpp')}>
                 {formatDistanceToNow(log.createdAt, { addSuffix: true })}
               </time>
             </div>
-            
+
             {log.field && (
               <div className="mt-1 text-xs text-muted-foreground">
                 {log.oldValue && (
@@ -127,7 +134,9 @@ export function ActivityLog({ task }: ActivityLogProps) {
                 )}
                 {log.oldValue && log.newValue && ' → '}
                 {log.newValue && (
-                  <span className="text-foreground font-medium">{formatFieldValue(log.field, log.newValue)}</span>
+                  <span className="text-foreground font-medium">
+                    {formatFieldValue(log.field, log.newValue)}
+                  </span>
                 )}
               </div>
             )}
