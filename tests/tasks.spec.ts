@@ -3,7 +3,7 @@ import { loginAsTestUser } from './helpers/auth';
 
 test.describe('Task Management', () => {
   test.beforeEach(async ({ page }) => {
-    page.on('console', msg => {
+    page.on('console', (msg) => {
       if (msg.type() === 'error') console.log(`BROWSER ERROR: ${msg.text()}`);
     });
     await loginAsTestUser(page);
@@ -23,7 +23,10 @@ test.describe('Task Management', () => {
     // Fill in task details
     const taskName = `Test Task ${Date.now()}`;
     await page.getByPlaceholder('What needs to be done?').first().fill(taskName);
-    await page.getByPlaceholder('Add more details...').first().fill('This is a test task description');
+    await page
+      .getByPlaceholder('Add more details...')
+      .first()
+      .fill('This is a test task description');
 
     // Submit the form
     await page.getByRole('button', { name: 'Create Task' }).click();
@@ -65,7 +68,7 @@ test.describe('Task Management', () => {
     await taskHeading.click();
 
     // Handle the confirmation dialog
-    page.on('dialog', async dialog => {
+    page.on('dialog', async (dialog) => {
       expect(dialog.message()).toBe('Are you sure you want to delete this task?');
       await dialog.accept();
     });
@@ -109,7 +112,10 @@ test.describe('Task Management', () => {
 
     // Fill task name and use AI Parse
     const taskName = `AI Task ${Date.now()}`;
-    await page.getByPlaceholder('What needs to be done?').first().fill('Submit report #work high priority');
+    await page
+      .getByPlaceholder('What needs to be done?')
+      .first()
+      .fill('Submit report #work high priority');
 
     // Use the AI Parse button
     await page.getByRole('button', { name: 'Parse natural language' }).click();
@@ -218,8 +224,8 @@ test.describe('Task Management', () => {
       const response = await fetch('/api/tasks');
       return await response.json();
     });
-    const sortedTasks = tasks.filter((t: { name: string }) =>
-      t.name.includes('Dependency A') || t.name.includes('Dependency B')
+    const sortedTasks = tasks.filter(
+      (t: { name: string }) => t.name.includes('Dependency A') || t.name.includes('Dependency B')
     );
     const taskA = sortedTasks.find((t: { name: string }) => t.name.includes('Dependency A'));
     const taskB = sortedTasks.find((t: { name: string }) => t.name.includes('Dependency B'));
@@ -229,14 +235,17 @@ test.describe('Task Management', () => {
     }
 
     // Add dependency: B depends on A
-    await page.evaluate(async ({ taskBId, taskAId }: { taskBId: string; taskAId: string }) => {
-      const response = await fetch('/api/tasks/dependencies', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ taskId: taskBId, dependsOnTaskId: taskAId }),
-      });
-      return await response.json();
-    }, { taskBId: taskB.id, taskAId: taskA.id });
+    await page.evaluate(
+      async ({ taskBId, taskAId }: { taskBId: string; taskAId: string }) => {
+        const response = await fetch('/api/tasks/dependencies', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ taskId: taskBId, dependsOnTaskId: taskAId }),
+        });
+        return await response.json();
+      },
+      { taskBId: taskB.id, taskAId: taskA.id }
+    );
 
     // Verify dependency was added
     const deps = await page.evaluate(async (taskId: string) => {
@@ -248,15 +257,18 @@ test.describe('Task Management', () => {
     expect(deps[0].dependsOnTaskId).toBe(taskA.id);
 
     // Test circular dependency detection
-    const circularResult = await page.evaluate(async ({ taskAId, taskBId }: { taskAId: string; taskBId: string }) => {
-      const response = await fetch('/api/tasks/dependencies', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ taskId: taskAId, dependsOnTaskId: taskBId }),
-      });
-      const data = await response.json();
-      return { ok: response.ok, error: data.error };
-    }, { taskAId: taskA.id, taskBId: taskB.id });
+    const circularResult = await page.evaluate(
+      async ({ taskAId, taskBId }: { taskAId: string; taskBId: string }) => {
+        const response = await fetch('/api/tasks/dependencies', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ taskId: taskAId, dependsOnTaskId: taskBId }),
+        });
+        const data = await response.json();
+        return { ok: response.ok, error: data.error };
+      },
+      { taskAId: taskA.id, taskBId: taskB.id }
+    );
 
     // Should fail with circular dependency error
     expect(circularResult.ok).toBe(false);
