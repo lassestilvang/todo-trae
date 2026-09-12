@@ -6,16 +6,14 @@ import { useThemeStore } from '@/stores/themeStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useTemplateStore } from '@/stores/templateStore';
 import { ViewType } from '@/types';
-import { 
-  Plus, 
-  Search, 
-  Bell, 
+import {
+  Plus,
+  Search,
   Check,
-  ChevronDown, 
+  ChevronDown,
   Calendar,
   Clock,
   CheckCircle2,
-  Hash,
   Tag,
   Sun,
   Moon,
@@ -28,7 +26,7 @@ import {
   User,
   Settings,
   Download,
-  Upload
+  Upload,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { isToday } from 'date-fns';
@@ -41,7 +39,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/DropdownMenu';
-import { TaskForm } from './TaskForm';
 import { ListForm } from './ListForm';
 import { LabelForm } from './LabelForm';
 import { NotificationCenter } from './NotificationCenter';
@@ -49,6 +46,7 @@ import { useRef, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export function Sidebar() {
   const { data: session } = useSession();
@@ -64,10 +62,10 @@ export function Sidebar() {
     setSelectedListId,
     setSelectedLabelId,
     setSelectedView,
-    setSearchQuery
+    setSearchQuery,
   } = useTaskStore();
   const { theme, setTheme } = useThemeStore();
-  const { isSearchFocused, setSearchFocused, isTaskFormOpen, setTaskFormOpen } = useUIStore();
+  const { isSearchFocused, setSearchFocused, setTaskFormOpen } = useUIStore();
   const { templates, deleteTemplate } = useTemplateStore();
   const [showTemplates, setShowTemplates] = useState(false);
   const [listFormOpen, setListFormOpen] = useState(false);
@@ -93,19 +91,25 @@ export function Sidebar() {
   };
 
   const views: Array<{ id: ViewType; name: string; icon: React.ReactNode; badge?: number }> = [
-    { 
-      id: 'today', 
-      name: 'Today', 
-      icon: <Calendar className="w-4 h-4" />, 
-      badge: tasks.filter(t => {
-        if (!t.date || t.completed) return false;
-        const date = new Date(t.date);
-        return !isNaN(date.getTime()) && isToday(date);
-      }).length || undefined 
+    {
+      id: 'today',
+      name: 'Today',
+      icon: <Calendar className="w-4 h-4" />,
+      badge:
+        tasks.filter((t) => {
+          if (!t.date || t.completed) return false;
+          const date = new Date(t.date);
+          return !isNaN(date.getTime()) && isToday(date);
+        }).length || undefined,
     },
     { id: 'next7days', name: 'Next 7 Days', icon: <Clock className="w-4 h-4" /> },
     { id: 'upcoming', name: 'Upcoming', icon: <Calendar className="w-4 h-4" /> },
-    { id: 'all', name: 'All', icon: <CheckCircle2 className="w-4 h-4" />, badge: tasks.filter(t => !t.completed).length || undefined },
+    {
+      id: 'all',
+      name: 'All',
+      icon: <CheckCircle2 className="w-4 h-4" />,
+      badge: tasks.filter((t) => !t.completed).length || undefined,
+    },
   ];
 
   const handleSearch = (query: string) => {
@@ -139,7 +143,7 @@ export function Sidebar() {
   };
 
   return (
-    <nav 
+    <nav
       className="w-72 border-r border-border/30 flex flex-col bg-background/20 backdrop-blur-md"
       aria-label="Main Navigation"
     >
@@ -148,16 +152,25 @@ export function Sidebar() {
         <div className="flex items-center justify-between mb-6">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <div 
+              <div
                 className="flex items-center gap-2 group cursor-pointer"
                 role="button"
                 data-cursor="hover"
                 tabIndex={0}
                 aria-label="Account Settings"
               >
-                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform overflow-hidden" aria-hidden="true">
+                <div
+                  className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform overflow-hidden"
+                  aria-hidden="true"
+                >
                   {session?.user?.image ? (
-                    <img src={session.user.image} alt={session.user.name || ''} className="w-full h-full object-cover" />
+                    <Image
+                      src={session.user.image}
+                      alt={session.user.name || ''}
+                      width={32}
+                      height={32}
+                      className="w-full h-full object-cover rounded-full"
+                    />
                   ) : (
                     (session?.user?.name?.[0] || 'U').toUpperCase()
                   )}
@@ -171,7 +184,10 @@ export function Sidebar() {
                 <ChevronDown className="w-3 h-3 text-muted-foreground ml-1" aria-hidden="true" />
               </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56 rounded-xl shadow-xl border-border/40">
+            <DropdownMenuContent
+              align="start"
+              className="w-56 rounded-xl shadow-xl border-border/40"
+            >
               <div className="px-2 py-2 border-b border-border/30 mb-1">
                 <p className="text-xs font-semibold text-muted-foreground px-2 pb-1">Account</p>
                 <div className="flex items-center gap-2 px-2 py-1">
@@ -180,7 +196,9 @@ export function Sidebar() {
                   </div>
                   <div className="flex flex-col overflow-hidden">
                     <p className="text-sm font-medium truncate">{session?.user?.name}</p>
-                    <p className="text-[10px] text-muted-foreground truncate">{session?.user?.email}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">
+                      {session?.user?.email}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -205,7 +223,9 @@ export function Sidebar() {
                     const response = await fetch('/api/export');
                     if (!response.ok) throw new Error('Export failed');
                     const data = await response.json();
-                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const blob = new Blob([JSON.stringify(data, null, 2)], {
+                      type: 'application/json',
+                    });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
@@ -248,7 +268,9 @@ export function Sidebar() {
                     });
                     if (!response.ok) throw new Error('Import failed');
                     const result = await response.json();
-                    toast.success(`Imported: ${result.imported.lists} lists, ${result.imported.labels} labels, ${result.imported.tasks} tasks`);
+                    toast.success(
+                      `Imported: ${result.imported.lists} lists, ${result.imported.labels} labels, ${result.imported.tasks} tasks`
+                    );
                     // Refresh the page to show imported data
                     window.location.reload();
                   } catch {
@@ -258,7 +280,7 @@ export function Sidebar() {
                 }}
               />
               <div className="h-px bg-border/30 my-1" />
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 className="gap-2 rounded-lg py-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
                 onClick={() => signOut()}
               >
@@ -270,13 +292,13 @@ export function Sidebar() {
 
           <div className="flex items-center gap-1">
             <NotificationCenter />
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-8 w-8 p-0 rounded-xl hover:bg-accent/50" 
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 rounded-xl hover:bg-accent/50"
                   aria-label={`Current theme: ${getThemeLabel()}. Click to change.`}
                 >
                   {getThemeIcon()}
@@ -302,24 +324,32 @@ export function Sidebar() {
             </DropdownMenu>
           </div>
         </div>
-        
-        <Button 
+
+        <Button
           className="w-full justify-start gap-2 mb-4 rounded-xl shadow-lg shadow-primary/20 h-11 text-sm font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
           onClick={() => setTaskFormOpen(true)}
           aria-label="Create new task"
         >
-          <div className="w-5 h-5 rounded-md bg-white/20 flex items-center justify-center" aria-hidden="true">
+          <div
+            className="w-5 h-5 rounded-md bg-white/20 flex items-center justify-center"
+            aria-hidden="true"
+          >
             <Plus className="w-3.5 h-3.5" />
           </div>
           Add new task
         </Button>
 
-                <ListForm open={listFormOpen} onOpenChange={setListFormOpen} />
+        <ListForm open={listFormOpen} onOpenChange={setListFormOpen} />
         <LabelForm open={labelFormOpen} onOpenChange={setLabelFormOpen} />
 
         <div className="relative group">
-          <label htmlFor="sidebar-search" className="sr-only">Search tasks</label>
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" aria-hidden="true" />
+          <label htmlFor="sidebar-search" className="sr-only">
+            Search tasks
+          </label>
+          <Search
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors"
+            aria-hidden="true"
+          />
           <Input
             id="sidebar-search"
             ref={searchInputRef}
@@ -338,12 +368,19 @@ export function Sidebar() {
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         {/* Views */}
         <div className="p-4 space-y-1" role="group" aria-labelledby="views-heading">
-          <h3 id="views-heading" className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 px-3">Main</h3>
+          <h3
+            id="views-heading"
+            className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 px-3"
+          >
+            Main
+          </h3>
           {views.map((view) => (
             <button
               key={view.id}
               onClick={() => handleViewSelect(view.id)}
-              aria-current={selectedView === view.id && !selectedListId && pathname === '/' ? 'page' : undefined}
+              aria-current={
+                selectedView === view.id && !selectedListId && pathname === '/' ? 'page' : undefined
+              }
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                 selectedView === view.id && !selectedListId && pathname === '/'
                   ? 'bg-primary/10 text-primary shadow-sm'
@@ -351,17 +388,25 @@ export function Sidebar() {
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className={`p-1.5 rounded-lg transition-colors ${
-                  selectedView === view.id && !selectedListId && pathname === '/' ? 'bg-primary/20' : 'bg-transparent'
-                }`} aria-hidden="true">
+                <div
+                  className={`p-1.5 rounded-lg transition-colors ${
+                    selectedView === view.id && !selectedListId && pathname === '/'
+                      ? 'bg-primary/20'
+                      : 'bg-transparent'
+                  }`}
+                  aria-hidden="true"
+                >
                   {view.icon}
                 </div>
                 <span>{view.name}</span>
               </div>
               {view.badge && (
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm ${
-                  view.id === 'today' ? 'bg-red-500 text-white' : 'bg-muted text-muted-foreground'
-                }`} aria-label={`${view.badge} tasks`}>
+                <span
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm ${
+                    view.id === 'today' ? 'bg-red-500 text-white' : 'bg-muted text-muted-foreground'
+                  }`}
+                  aria-label={`${view.badge} tasks`}
+                >
                   {view.badge}
                 </span>
               )}
@@ -371,7 +416,9 @@ export function Sidebar() {
 
         {/* Analytics Link */}
         <div className="px-4 py-2 space-y-1">
-          <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 px-3">Insights</h3>
+          <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 px-3">
+            Insights
+          </h3>
           <Link
             href="/analytics"
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
@@ -380,9 +427,11 @@ export function Sidebar() {
                 : 'hover:bg-accent/40 text-muted-foreground hover:text-foreground'
             }`}
           >
-            <div className={`p-1.5 rounded-lg transition-colors ${
-              pathname === '/analytics' ? 'bg-primary/20' : 'bg-transparent'
-            }`}>
+            <div
+              className={`p-1.5 rounded-lg transition-colors ${
+                pathname === '/analytics' ? 'bg-primary/20' : 'bg-transparent'
+              }`}
+            >
               <TrendingUp className="w-4 h-4" />
             </div>
             <span>Analytics</span>
@@ -392,10 +441,15 @@ export function Sidebar() {
         {/* Lists */}
         <div className="p-4 border-t border-border/30" role="group" aria-labelledby="lists-heading">
           <div className="flex items-center justify-between mb-3 px-3">
-            <h3 id="lists-heading" className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">My Lists</h3>
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <h3
+              id="lists-heading"
+              className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider"
+            >
+              My Lists
+            </h3>
+            <Button
+              variant="ghost"
+              size="sm"
               className="h-6 w-6 p-0 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors"
               onClick={() => setListFormOpen(true)}
               aria-label="Add new list"
@@ -424,7 +478,9 @@ export function Sidebar() {
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-base" aria-hidden="true">{list.emoji}</span>
+                  <span className="text-base" aria-hidden="true">
+                    {list.emoji}
+                  </span>
                   <span>{list.name}</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -437,24 +493,37 @@ export function Sidebar() {
                   >
                     <Share2 className="w-3.5 h-3.5" />
                   </Button>
-                  {(list.isDefault || tasks.filter(t => t.listId === list.id && !t.completed).length > 0) && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/20 text-primary" aria-label={`${tasks.filter(t => t.listId === list.id && !t.completed).length} tasks`}>
-                      {tasks.filter(t => t.listId === list.id && !t.completed).length || '0'}
+                  {(list.isDefault ||
+                    tasks.filter((t) => t.listId === list.id && !t.completed).length > 0) && (
+                    <span
+                      className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/20 text-primary"
+                      aria-label={`${tasks.filter((t) => t.listId === list.id && !t.completed).length} tasks`}
+                    >
+                      {tasks.filter((t) => t.listId === list.id && !t.completed).length || '0'}
                     </span>
                   )}
                 </div>
               </div>
             ))}
-        </div>
+          </div>
         </div>
 
         {/* Labels */}
-        <div className="p-4 border-t border-border/30" role="group" aria-labelledby="labels-heading">
+        <div
+          className="p-4 border-t border-border/30"
+          role="group"
+          aria-labelledby="labels-heading"
+        >
           <div className="flex items-center justify-between mb-3 px-3">
-            <h3 id="labels-heading" className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Labels</h3>
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <h3
+              id="labels-heading"
+              className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider"
+            >
+              Labels
+            </h3>
+            <Button
+              variant="ghost"
+              size="sm"
               className="h-6 w-6 p-0 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors"
               onClick={() => setLabelFormOpen(true)}
               aria-label="Add new label"
@@ -466,22 +535,22 @@ export function Sidebar() {
             {labels.map((label) => {
               const isActive = selectedLabelId === label.id;
               return (
-              <button
-                key={label.id}
-                onClick={() => setSelectedLabelId(isActive ? null : label.id)}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all hover:scale-105 active:scale-95 ${
-                  isActive ? 'ring-2 ring-offset-2 ring-offset-background' : ''
-                }`}
-                aria-label={`Filter by label: ${label.name}${isActive ? ' (active)' : ''}`}
-                style={{
-                  color: label.color,
-                  borderColor: `${label.color}30`,
-                  backgroundColor: `${label.color}10`
-                }}
-              >
-                <Tag className="w-3 h-3" aria-hidden="true" />
-                {label.name}
-              </button>
+                <button
+                  key={label.id}
+                  onClick={() => setSelectedLabelId(isActive ? null : label.id)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all hover:scale-105 active:scale-95 ${
+                    isActive ? 'ring-2 ring-offset-2 ring-offset-background' : ''
+                  }`}
+                  aria-label={`Filter by label: ${label.name}${isActive ? ' (active)' : ''}`}
+                  style={{
+                    color: label.color,
+                    borderColor: `${label.color}30`,
+                    backgroundColor: `${label.color}10`,
+                  }}
+                >
+                  <Tag className="w-3 h-3" aria-hidden="true" />
+                  {label.name}
+                </button>
               );
             })}
           </div>
@@ -510,7 +579,9 @@ export function Sidebar() {
                 <LayoutTemplate className="w-4 h-4" />
               </div>
               <span>Templates</span>
-              <ChevronDown className={`w-3.5 h-3.5 ml-auto text-muted-foreground transition-transform duration-200 ${showTemplates ? '' : '-rotate-90'}`} />
+              <ChevronDown
+                className={`w-3.5 h-3.5 ml-auto text-muted-foreground transition-transform duration-200 ${showTemplates ? '' : '-rotate-90'}`}
+              />
             </button>
           </div>
         </div>
@@ -518,7 +589,7 @@ export function Sidebar() {
 
       {/* Templates Section */}
       <div className="px-4 py-4 border-t border-border/10">
-        <div 
+        <div
           className="flex items-center justify-between px-2 mb-3 cursor-pointer group"
           onClick={() => setShowTemplates(!showTemplates)}
         >
@@ -526,16 +597,18 @@ export function Sidebar() {
             <LayoutTemplate className="w-3 h-3" />
             Templates
           </h2>
-          <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform duration-300 ${showTemplates ? '' : '-rotate-90'}`} />
+          <ChevronDown
+            className={`w-3.5 h-3.5 text-muted-foreground transition-transform duration-300 ${showTemplates ? '' : '-rotate-90'}`}
+          />
         </div>
-        
+
         <AnimatePresence initial={false}>
           {showTemplates && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2, ease: "easeInOut" }}
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
               className="overflow-hidden space-y-1"
             >
               {templates.map((template) => (
@@ -569,7 +642,9 @@ export function Sidebar() {
                 </div>
               ))}
               {templates.length === 0 && (
-                <p className="px-3 py-2 text-xs text-muted-foreground italic">No templates yet. Save a task as a template to see it here.</p>
+                <p className="px-3 py-2 text-xs text-muted-foreground italic">
+                  No templates yet. Save a task as a template to see it here.
+                </p>
               )}
             </motion.div>
           )}
