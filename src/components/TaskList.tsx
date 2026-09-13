@@ -438,6 +438,7 @@ export function TaskList() {
       </div>
 
       <TaskForm
+        key={taskFormOpen ? 'open' : 'closed'}
         open={taskFormOpen}
         onOpenChange={setTaskFormOpen}
         listId={selectedListId || undefined}
