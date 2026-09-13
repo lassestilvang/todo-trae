@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTaskStore } from '@/stores/taskStore';
 import { TaskList } from '@/types';
 import { Button } from '@/components/ui/Button';
@@ -17,27 +17,12 @@ interface ListFormProps {
 
 export function ListForm({ open, onOpenChange, list }: ListFormProps) {
   const { addList, updateList } = useTaskStore();
-  const [formData, setFormData] = useState({
-    name: list?.name || '',
-    emoji: list?.emoji || '📁',
-    color: list?.color || '#3b82f6',
-  });
 
-  useEffect(() => {
-    if (list) {
-      setFormData({
-        name: list.name,
-        emoji: list.emoji || '📁',
-        color: list.color || '#3b82f6',
-      });
-    } else {
-      setFormData({
-        name: '',
-        emoji: '📁',
-        color: '#3b82f6',
-      });
-    }
-  }, [list, open]);
+  const [formData, setFormData] = useState(() => ({
+    name: list?.name ?? '',
+    emoji: list?.emoji ?? '📁',
+    color: list?.color ?? '#3b82f6',
+  }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
