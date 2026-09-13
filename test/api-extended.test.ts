@@ -1,7 +1,17 @@
 import { describe, expect, test, beforeEach, afterEach } from 'bun:test';
 import { db } from '../src/db';
-import { taskLists, tasks, labels, subtasks, taskLabels, reminders, taskDependencies, attachments, activityLog } from '../src/db/schema';
-import { ne, eq } from 'drizzle-orm';
+import {
+  taskLists,
+  tasks,
+  labels,
+  subtasks,
+  taskLabels,
+  reminders,
+  taskDependencies,
+  attachments,
+  activityLog,
+} from '../src/db/schema';
+import { eq } from 'drizzle-orm';
 import {
   getAllLists,
   updateList,
@@ -59,7 +69,9 @@ async function ensureTestSetup() {
     .where(eq(usersTable.id, TEST_USER_ID))
     .limit(1);
   if (testUser.length === 0) {
-    await db.insert(usersTable).values({ id: TEST_USER_ID, email: 'test@example.com', name: 'Test User' });
+    await db
+      .insert(usersTable)
+      .values({ id: TEST_USER_ID, email: 'test@example.com', name: 'Test User' });
   }
 
   const otherUser = await db
@@ -68,7 +80,9 @@ async function ensureTestSetup() {
     .where(eq(usersTable.id, OTHER_USER_ID))
     .limit(1);
   if (otherUser.length === 0) {
-    await db.insert(usersTable).values({ id: OTHER_USER_ID, email: 'other@example.com', name: 'Other User' });
+    await db
+      .insert(usersTable)
+      .values({ id: OTHER_USER_ID, email: 'other@example.com', name: 'Other User' });
   }
 
   const { taskLists: taskListsTable } = await import('../src/db/schema');
@@ -143,16 +157,25 @@ afterEach(async () => {
 
 describe('List Operations (Extended)', () => {
   test('getAllLists returns all lists for a user', async () => {
-    await createList({ id: 'list-1', name: 'List 1', color: '#FF0000', emoji: '📝', isDefault: false }, TEST_USER_ID);
-    await createList({ id: 'list-2', name: 'List 2', color: '#00FF00', emoji: '✅', isDefault: false }, TEST_USER_ID);
+    await createList(
+      { id: 'list-1', name: 'List 1', color: '#FF0000', emoji: '📝', isDefault: false },
+      TEST_USER_ID
+    );
+    await createList(
+      { id: 'list-2', name: 'List 2', color: '#00FF00', emoji: '✅', isDefault: false },
+      TEST_USER_ID
+    );
 
     const lists = await getAllLists(TEST_USER_ID);
     expect(lists).toHaveLength(3); // default-inbox + list-1 + list-2
-    expect(lists.map((l) => l.name).sort()).toEqual(['List 1', 'List 2', 'Inbox']);
+    expect(lists.map((l) => l.name).sort()).toEqual(['Inbox', 'List 1', 'List 2']);
   });
 
   test('getAllLists does not return lists from other users', async () => {
-    await createList({ id: 'other-list', name: 'Other List', color: '#FF0000', emoji: '📝', isDefault: false }, OTHER_USER_ID);
+    await createList(
+      { id: 'other-list', name: 'Other List', color: '#FF0000', emoji: '📝', isDefault: false },
+      OTHER_USER_ID
+    );
 
     const lists = await getAllLists(TEST_USER_ID);
     expect(lists).toHaveLength(1);
@@ -160,15 +183,24 @@ describe('List Operations (Extended)', () => {
   });
 
   test('updateList updates an existing list', async () => {
-    await createList({ id: 'edit-list', name: 'Original', color: '#FF0000', emoji: '📝', isDefault: false }, TEST_USER_ID);
+    await createList(
+      { id: 'edit-list', name: 'Original', color: '#FF0000', emoji: '📝', isDefault: false },
+      TEST_USER_ID
+    );
 
-    const updated = await updateList('edit-list', TEST_USER_ID, { name: 'Updated', color: '#00FF00' });
+    const updated = await updateList('edit-list', TEST_USER_ID, {
+      name: 'Updated',
+      color: '#00FF00',
+    });
     expect(updated.name).toBe('Updated');
     expect(updated.color).toBe('#00FF00');
   });
 
   test('deleteList removes a list', async () => {
-    await createList({ id: 'del-list', name: 'Delete Me', color: '#FF0000', emoji: '📝', isDefault: false }, TEST_USER_ID);
+    await createList(
+      { id: 'del-list', name: 'Delete Me', color: '#FF0000', emoji: '📝', isDefault: false },
+      TEST_USER_ID
+    );
 
     await deleteList('del-list', TEST_USER_ID);
     const lists = await getAllLists(TEST_USER_ID);
@@ -189,14 +221,20 @@ describe('Label Operations', () => {
 
   test('getAllLabels returns all labels for a user', async () => {
     await createLabel({ id: 'lbl-1', name: 'Work', color: '#FF0000', icon: '💼' }, TEST_USER_ID);
-    await createLabel({ id: 'lbl-2', name: 'Personal', color: '#0000FF', icon: '🏠' }, TEST_USER_ID);
+    await createLabel(
+      { id: 'lbl-2', name: 'Personal', color: '#0000FF', icon: '🏠' },
+      TEST_USER_ID
+    );
 
     const labels = await getAllLabels(TEST_USER_ID);
     expect(labels).toHaveLength(2);
   });
 
   test('getLabelById returns a label by ID', async () => {
-    await createLabel({ id: 'find-label', name: 'Find Me', color: '#FF0000', icon: '🔍' }, TEST_USER_ID);
+    await createLabel(
+      { id: 'find-label', name: 'Find Me', color: '#FF0000', icon: '🔍' },
+      TEST_USER_ID
+    );
     const label = await getLabelById('find-label', TEST_USER_ID);
     expect(label).toBeDefined();
     expect(label?.name).toBe('Find Me');
@@ -208,20 +246,32 @@ describe('Label Operations', () => {
   });
 
   test('getLabelById respects user isolation', async () => {
-    await createLabel({ id: 'user-label', name: 'User Label', color: '#FF0000', icon: '🔒' }, OTHER_USER_ID);
+    await createLabel(
+      { id: 'user-label', name: 'User Label', color: '#FF0000', icon: '🔒' },
+      OTHER_USER_ID
+    );
     const label = await getLabelById('user-label', TEST_USER_ID);
     expect(label).toBeNull();
   });
 
   test('updateLabel updates a label', async () => {
-    await createLabel({ id: 'upd-label', name: 'Original', color: '#FF0000', icon: '🔵' }, TEST_USER_ID);
-    const updated = await updateLabel('upd-label', TEST_USER_ID, { name: 'Updated', color: '#00FF00' });
+    await createLabel(
+      { id: 'upd-label', name: 'Original', color: '#FF0000', icon: '🔵' },
+      TEST_USER_ID
+    );
+    const updated = await updateLabel('upd-label', TEST_USER_ID, {
+      name: 'Updated',
+      color: '#00FF00',
+    });
     expect(updated.name).toBe('Updated');
     expect(updated.color).toBe('#00FF00');
   });
 
   test('deleteLabel removes a label', async () => {
-    await createLabel({ id: 'del-label', name: 'Delete Me', color: '#FF0000', icon: '🗑️' }, TEST_USER_ID);
+    await createLabel(
+      { id: 'del-label', name: 'Delete Me', color: '#FF0000', icon: '🗑️' },
+      TEST_USER_ID
+    );
     await deleteLabel('del-label', TEST_USER_ID);
     const label = await getLabelById('del-label', TEST_USER_ID);
     expect(label).toBeNull();
@@ -250,7 +300,10 @@ describe('Task Operations (Extended)', () => {
   });
 
   test('getTasksByListId returns tasks filtered by list', async () => {
-    await createList({ id: 'list-a', name: 'List A', color: '#FF0000', emoji: '📝', isDefault: false }, TEST_USER_ID);
+    await createList(
+      { id: 'list-a', name: 'List A', color: '#FF0000', emoji: '📝', isDefault: false },
+      TEST_USER_ID
+    );
     await createTask(makeTaskData('task-a1', 'list-a'));
     await createTask(makeTaskData('task-a2', 'list-a'));
     await createTask(makeTaskData('task-b1', 'default-inbox'));
@@ -261,7 +314,10 @@ describe('Task Operations (Extended)', () => {
   });
 
   test('createTask with labelIds creates task labels', async () => {
-    await createLabel({ id: 'lbl-test', name: 'Label', color: '#FF0000', icon: '🔖' }, TEST_USER_ID);
+    await createLabel(
+      { id: 'lbl-test', name: 'Label', color: '#FF0000', icon: '🔖' },
+      TEST_USER_ID
+    );
 
     const task = await createTask({
       id: 'task-with-labels',
@@ -342,8 +398,20 @@ describe('Subtask Operations', () => {
 
   test('getSubtasksByTaskId returns subtasks for a task', async () => {
     await createTask(makeTaskData('parent-task'));
-    await createSubtask({ id: 'sub-1', taskId: 'parent-task', name: 'Sub 1', completed: false, order: 0 });
-    await createSubtask({ id: 'sub-2', taskId: 'parent-task', name: 'Sub 2', completed: false, order: 1 });
+    await createSubtask({
+      id: 'sub-1',
+      taskId: 'parent-task',
+      name: 'Sub 1',
+      completed: false,
+      order: 0,
+    });
+    await createSubtask({
+      id: 'sub-2',
+      taskId: 'parent-task',
+      name: 'Sub 2',
+      completed: false,
+      order: 1,
+    });
 
     const subtasksList = await getSubtasksByTaskId('parent-task');
     expect(subtasksList).toHaveLength(2);
@@ -353,7 +421,13 @@ describe('Subtask Operations', () => {
 
   test('getSubtaskById returns a subtask by ID', async () => {
     await createTask(makeTaskData('parent-task'));
-    await createSubtask({ id: 'find-sub', taskId: 'parent-task', name: 'Find Me', completed: false, order: 0 });
+    await createSubtask({
+      id: 'find-sub',
+      taskId: 'parent-task',
+      name: 'Find Me',
+      completed: false,
+      order: 0,
+    });
 
     const sub = await getSubtaskById('find-sub');
     expect(sub).toBeDefined();
@@ -367,7 +441,13 @@ describe('Subtask Operations', () => {
 
   test('updateSubtask updates a subtask', async () => {
     await createTask(makeTaskData('parent-task'));
-    await createSubtask({ id: 'upd-sub', taskId: 'parent-task', name: 'Original', completed: false, order: 0 });
+    await createSubtask({
+      id: 'upd-sub',
+      taskId: 'parent-task',
+      name: 'Original',
+      completed: false,
+      order: 0,
+    });
 
     const updated = await updateSubtask('upd-sub', { name: 'Updated', completed: true });
     expect(updated.name).toBe('Updated');
@@ -376,7 +456,13 @@ describe('Subtask Operations', () => {
 
   test('deleteSubtask removes a subtask', async () => {
     await createTask(makeTaskData('parent-task'));
-    await createSubtask({ id: 'del-sub', taskId: 'parent-task', name: 'Delete Me', completed: false, order: 0 });
+    await createSubtask({
+      id: 'del-sub',
+      taskId: 'parent-task',
+      name: 'Delete Me',
+      completed: false,
+      order: 0,
+    });
 
     await deleteSubtask('del-sub');
     const sub = await getSubtaskById('del-sub');
@@ -401,8 +487,22 @@ describe('Attachment Operations', () => {
 
   test('getAttachmentsByTaskId returns attachments for a task', async () => {
     await createTask(makeTaskData('attach-task'));
-    await createAttachment({ id: 'att-1', taskId: 'attach-task', filename: 'a.txt', filePath: '/uploads/a.txt', fileSize: 100, mimeType: 'text/plain' });
-    await createAttachment({ id: 'att-2', taskId: 'attach-task', filename: 'b.txt', filePath: '/uploads/b.txt', fileSize: 200, mimeType: 'text/plain' });
+    await createAttachment({
+      id: 'att-1',
+      taskId: 'attach-task',
+      filename: 'a.txt',
+      filePath: '/uploads/a.txt',
+      fileSize: 100,
+      mimeType: 'text/plain',
+    });
+    await createAttachment({
+      id: 'att-2',
+      taskId: 'attach-task',
+      filename: 'b.txt',
+      filePath: '/uploads/b.txt',
+      fileSize: 200,
+      mimeType: 'text/plain',
+    });
 
     const atts = await getAttachmentsByTaskId('attach-task');
     expect(atts).toHaveLength(2);
@@ -410,7 +510,14 @@ describe('Attachment Operations', () => {
 
   test('deleteAttachment removes an attachment', async () => {
     await createTask(makeTaskData('attach-task'));
-    await createAttachment({ id: 'del-att', taskId: 'attach-task', filename: 'del.txt', filePath: '/uploads/del.txt', fileSize: 100, mimeType: 'text/plain' });
+    await createAttachment({
+      id: 'del-att',
+      taskId: 'attach-task',
+      filename: 'del.txt',
+      filePath: '/uploads/del.txt',
+      fileSize: 100,
+      mimeType: 'text/plain',
+    });
 
     await deleteAttachment('del-att');
     const atts = await getAttachmentsByTaskId('attach-task');
@@ -554,7 +661,11 @@ describe('Task Dependency Operations', () => {
 
   test('addTaskDependency throws when tasks not owned by user', async () => {
     await createTask(makeTaskData('other-task', 'default-inbox', TEST_USER_ID));
-    await createTask({ ...makeTaskData('other-user-task'), listId: 'default-inbox-other', userId: OTHER_USER_ID });
+    await createTask({
+      ...makeTaskData('other-user-task'),
+      listId: 'default-inbox-other',
+      userId: OTHER_USER_ID,
+    });
 
     await expect(addTaskDependency('other-task', 'other-user-task', TEST_USER_ID)).rejects.toThrow(
       'not found'
@@ -632,9 +743,24 @@ describe('Activity Log Operations', () => {
   });
 
   test('getActivityLogByTaskId returns logs for a specific task', async () => {
-    await createActivityLog({ id: 'log-1', taskId: 'task-a', action: 'created', userId: TEST_USER_ID });
-    await createActivityLog({ id: 'log-2', taskId: 'task-b', action: 'created', userId: TEST_USER_ID });
-    await createActivityLog({ id: 'log-3', taskId: 'task-a', action: 'updated', userId: TEST_USER_ID });
+    await createActivityLog({
+      id: 'log-1',
+      taskId: 'task-a',
+      action: 'created',
+      userId: TEST_USER_ID,
+    });
+    await createActivityLog({
+      id: 'log-2',
+      taskId: 'task-b',
+      action: 'created',
+      userId: TEST_USER_ID,
+    });
+    await createActivityLog({
+      id: 'log-3',
+      taskId: 'task-a',
+      action: 'updated',
+      userId: TEST_USER_ID,
+    });
 
     const logs = await getActivityLogByTaskId('task-a', TEST_USER_ID);
     expect(logs).toHaveLength(2);
