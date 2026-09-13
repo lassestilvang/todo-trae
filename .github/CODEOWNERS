@@ -1,0 +1,27 @@
+# Code owners for the daily-task-planner project
+# These owners will be requested for review when files are changed
+
+# Default owners for frontend code
+src/components/ @lasse-stilvang
+src/stores/ @lasse-stilvang
+src/app/ @lasse-stilvang
+
+# API routes
+src/app/api/ @lasse-stilvang
+
+# Database and schema
+src/db/ @lasse-stilvang
+src/lib/ @lasse-stilvang
+src/types/ @lasse-stilvang
+
+# Tests
+test/ @lasse-stilvang
+tests/ @lasse-stilvang
+
+# Configuration
+*.config.ts @lasse-stilvang
+*.config.mjs @lasse-stilvang
+*.json @lasse-stilvang
+
+# CI/CD
+.github/ @lasse-stilvang
