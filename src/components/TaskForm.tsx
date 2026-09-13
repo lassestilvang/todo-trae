@@ -51,26 +51,48 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
   const { lists, labels, subtasks, attachments, addTask, updateTask, deleteTask } = useTaskStore();
   const { templates, fetchTemplates, addTemplate } = useTemplateStore();
   const [activeTab, setActiveTab] = useState<'basic' | 'advanced' | 'activity'>('basic');
-  const [formData, setFormData] = useState({
-    name: task?.name || '',
-    description: task?.description || '',
-    listId: task?.listId || listId || lists.find((l) => l.isDefault)?.id || '',
-    date: task?.date ? format(new Date(task.date), 'yyyy-MM-dd') : '',
-    time: task?.date ? format(new Date(task.date), 'HH:mm') : '',
-    deadlineDate: task?.deadline ? format(new Date(task.deadline), 'yyyy-MM-dd') : '',
-    deadline: task?.deadline ? format(new Date(task.deadline), 'HH:mm') : '',
-    priority: task?.priority || ('none' as Priority),
-    estimate: task?.estimate || '',
-    actualTime: task?.actualTime || '',
-    labels: task?.labels?.map((l: Label) => l.id) || ([] as string[]),
-    recurring: task?.recurring,
-    recurringEndDate: task?.recurringEndDate
-      ? format(new Date(task.recurringEndDate), 'yyyy-MM-dd')
-      : '',
-    reminderDate: '',
-    reminderTime: '',
-    dependencyTaskId: '',
-  });
+
+  const initialFormData = task
+    ? {
+        name: task.name,
+        description: task.description || '',
+        listId: task.listId,
+        date: task.date ? format(new Date(task.date), 'yyyy-MM-dd') : '',
+        time: task.date ? format(new Date(task.date), 'HH:mm') : '',
+        deadlineDate: task.deadline ? format(new Date(task.deadline), 'yyyy-MM-dd') : '',
+        deadline: task.deadline ? format(new Date(task.deadline), 'HH:mm') : '',
+        priority: task.priority,
+        estimate: task.estimate || '',
+        actualTime: task.actualTime || '',
+        labels: task.labels?.map((l: Label) => l.id) || [],
+        recurring: task.recurring,
+        recurringEndDate: task.recurringEndDate
+          ? format(new Date(task.recurringEndDate), 'yyyy-MM-dd')
+          : '',
+        reminderDate: '',
+        reminderTime: '',
+        dependencyTaskId: '',
+      }
+    : ({
+        name: '',
+        description: '',
+        listId: listId || lists.find((l) => l.isDefault)?.id || '',
+        date: '',
+        time: '',
+        deadlineDate: '',
+        deadline: '',
+        priority: 'none' as Priority,
+        estimate: '',
+        actualTime: '',
+        labels: [] as string[],
+        recurring: undefined,
+        recurringEndDate: '',
+        reminderDate: '',
+        reminderTime: '',
+        dependencyTaskId: '',
+      } as const);
+
+  const [formData, setFormData] = useState<typeof initialFormData>(initialFormData);
 
   useEffect(() => {
     fetchTemplates();
@@ -131,55 +153,8 @@ export function TaskForm({ open, onOpenChange, task, listId }: TaskFormProps) {
     high: <Flag className="w-3.5 h-3.5 fill-current" />,
   };
 
-  // Reset form when task changes or lists load
-  useEffect(() => {
-    if (task) {
-      setFormData({
-        name: task.name,
-        description: task.description || '',
-        listId: task.listId,
-        date: task.date ? format(new Date(task.date), 'yyyy-MM-dd') : '',
-        time: task.date ? format(new Date(task.date), 'HH:mm') : '',
-        deadlineDate: task.deadline ? format(new Date(task.deadline), 'yyyy-MM-dd') : '',
-        deadline: task.deadline ? format(new Date(task.deadline), 'HH:mm') : '',
-        priority: task.priority,
-        estimate: task.estimate || '',
-        actualTime: task.actualTime || '',
-        labels: task.labels?.map((l: Label) => l.id) || [],
-        recurring: task.recurring,
-        recurringEndDate: task.recurringEndDate
-          ? format(new Date(task.recurringEndDate), 'yyyy-MM-dd')
-          : '',
-        reminderDate: '',
-        reminderTime: '',
-        dependencyTaskId: '',
-      });
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        name: '',
-        description: '',
-        listId:
-          prev.listId ||
-          listId ||
-          lists.find((l) => l.isDefault)?.id ||
-          (lists.length > 0 ? lists[0].id : ''),
-        date: '',
-        time: '',
-        deadlineDate: '',
-        deadline: '',
-        priority: 'none',
-        estimate: '',
-        actualTime: '',
-        labels: [],
-        recurring: undefined,
-        recurringEndDate: '',
-        reminderDate: '',
-        reminderTime: '',
-        dependencyTaskId: '',
-      }));
-    }
-  }, [task, listId, lists]);
+  // Reset form when task changes — handled via lazy useState initialization
+  // and key-based remount in parent components
 
   // Get current task's subtasks and attachments
   const currentSubtasks = task ? subtasks.filter((s) => s.taskId === task.id) : [];
