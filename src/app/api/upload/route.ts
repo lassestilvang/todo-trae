@@ -2,10 +2,41 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { createAttachment } from '@/lib/api';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4, validate as uuidValidate } from 'uuid';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { existsSync } from 'fs';
+
+const ALLOWED_EXTENSIONS = new Set([
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.gif',
+  '.webp',
+  '.pdf',
+  '.txt',
+  '.doc',
+  '.docx',
+  '.xls',
+  '.xlsx',
+  '.csv',
+]);
+
+const ALLOWED_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'application/pdf',
+  'text/plain',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/csv',
+]);
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 /**
  * @swagger
@@ -36,7 +67,6 @@ import { existsSync } from 'fs';
  *       401:
  *         description: Unauthorized.
  */
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,6 +87,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'taskId is required' }, { status: 400 });
     }
 
+    // Validate taskId is a valid UUID to prevent path traversal
+    if (!uuidValidate(taskId)) {
+      return NextResponse.json({ error: 'Invalid task ID' }, { status: 400 });
+    }
+
+    // Validate file extension against allowlist
+    const extension = path.extname(file.name).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.has(extension)) {
+      return NextResponse.json(
+        { error: `File type '${extension}' is not allowed` },
+        { status: 400 }
+      );
+    }
+
+    // Validate MIME type against allowlist
+    if (!ALLOWED_MIME_TYPES.has(file.type)) {
+      return NextResponse.json(
+        { error: `File MIME type '${file.type}' is not allowed` },
+        { status: 400 }
+      );
+    }
+
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
         { error: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB` },
@@ -66,7 +118,6 @@ export async function POST(request: NextRequest) {
 
     // Generate unique filename while preserving extension
     const originalName = file.name;
-    const extension = path.extname(originalName);
     const baseName = path.basename(originalName, extension);
     const uniqueName = `${baseName}-${Date.now()}${extension}`;
     const filePath = `/uploads/${taskId}/${uniqueName}`;
