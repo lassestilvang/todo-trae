@@ -313,7 +313,7 @@ export function Task({ task }: TaskProps) {
         </div>
       </div>
 
-      <TaskForm open={editFormOpen} onOpenChange={setEditFormOpen} task={task} />
+      <TaskForm key={task.id} open={editFormOpen} onOpenChange={setEditFormOpen} task={task} />
     </motion.div>
   );
 }
