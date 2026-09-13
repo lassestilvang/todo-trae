@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTaskStore } from '@/stores/taskStore';
 import { Label } from '@/types';
 import { Button } from '@/components/ui/Button';
@@ -17,27 +17,12 @@ interface LabelFormProps {
 
 export function LabelForm({ open, onOpenChange, label }: LabelFormProps) {
   const { addLabel, updateLabel } = useTaskStore();
-  const [formData, setFormData] = useState({
-    name: label?.name || '',
-    color: label?.color || '#3b82f6',
-    icon: label?.icon || '🏷️',
-  });
 
-  useEffect(() => {
-    if (label) {
-      setFormData({
-        name: label.name,
-        color: label.color || '#3b82f6',
-        icon: label.icon || '🏷️',
-      });
-    } else {
-      setFormData({
-        name: '',
-        color: '#3b82f6',
-        icon: '🏷️',
-      });
-    }
-  }, [label, open]);
+  const [formData, setFormData] = useState(() => ({
+    name: label?.name ?? '',
+    color: label?.color ?? '#3b82f6',
+    icon: label?.icon ?? '🏷️',
+  }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
