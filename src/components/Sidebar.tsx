@@ -339,8 +339,16 @@ export function Sidebar() {
           Add new task
         </Button>
 
-        <ListForm open={listFormOpen} onOpenChange={setListFormOpen} />
-        <LabelForm open={labelFormOpen} onOpenChange={setLabelFormOpen} />
+        <ListForm
+          key={listFormOpen ? 'open' : 'closed'}
+          open={listFormOpen}
+          onOpenChange={setListFormOpen}
+        />
+        <LabelForm
+          key={labelFormOpen ? 'open' : 'closed'}
+          open={labelFormOpen}
+          onOpenChange={setLabelFormOpen}
+        />
 
         <div className="relative group">
           <label htmlFor="sidebar-search" className="sr-only">
