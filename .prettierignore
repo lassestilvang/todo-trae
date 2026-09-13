@@ -11,9 +11,5 @@ yarn.lock
 bun.lock
 .idea
 .vscode
-
-# Generated files
-.next/
-out/
 *.log
 next-env.d.ts
