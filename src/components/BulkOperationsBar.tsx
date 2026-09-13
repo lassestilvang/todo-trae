@@ -1,3 +1,5 @@
+'use client';
+
 import { CheckCircle, Trash2, AlertCircle, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
