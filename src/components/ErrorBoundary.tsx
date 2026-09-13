@@ -5,9 +5,11 @@ import * as Sentry from '@sentry/nextjs';
 import { Button } from './ui/Button';
 import { AlertCircle, RefreshCw, Home } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 interface Props {
   children: ReactNode;
+  router: ReturnType<typeof useRouter>;
 }
 
 interface State {
@@ -15,7 +17,11 @@ interface State {
   error: Error | null;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
+/**
+ * Internal class-based ErrorBoundary that provides the error UI.
+ * Uses the router prop for client-side navigation.
+ */
+class ErrorBoundaryClass extends Component<Props, State> {
   public state: State = {
     hasError: false,
     error: null,
@@ -46,7 +52,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   private handleGoHome = () => {
     this.setState({ hasError: false, error: null });
-    window.location.href = '/';
+    this.props.router.push('/');
   };
 
   public render() {
@@ -103,4 +109,17 @@ export class ErrorBoundary extends Component<Props, State> {
 
     return this.props.children;
   }
+}
+
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+/**
+ * Wrapper for the class-based ErrorBoundary that provides the Next.js router.
+ * The class component needs the router prop for client-side navigation.
+ */
+export function ErrorBoundary({ children }: ErrorBoundaryProps) {
+  const router = useRouter();
+  return <ErrorBoundaryClass router={router}>{children}</ErrorBoundaryClass>;
 }
