@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Bell, X, Clock } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
@@ -15,6 +16,7 @@ interface Notification {
 }
 
 export function NotificationCenter() {
+  const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [lastCheck, setLastCheck] = useState<Date>(new Date());
@@ -61,7 +63,7 @@ export function NotificationCenter() {
               label: 'View',
               onClick: () => {
                 // Navigate to task — would need to open task form
-                window.location.href = `/?task=${r.taskId}`;
+                router.push(`/?task=${r.taskId}`);
               },
             },
           });
@@ -72,7 +74,7 @@ export function NotificationCenter() {
     } finally {
       setLastCheck(new Date());
     }
-  }, [notifications, lastCheck]);
+  }, [notifications, lastCheck, router]);
 
   // Poll for reminders every 30 seconds
   useEffect(() => {
