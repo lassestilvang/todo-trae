@@ -16,6 +16,7 @@ We take security vulnerabilities seriously. Please report them responsibly.
 Instead, report them by emailing the maintainer directly at: `lasse.stilvang@gmail.com`
 
 Please include:
+
 - A clear description of the vulnerability
 - Steps to reproduce or proof-of-concept
 - Potential impact assessment
