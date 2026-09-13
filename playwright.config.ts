@@ -71,12 +71,10 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: process.env.CI
-    ? undefined
-    : {
-        command: 'bun run dev',
-        url: 'http://localhost:3000',
-        reuseExistingServer: true,
-        timeout: 120 * 1000,
-      },
+  webServer: {
+    command: process.env.CI ? 'npx next dev' : 'bun run dev',
+    url: 'http://localhost:3000',
+    reuseExistingServer: true,
+    timeout: 120 * 1000,
+  },
 });
