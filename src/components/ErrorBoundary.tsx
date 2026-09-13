@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import * as Sentry from '@sentry/nextjs';
 import { Button } from './ui/Button';
 import { AlertCircle, RefreshCw, Home } from 'lucide-react';
@@ -22,7 +22,7 @@ interface State {
  * Uses the router prop for client-side navigation.
  */
 class ErrorBoundaryClass extends Component<Props, State> {
-  public state: State = {
+  public override state: State = {
     hasError: false,
     error: null,
   };
@@ -31,7 +31,7 @@ class ErrorBoundaryClass extends Component<Props, State> {
     return { hasError: true, error };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  public override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     if (process.env.NODE_ENV === 'production') {
       Sentry.captureException(error, {
         contexts: {
@@ -55,7 +55,7 @@ class ErrorBoundaryClass extends Component<Props, State> {
     this.props.router.push('/');
   };
 
-  public render() {
+  public override render() {
     if (this.state.hasError) {
       return (
         <div className="flex h-screen w-full items-center justify-center bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-background to-background p-6">
