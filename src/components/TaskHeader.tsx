@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useTaskStore } from '@/stores/taskStore';
 import {
   MoreHorizontal,
@@ -33,6 +34,7 @@ interface TaskHeaderProps {
 }
 
 export function TaskHeader({ title, taskCount }: TaskHeaderProps) {
+  const router = useRouter();
   const { showCompleted, setShowCompleted, showCompletedOnly, setShowCompletedOnly, activityLogs } =
     useTaskStore();
 
@@ -166,21 +168,21 @@ export function TaskHeader({ title, taskCount }: TaskHeaderProps) {
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem
                 className="gap-2 cursor-pointer"
-                onClick={() => (window.location.href = '/analytics')}
+                onClick={() => router.push('/analytics')}
               >
                 <TrendingUp className="w-4 h-4" />
                 <span>Analytics</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="gap-2 cursor-pointer"
-                onClick={() => (window.location.href = '/api-docs')}
+                onClick={() => router.push('/api-docs')}
               >
                 <HelpCircle className="w-4 h-4" />
                 <span>API Docs</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="gap-2 cursor-pointer"
-                onClick={() => (window.location.href = '/settings')}
+                onClick={() => router.push('/settings')}
               >
                 <Settings className="w-4 h-4" />
                 <span>Settings</span>
