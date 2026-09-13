@@ -569,13 +569,41 @@ export function Sidebar() {
           <div className="space-y-1 px-2">
             <button
               onClick={() => router.push('/analytics')}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium hover:bg-accent/40 text-muted-foreground hover:text-foreground transition-all"
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                pathname === '/analytics'
+                  ? 'bg-primary/10 text-primary shadow-sm'
+                  : 'hover:bg-accent/40 text-muted-foreground hover:text-foreground'
+              }}`}
               aria-label="View analytics dashboard"
             >
-              <div className="p-1.5 rounded-lg bg-primary/10 text-primary" aria-hidden="true">
+              <div
+                className={`p-1.5 rounded-lg transition-colors ${
+                  pathname === '/analytics' ? 'bg-primary/20' : 'bg-primary/10'
+                }`}
+                aria-hidden="true"
+              >
                 <TrendingUp className="w-4 h-4" />
               </div>
               <span>Analytics</span>
+            </button>
+            <button
+              onClick={() => router.push('/settings')}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                pathname === '/settings'
+                  ? 'bg-primary/10 text-primary shadow-sm'
+                  : 'hover:bg-accent/40 text-muted-foreground hover:text-foreground'
+              }}`}
+              aria-label="Open settings"
+            >
+              <div
+                className={`p-1.5 rounded-lg transition-colors ${
+                  pathname === '/settings' ? 'bg-primary/20' : 'bg-primary/10'
+                }}`}
+                aria-hidden="true"
+              >
+                <Settings className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <span>Settings</span>
             </button>
             <button
               onClick={() => setShowTemplates(!showTemplates)}
