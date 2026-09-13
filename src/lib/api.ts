@@ -50,6 +50,38 @@ function mapLabel(row: typeof labels.$inferSelect): Label {
   };
 }
 
+// Helper to map DB row to Task type (with optional reminders and dependencies)
+type TaskRow = typeof tasks.$inferSelect & {
+  taskLabels: Array<typeof taskLabels.$inferSelect & { label: typeof labels.$inferSelect }>;
+};
+
+function mapTask(
+  row: TaskRow,
+  options?: { reminders?: Date[]; dependencies?: TaskDependency[] }
+): Task {
+  return {
+    ...row,
+    createdAt: row.createdAt || new Date(),
+    updatedAt: row.updatedAt || new Date(),
+    date: row.date || undefined,
+    deadline: row.deadline || undefined,
+    completed: !!row.completed,
+    completedAt: row.completedAt || undefined,
+    recurringEndDate: row.recurringEndDate || undefined,
+    description: row.description || undefined,
+    estimate: row.estimate || undefined,
+    actualTime: row.actualTime || undefined,
+    parentTaskId: row.parentTaskId || undefined,
+    userId: row.userId || undefined,
+    order: row.order || 0,
+    priority: (row.priority || 'none') as Priority,
+    recurring: (row.recurring || undefined) as RecurringType | undefined,
+    labels: row.taskLabels.map((tl) => mapLabel(tl.label)),
+    reminders: options?.reminders ?? [],
+    dependencies: options?.dependencies,
+  };
+}
+
 // Task List operations
 export async function getAllLists(userId: string): Promise<TaskList[]> {
   const results = await db
@@ -211,26 +243,7 @@ export async function getAllTasks(
     remindersByTaskId.get(r.taskId)!.push(r.reminderTime);
   }
 
-  return results.map((row) => ({
-    ...row,
-    createdAt: row.createdAt || new Date(),
-    updatedAt: row.updatedAt || new Date(),
-    date: row.date || undefined,
-    deadline: row.deadline || undefined,
-    completed: !!row.completed,
-    completedAt: row.completedAt || undefined,
-    recurringEndDate: row.recurringEndDate || undefined,
-    description: row.description || undefined,
-    estimate: row.estimate || undefined,
-    actualTime: row.actualTime || undefined,
-    parentTaskId: row.parentTaskId || undefined,
-    userId: row.userId || undefined,
-    order: row.order || 0,
-    priority: (row.priority || 'none') as Priority,
-    recurring: (row.recurring || undefined) as RecurringType | undefined,
-    labels: row.taskLabels.map((tl) => mapLabel(tl.label)),
-    reminders: remindersByTaskId.get(row.id) || [],
-  }));
+  return results.map((row) => mapTask(row, { reminders: remindersByTaskId.get(row.id) || [] }));
 }
 
 export async function getTasksByListId(
@@ -270,26 +283,7 @@ export async function getTasksByListId(
     remindersByTaskId.get(r.taskId)!.push(r.reminderTime);
   }
 
-  return results.map((row) => ({
-    ...row,
-    createdAt: row.createdAt || new Date(),
-    updatedAt: row.updatedAt || new Date(),
-    date: row.date || undefined,
-    deadline: row.deadline || undefined,
-    completed: !!row.completed,
-    completedAt: row.completedAt || undefined,
-    recurringEndDate: row.recurringEndDate || undefined,
-    description: row.description || undefined,
-    estimate: row.estimate || undefined,
-    actualTime: row.actualTime || undefined,
-    parentTaskId: row.parentTaskId || undefined,
-    userId: row.userId || undefined,
-    order: row.order || 0,
-    priority: (row.priority || 'none') as Priority,
-    recurring: (row.recurring || undefined) as RecurringType | undefined,
-    labels: row.taskLabels.map((tl) => mapLabel(tl.label)),
-    reminders: remindersByTaskId.get(row.id) || [],
-  }));
+  return results.map((row) => mapTask(row, { reminders: remindersByTaskId.get(row.id) || [] }));
 }
 
 export async function getTaskById(id: string, userId: string): Promise<Task | null> {
@@ -309,27 +303,7 @@ export async function getTaskById(id: string, userId: string): Promise<Task | nu
   const taskReminders = await getRemindersByTaskId(id);
   const taskDeps = await getTaskDependencies(id, userId);
 
-  return {
-    ...row,
-    createdAt: row.createdAt || new Date(),
-    updatedAt: row.updatedAt || new Date(),
-    date: row.date || undefined,
-    deadline: row.deadline || undefined,
-    completed: !!row.completed,
-    completedAt: row.completedAt || undefined,
-    recurringEndDate: row.recurringEndDate || undefined,
-    description: row.description || undefined,
-    estimate: row.estimate || undefined,
-    actualTime: row.actualTime || undefined,
-    parentTaskId: row.parentTaskId || undefined,
-    userId: row.userId || undefined,
-    order: row.order || 0,
-    priority: (row.priority || 'none') as Priority,
-    recurring: (row.recurring || undefined) as RecurringType | undefined,
-    labels: row.taskLabels.map((tl) => mapLabel(tl.label)),
-    reminders: taskReminders,
-    dependencies: taskDeps,
-  };
+  return mapTask(row, { reminders: taskReminders, dependencies: taskDeps });
 }
 
 export async function createTask(
@@ -583,17 +557,15 @@ export async function reorderTasks(
   listId: string,
   orderedIds: string[]
 ): Promise<void> {
-  const updates = orderedIds.map((taskId, order) => ({
-    id: taskId,
-    order,
-  }));
-
-  for (const { id, order } of updates) {
-    await db
-      .update(tasks)
-      .set({ order })
-      .where(and(eq(tasks.id, id), eq(tasks.userId, userId)));
-  }
+  // Wrap sequential updates in a transaction for atomicity
+  await db.transaction(async (tx) => {
+    for (let i = 0; i < orderedIds.length; i++) {
+      await tx
+        .update(tasks)
+        .set({ order: i })
+        .where(and(eq(tasks.id, orderedIds[i]), eq(tasks.userId, userId)));
+    }
+  });
 
   logger.info('Tasks reordered', { listId, count: orderedIds.length, userId });
 }
@@ -630,22 +602,107 @@ export async function deleteAllRemindersForTask(taskId: string): Promise<void> {
 export async function bulkUpdateTasks(
   userId: string,
   taskIds: string[],
-  updates: Partial<Task>
+  updates: Partial<Task> & { labelIds?: string[] }
 ): Promise<Task[]> {
-  const updatedTasks: Task[] = [];
-  for (const taskId of taskIds) {
-    const updated = await updateTask(taskId, userId, updates);
-    updatedTasks.push(updated);
+  // Separate labelIds from scalar field updates
+  const { labelIds, ...fieldUpdates } = updates;
+
+  // Build a single DB update payload from non-label fields
+  const dbUpdates: Partial<typeof tasks.$inferInsert> = {
+    updatedAt: new Date(),
+  };
+  if (fieldUpdates.listId !== undefined) dbUpdates.listId = fieldUpdates.listId;
+  if (fieldUpdates.name !== undefined) dbUpdates.name = fieldUpdates.name;
+  if (fieldUpdates.description !== undefined) dbUpdates.description = fieldUpdates.description;
+  if (fieldUpdates.date !== undefined) dbUpdates.date = fieldUpdates.date;
+  if (fieldUpdates.deadline !== undefined) dbUpdates.deadline = fieldUpdates.deadline;
+  if (fieldUpdates.estimate !== undefined) dbUpdates.estimate = fieldUpdates.estimate;
+  if (fieldUpdates.actualTime !== undefined) dbUpdates.actualTime = fieldUpdates.actualTime;
+  if (fieldUpdates.priority !== undefined) dbUpdates.priority = fieldUpdates.priority;
+  if (fieldUpdates.completed !== undefined) dbUpdates.completed = fieldUpdates.completed;
+  if (fieldUpdates.completedAt !== undefined) dbUpdates.completedAt = fieldUpdates.completedAt;
+  if (fieldUpdates.recurring !== undefined) dbUpdates.recurring = fieldUpdates.recurring;
+  if (fieldUpdates.recurringEndDate !== undefined)
+    dbUpdates.recurringEndDate = fieldUpdates.recurringEndDate;
+  if (fieldUpdates.parentTaskId !== undefined) dbUpdates.parentTaskId = fieldUpdates.parentTaskId;
+  if (fieldUpdates.order !== undefined) dbUpdates.order = fieldUpdates.order;
+
+  // Single batch update instead of N sequential queries
+  const scalarKeys = Object.keys(dbUpdates).filter((k) => k !== 'updatedAt');
+  if (scalarKeys.length > 0) {
+    await db
+      .update(tasks)
+      .set(dbUpdates)
+      .where(and(inArray(tasks.id, taskIds), eq(tasks.userId, userId)));
   }
+
+  // Handle label assignment as a separate batch operation
+  if (labelIds) {
+    await db.delete(taskLabels).where(inArray(taskLabels.taskId, taskIds));
+    if (labelIds.length > 0) {
+      await db
+        .insert(taskLabels)
+        .values(
+          taskIds.flatMap((taskId: string) =>
+            labelIds.map((labelId: string) => ({ taskId, labelId }))
+          )
+        );
+    }
+  }
+
+  // Fetch and return the updated tasks in a single query
+  const results = await db.query.tasks.findMany({
+    where: and(inArray(tasks.id, taskIds), eq(tasks.userId, userId)),
+    with: {
+      taskLabels: { with: { label: true } },
+    },
+  });
+
+  // Batch-fetch reminders for all updated tasks (avoids N+1)
+  const reminderResults = await db
+    .select()
+    .from(reminders)
+    .where(
+      inArray(
+        reminders.taskId,
+        results.map((r) => r.id)
+      )
+    )
+    .orderBy(asc(reminders.reminderTime));
+  const remindersByTaskId = new Map<string, Date[]>();
+  for (const r of reminderResults) {
+    if (!remindersByTaskId.has(r.taskId)) {
+      remindersByTaskId.set(r.taskId, []);
+    }
+    remindersByTaskId.get(r.taskId)!.push(r.reminderTime);
+  }
+
   logger.info('Bulk updated tasks', { count: taskIds.length, action: 'bulk-update', userId });
-  return updatedTasks;
+  return results.map((row) => mapTask(row, { reminders: remindersByTaskId.get(row.id) || [] }));
 }
 
 export async function bulkDeleteTasks(userId: string, taskIds: string[]): Promise<void> {
-  for (const taskId of taskIds) {
-    await deleteTask(taskId, userId);
+  // Fetch task names for activity logging before deletion
+  const tasksToDelete = await db
+    .select({ id: tasks.id, name: tasks.name })
+    .from(tasks)
+    .where(and(inArray(tasks.id, taskIds), eq(tasks.userId, userId)));
+
+  // Log activity for each task being deleted
+  for (const task of tasksToDelete) {
+    await createActivityLog({
+      id: crypto.randomUUID(),
+      taskId: task.id,
+      action: 'deleted',
+      userId,
+    });
   }
-  logger.info('Bulk deleted tasks', { count: taskIds.length, userId });
+
+  // Single batch delete — DB-level cascade handles subtasks, labels, reminders,
+  // dependencies, and attachments
+  await db.delete(tasks).where(and(inArray(tasks.id, taskIds), eq(tasks.userId, userId)));
+
+  logger.info('Bulk deleted tasks', { count: tasksToDelete.length, userId });
 }
 
 export async function bulkAssignLabels(
@@ -653,9 +710,18 @@ export async function bulkAssignLabels(
   taskIds: string[],
   labelIds: string[]
 ): Promise<void> {
-  for (const taskId of taskIds) {
-    await updateTask(taskId, userId, { labelIds });
+  // Batch delete existing labels for all tasks, then insert new ones
+  await db.delete(taskLabels).where(inArray(taskLabels.taskId, taskIds));
+  if (labelIds.length > 0) {
+    await db
+      .insert(taskLabels)
+      .values(
+        taskIds.flatMap((taskId: string) =>
+          labelIds.map((labelId: string) => ({ taskId, labelId }))
+        )
+      );
   }
+
   logger.info('Bulk assigned labels', {
     count: taskIds.length,
     labelCount: labelIds.length,
@@ -682,14 +748,18 @@ export async function getTaskDependencies(
 }
 
 export async function getDependentTasks(taskId: string, userId: string): Promise<Task[]> {
-  // Get tasks that depend on this task (i.e., this task is a prerequisite)
-  const results = await db
-    .select()
+  // Get tasks that depend on this task (i.e., this task is a prerequisite),
+  // verified to belong to the user in the same query to avoid leaking
+  // dependency existence for tasks we don't own.
+  const depResults = await db
+    .select({ dependentTaskId: taskDependencies.taskId })
     .from(taskDependencies)
-    .where(eq(taskDependencies.dependsOnTaskId, taskId));
-  // Filter to only the ones owned by the user
-  const taskIds = results.map((r) => r.taskId);
+    .innerJoin(tasks, eq(tasks.id, taskDependencies.dependsOnTaskId))
+    .where(and(eq(taskDependencies.dependsOnTaskId, taskId), eq(tasks.userId, userId)));
+
+  const taskIds = depResults.map((r) => r.dependentTaskId);
   if (taskIds.length === 0) return [];
+
   const rawTasks = await db.query.tasks.findMany({
     where: and(inArray(tasks.id, taskIds), eq(tasks.userId, userId)),
     with: {
@@ -710,26 +780,7 @@ export async function getDependentTasks(taskId: string, userId: string): Promise
     remindersByTaskId.get(r.taskId)!.push(r.reminderTime);
   }
 
-  return rawTasks.map((row) => ({
-    ...row,
-    createdAt: row.createdAt || new Date(),
-    updatedAt: row.updatedAt || new Date(),
-    date: row.date || undefined,
-    deadline: row.deadline || undefined,
-    completed: !!row.completed,
-    completedAt: row.completedAt || undefined,
-    recurringEndDate: row.recurringEndDate || undefined,
-    description: row.description || undefined,
-    estimate: row.estimate || undefined,
-    actualTime: row.actualTime || undefined,
-    parentTaskId: row.parentTaskId || undefined,
-    userId: row.userId || undefined,
-    order: row.order || 0,
-    priority: (row.priority || 'none') as Priority,
-    recurring: (row.recurring || undefined) as RecurringType | undefined,
-    labels: row.taskLabels.map((tl) => mapLabel(tl.label)),
-    reminders: remindersByTaskId.get(row.id) || [],
-  }));
+  return rawTasks.map((row) => mapTask(row, { reminders: remindersByTaskId.get(row.id) || [] }));
 }
 
 export async function addTaskDependency(
