@@ -8,6 +8,20 @@ jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: todo_user
+          POSTGRES_PASSWORD: todo_password
+          POSTGRES_DB: todo_trae
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U todo_user -d todo_trae"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -19,7 +33,23 @@ jobs:
         run: npm audit --audit-level=critical
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
+      - name: Initialize database schema
+        run: npx drizzle-kit push
+        env:
+          DATABASE_URL: postgresql://todo_user:todo_password@localhost:5432/todo_trae
+      - name: Create test user
+        run: |
+          HASH=$(node -e "const { scryptSync, randomBytes } = require('crypto'); const salt = randomBytes(16).toString('hex'); const hash = scryptSync('password123', salt, 64).toString('hex'); process.stdout.write(salt + ':' + hash)")
+          PGPASSWORD=todo_password psql -h localhost -U todo_user -d todo_trae -c \
+            "INSERT INTO users (id, email, name, password) VALUES ('test-user-id', 'test@example.com', 'Test User', '$HASH') ON CONFLICT (id) DO UPDATE SET password = '$HASH', email = 'test@example.com', name = 'Test User';"
       - name: Run Playwright tests
+        env:
+          DATABASE_URL: postgresql://todo_user:todo_password@localhost:5432/todo_trae
+          NEXTAUTH_URL: http://localhost:3000
+          NEXTAUTH_SECRET: ci-test-secret
+          GITHUB_ID: test
+          GITHUB_SECRET: test
+          NEXT_PUBLIC_SOCKET_URL: http://localhost:3001
         run: npx playwright test
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
