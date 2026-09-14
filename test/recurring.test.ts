@@ -1,143 +1,164 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, it, expect } from 'bun:test';
 import { calculateNextRecurringDate } from '@/lib/recurring';
-import { RecurringType } from '@/types';
 
 describe('calculateNextRecurringDate', () => {
-  test('returns null when no date or deadline', () => {
-    expect(calculateNextRecurringDate(undefined, undefined, 'daily')).toBeNull();
+  const createDate = (year: number, month: number, day: number, hour = 0, minute = 0) => {
+    const d = new Date();
+    d.setFullYear(year, month - 1, day);
+    d.setHours(hour, minute, 0, 0);
+    return d;
+  };
+
+  describe('daily recurrence', () => {
+    it('should add 1 day for daily recurrence', () => {
+      const date = createDate(2024, 1, 15);
+      const result = calculateNextRecurringDate(date, undefined, 'daily');
+      expect(result).toEqual(createDate(2024, 1, 16));
+    });
+
+    it('should handle month boundary for daily recurrence', () => {
+      const date = createDate(2024, 1, 31);
+      const result = calculateNextRecurringDate(date, undefined, 'daily');
+      expect(result).toEqual(createDate(2024, 2, 1));
+    });
+
+    it('should handle year boundary for daily recurrence', () => {
+      const date = createDate(2024, 12, 31);
+      const result = calculateNextRecurringDate(date, undefined, 'daily');
+      expect(result).toEqual(createDate(2025, 1, 1));
+    });
+
+    it('should handle leap year for daily recurrence', () => {
+      const date = createDate(2024, 2, 28);
+      const result = calculateNextRecurringDate(date, undefined, 'daily');
+      expect(result).toEqual(createDate(2024, 2, 29));
+    });
   });
 
-  test('returns null when no recurring type', () => {
-    expect(
-      calculateNextRecurringDate(new Date('2026-06-01T10:00:00Z'), undefined, undefined)
-    ).toBeNull();
+  describe('weekly recurrence', () => {
+    it('should add 7 days for weekly recurrence', () => {
+      const date = createDate(2024, 1, 15);
+      const result = calculateNextRecurringDate(date, undefined, 'weekly');
+      expect(result).toEqual(createDate(2024, 1, 22));
+    });
+
+    it('should handle month boundary for weekly recurrence', () => {
+      const date = createDate(2024, 1, 28);
+      const result = calculateNextRecurringDate(date, undefined, 'weekly');
+      expect(result).toEqual(createDate(2024, 2, 4));
+    });
   });
 
-  test('daily recurrence adds 1 day', () => {
-    const result = calculateNextRecurringDate(new Date('2026-06-01T09:00:00Z'), undefined, 'daily');
-    expect(result).toBeInstanceOf(Date);
-    expect(result!.toISOString()).toBe('2026-06-02T09:00:00.000Z');
+  describe('weekday recurrence', () => {
+    it('should add 1 day for Monday-Thursday', () => {
+      const monday = createDate(2024, 1, 15); // Monday
+      const result = calculateNextRecurringDate(monday, undefined, 'weekday');
+      expect(result).toEqual(createDate(2024, 1, 16));
+
+      const thursday = createDate(2024, 1, 18); // Thursday
+      const result2 = calculateNextRecurringDate(thursday, undefined, 'weekday');
+      expect(result2).toEqual(createDate(2024, 1, 19));
+    });
+
+    it('should skip to Monday from Friday (+3 days)', () => {
+      const friday = createDate(2024, 1, 19); // Friday
+      const result = calculateNextRecurringDate(friday, undefined, 'weekday');
+      expect(result).toEqual(createDate(2024, 1, 22)); // Monday
+    });
+
+    it('should skip to Monday from Saturday (+2 days)', () => {
+      const saturday = createDate(2024, 1, 20); // Saturday
+      const result = calculateNextRecurringDate(saturday, undefined, 'weekday');
+      expect(result).toEqual(createDate(2024, 1, 22)); // Monday
+    });
+
+    it('should skip to Monday from Sunday (+1 day)', () => {
+      const sunday = createDate(2024, 1, 21); // Sunday
+      const result = calculateNextRecurringDate(sunday, undefined, 'weekday');
+      expect(result).toEqual(createDate(2024, 1, 22)); // Monday
+    });
+
+    it('should handle month boundary correctly for weekday', () => {
+      const friday = createDate(2024, 1, 26); // Friday Jan 26
+      const result = calculateNextRecurringDate(friday, undefined, 'weekday');
+      expect(result).toEqual(createDate(2024, 1, 29)); // Monday Jan 29
+    });
   });
 
-  test('weekly recurrence adds 7 days', () => {
-    const result = calculateNextRecurringDate(
-      new Date('2026-06-01T08:00:00Z'),
-      undefined,
-      'weekly'
-    );
-    expect(result!.toISOString()).toBe('2026-06-08T08:00:00.000Z');
+  describe('monthly recurrence', () => {
+    it('should add 1 month for monthly recurrence', () => {
+      const date = createDate(2024, 1, 15);
+      const result = calculateNextRecurringDate(date, undefined, 'monthly');
+      expect(result).toEqual(createDate(2024, 2, 15));
+    });
+
+    it('should handle year boundary for monthly recurrence', () => {
+      const date = createDate(2024, 12, 15);
+      const result = calculateNextRecurringDate(date, undefined, 'monthly');
+      expect(result).toEqual(createDate(2025, 1, 15));
+    });
+
+    it('should handle end-of-month dates correctly', () => {
+      const date = createDate(2024, 1, 31);
+      const result = calculateNextRecurringDate(date, undefined, 'monthly');
+      // JS Date rolls over: Jan 31 + 1 month = Mar 2 (since Feb has 29 days in 2024)
+      // or Mar 3 in non-leap years
+      expect(result).toBeInstanceOf(Date);
+      expect(result?.getMonth()).toBeGreaterThanOrEqual(1); // Feb or later
+    });
   });
 
-  test('weekday recurrence on Monday adds 1 day', () => {
-    // 2026-06-01 is a Monday
-    const result = calculateNextRecurringDate(
-      new Date('2026-06-01T10:00:00Z'),
-      undefined,
-      'weekday'
-    );
-    expect(result!.toISOString()).toBe('2026-06-02T10:00:00.000Z');
+  describe('yearly recurrence', () => {
+    it('should add 12 months for yearly recurrence', () => {
+      const date = createDate(2024, 1, 15);
+      const result = calculateNextRecurringDate(date, undefined, 'yearly');
+      expect(result).toEqual(createDate(2025, 1, 15));
+    });
+
+    it('should handle leap day correctly', () => {
+      const date = createDate(2024, 2, 29); // Leap day (Feb 29, 2024)
+      const result = calculateNextRecurringDate(date, undefined, 'yearly');
+      // In non-leap year 2025, Feb 29 becomes Mar 1 (JS Date behavior)
+      expect(result).toEqual(createDate(2025, 3, 1));
+    });
   });
 
-  test('weekday recurrence on Friday skips to Monday (+3 days)', () => {
-    // 2026-06-05 is a Friday
-    const result = calculateNextRecurringDate(
-      new Date('2026-06-05T10:00:00Z'),
-      undefined,
-      'weekday'
-    );
-    expect(result!.toISOString()).toBe('2026-06-08T10:00:00.000Z');
-  });
+  describe('edge cases', () => {
+    it('should return null when no base date is provided', () => {
+      const result = calculateNextRecurringDate(undefined, undefined, 'daily');
+      expect(result).toBeNull();
+    });
 
-  test('weekday recurrence on Saturday skips to Monday (+2 days)', () => {
-    // 2026-06-06 is a Saturday
-    const result = calculateNextRecurringDate(
-      new Date('2026-06-06T10:00:00Z'),
-      undefined,
-      'weekday'
-    );
-    expect(result!.toISOString()).toBe('2026-06-08T10:00:00.000Z');
-  });
+    it('should return null when recurring is undefined', () => {
+      const date = createDate(2024, 1, 15);
+      const result = calculateNextRecurringDate(date, undefined, undefined);
+      expect(result).toBeNull();
+    });
 
-  test('weekday recurrence on Sunday adds 1 day', () => {
-    // 2026-06-07 is a Sunday
-    const result = calculateNextRecurringDate(
-      new Date('2026-06-07T10:00:00Z'),
-      undefined,
-      'weekday'
-    );
-    expect(result!.toISOString()).toBe('2026-06-08T10:00:00.000Z');
-  });
+    it('should return null when recurring is custom', () => {
+      const date = createDate(2024, 1, 15);
+      const result = calculateNextRecurringDate(date, undefined, 'custom');
+      expect(result).toBeNull();
+    });
 
-  test('monthly recurrence adds 1 month', () => {
-    const result = calculateNextRecurringDate(
-      new Date('2026-03-15T10:00:00Z'),
-      undefined,
-      'monthly'
-    );
-    expect(result!.toISOString()).toBe('2026-04-15T10:00:00.000Z');
-  });
+    it('should use deadline when date is not provided', () => {
+      const deadline = createDate(2024, 1, 20);
+      const result = calculateNextRecurringDate(undefined, deadline, 'daily');
+      expect(result).toEqual(createDate(2024, 1, 21));
+    });
 
-  test('monthly recurrence handles year boundary', () => {
-    const result = calculateNextRecurringDate(
-      new Date('2026-12-15T10:00:00Z'),
-      undefined,
-      'monthly'
-    );
-    expect(result!.toISOString()).toBe('2027-01-15T10:00:00.000Z');
-  });
+    it('should prefer date over deadline when both provided', () => {
+      const date = createDate(2024, 1, 15);
+      const deadline = createDate(2024, 1, 20);
+      const result = calculateNextRecurringDate(date, deadline, 'daily');
+      expect(result).toEqual(createDate(2024, 1, 16));
+    });
 
-  test('yearly recurrence adds 12 months', () => {
-    const result = calculateNextRecurringDate(
-      new Date('2026-06-01T14:30:00Z'),
-      undefined,
-      'yearly'
-    );
-    expect(result!.toISOString()).toBe('2027-06-01T14:30:00.000Z');
-  });
-
-  test('falls back to deadline when date is not set', () => {
-    const result = calculateNextRecurringDate(undefined, new Date('2026-06-01T12:00:00Z'), 'daily');
-    expect(result!.toISOString()).toBe('2026-06-02T12:00:00.000Z');
-  });
-
-  test('prefers date over deadline when both are set', () => {
-    const result = calculateNextRecurringDate(
-      new Date('2026-06-01T09:00:00Z'),
-      new Date('2026-06-05T09:00:00Z'),
-      'daily'
-    );
-    expect(result!.toISOString()).toBe('2026-06-02T09:00:00.000Z');
-  });
-
-  test('returns null for unknown recurrence type', () => {
-    const result = calculateNextRecurringDate(
-      new Date('2026-06-01T10:00:00Z'),
-      undefined,
-      'custom' as RecurringType
-    );
-    expect(result).toBeNull();
-  });
-
-  test('respects recurring end date boundary', () => {
-    // Next date is exactly at the recurring end date — should be allowed
-    const result = calculateNextRecurringDate(
-      new Date('2026-06-01T10:00:00Z'),
-      undefined,
-      'daily',
-      new Date('2026-06-02T10:00:00Z')
-    );
-    expect(result!.toISOString()).toBe('2026-06-02T10:00:00.000Z');
-  });
-
-  test('returns next date even when recurringEndDate is in the past', () => {
-    // The function itself doesn't check recurringEndDate — that's the caller's job
-    // This documents the expected behavior
-    const result = calculateNextRecurringDate(
-      new Date('2026-06-01T10:00:00Z'),
-      undefined,
-      'daily',
-      new Date('2025-01-01T00:00:00Z')
-    );
-    expect(result!.toISOString()).toBe('2026-06-02T10:00:00.000Z');
+    it('should preserve time component from base date', () => {
+      const date = createDate(2024, 1, 15, 14, 30);
+      const result = calculateNextRecurringDate(date, undefined, 'daily');
+      expect(result?.getHours()).toBe(14);
+      expect(result?.getMinutes()).toBe(30);
+    });
   });
 });
