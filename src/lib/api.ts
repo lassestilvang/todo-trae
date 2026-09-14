@@ -26,7 +26,7 @@ import { eq, and, isNull, asc, desc, inArray, or } from 'drizzle-orm';
 import { calculateNextRecurringDate as _calculateNextRecurringDate } from './recurring';
 
 // Helper to map DB row to TaskList type
-function mapTaskList(row: typeof taskLists.$inferSelect): TaskList {
+export function mapTaskList(row: typeof taskLists.$inferSelect): TaskList {
   return {
     id: row.id,
     name: row.name,
@@ -39,7 +39,7 @@ function mapTaskList(row: typeof taskLists.$inferSelect): TaskList {
 }
 
 // Helper to map DB row to Label type
-function mapLabel(row: typeof labels.$inferSelect): Label {
+export function mapLabel(row: typeof labels.$inferSelect): Label {
   return {
     id: row.id,
     name: row.name,
@@ -51,11 +51,11 @@ function mapLabel(row: typeof labels.$inferSelect): Label {
 }
 
 // Helper to map DB row to Task type (with optional reminders and dependencies)
-type TaskRow = typeof tasks.$inferSelect & {
+export type TaskRow = typeof tasks.$inferSelect & {
   taskLabels: Array<typeof taskLabels.$inferSelect & { label: typeof labels.$inferSelect }>;
 };
 
-function mapTask(
+export function mapTask(
   row: TaskRow,
   options?: { reminders?: Date[]; dependencies?: TaskDependency[] }
 ): Task {
