@@ -79,7 +79,7 @@ export async function logLabelActivity(
 
 const MAX_LOG_VALUE_LENGTH = 500;
 
-function sanitizeLogValue(value: unknown): string | undefined {
+export function sanitizeLogValue(value: unknown): string | undefined {
   if (value === undefined || value === null) return undefined;
   try {
     let str: string;
