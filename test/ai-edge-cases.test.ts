@@ -18,25 +18,25 @@ const createMockTask = (overrides: Partial<Task> = {}): Task => ({
 
 describe('AI Edge Case Tests', () => {
   describe('parseNaturalLanguage - Date Parsing Edge Cases', () => {
-    it('should handle "in 1 day" (singular)', () => {
+    it('should handle "in 1 day" (singular) as scheduled date', () => {
       const result = parseNaturalLanguage('Submit report in 1 day');
-      expect(result.deadline).toBeInstanceOf(Date);
+      expect(result.date).toBeInstanceOf(Date);
       const expected = new Date();
       expected.setDate(expected.getDate() + 1);
-      expect(result.deadline!.getDate()).toBe(expected.getDate());
+      expect(result.date!.getDate()).toBe(expected.getDate());
     });
 
-    it('should handle "in 5 days" (plural)', () => {
+    it('should handle "in 5 days" (plural) as scheduled date', () => {
       const result = parseNaturalLanguage('Submit report in 5 days');
-      expect(result.deadline).toBeInstanceOf(Date);
+      expect(result.date).toBeInstanceOf(Date);
       const expected = new Date();
       expected.setDate(expected.getDate() + 5);
-      expect(result.deadline!.getDate()).toBe(expected.getDate());
+      expect(result.date!.getDate()).toBe(expected.getDate());
     });
 
-    it('should handle "in 2 weeks" (plural)', () => {
+    it('should handle "in 2 weeks" (plural) as scheduled date', () => {
       const result = parseNaturalLanguage('Submit report in 2 weeks');
-      expect(result.deadline).toBeInstanceOf(Date);
+      expect(result.date).toBeInstanceOf(Date);
     });
 
     it('should handle "next week" without crashing', () => {
@@ -53,27 +53,27 @@ describe('AI Edge Case Tests', () => {
       expect(result.name).toContain('Submit report');
     });
 
-    it('should handle "on 2024-12-25" (ISO date)', () => {
+    it('should handle "on 2024-12-25" (ISO date) as scheduled date', () => {
       const result = parseNaturalLanguage('Submit report on 2024-12-25');
-      expect(result.deadline).toBeInstanceOf(Date);
-      expect(result.deadline!.getFullYear()).toBe(2024);
-      expect(result.deadline!.getMonth()).toBe(11); // December
-      expect(result.deadline!.getDate()).toBe(25);
+      expect(result.date).toBeInstanceOf(Date);
+      expect(result.date!.getFullYear()).toBe(2024);
+      expect(result.date!.getMonth()).toBe(11); // December
+      expect(result.date!.getDate()).toBe(25);
     });
 
-    it('should handle "on 12/25/2024" (US date format)', () => {
+    it('should handle "on 12/25/2024" (US date format) as scheduled date', () => {
       const result = parseNaturalLanguage('Submit report on 12/25/2024');
-      expect(result.deadline).toBeInstanceOf(Date);
+      expect(result.date).toBeInstanceOf(Date);
     });
 
-    it('should handle "on Dec 25"', () => {
+    it('should handle "on Dec 25" as scheduled date', () => {
       const result = parseNaturalLanguage('Submit report on Dec 25');
-      expect(result.deadline).toBeInstanceOf(Date);
-      expect(result.deadline!.getMonth()).toBe(11); // December
-      expect(result.deadline!.getDate()).toBe(25);
+      expect(result.date).toBeInstanceOf(Date);
+      expect(result.date!.getMonth()).toBe(11); // December
+      expect(result.date!.getDate()).toBe(25);
     });
 
-    it('should handle "this monday" as deadline', () => {
+    it('should handle "this monday" as scheduled date', () => {
       const result = parseNaturalLanguage('Submit report this monday');
       // May or may not be a date depending on current day, but shouldn't crash
       expect(result).toBeDefined();
@@ -81,31 +81,36 @@ describe('AI Edge Case Tests', () => {
   });
 
   describe('parseNaturalLanguage - Time Parsing Edge Cases', () => {
-    it('should handle noon (12pm)', () => {
+    it('should handle noon (12pm) as scheduled date', () => {
       const result = parseNaturalLanguage('Meeting at 12pm');
-      expect(result.deadline!.getHours()).toBe(12);
+      expect(result.date).toBeInstanceOf(Date);
+      expect(result.date!.getHours()).toBe(12);
     });
 
-    it('should handle midnight (12am)', () => {
+    it('should handle midnight (12am) as scheduled date', () => {
       const result = parseNaturalLanguage('Meeting at 12am');
-      expect(result.deadline!.getHours()).toBe(0);
+      expect(result.date).toBeInstanceOf(Date);
+      expect(result.date!.getHours()).toBe(0);
     });
 
-    it('should handle "at 1pm"', () => {
+    it('should handle "at 1pm" as scheduled date', () => {
       const result = parseNaturalLanguage('Meeting at 1pm');
-      expect(result.deadline!.getHours()).toBe(13);
+      expect(result.date).toBeInstanceOf(Date);
+      expect(result.date!.getHours()).toBe(13);
     });
 
-    it('should handle "at 12:30am"', () => {
+    it('should handle "at 12:30am" as scheduled date', () => {
       const result = parseNaturalLanguage('Meeting at 12:30am');
-      expect(result.deadline!.getHours()).toBe(0);
-      expect(result.deadline!.getMinutes()).toBe(30);
+      expect(result.date).toBeInstanceOf(Date);
+      expect(result.date!.getHours()).toBe(0);
+      expect(result.date!.getMinutes()).toBe(30);
     });
 
-    it('should handle "at 11:45pm"', () => {
+    it('should handle "at 11:45pm" as scheduled date', () => {
       const result = parseNaturalLanguage('Meeting at 11:45pm');
-      expect(result.deadline!.getHours()).toBe(23);
-      expect(result.deadline!.getMinutes()).toBe(45);
+      expect(result.date).toBeInstanceOf(Date);
+      expect(result.date!.getHours()).toBe(23);
+      expect(result.date!.getMinutes()).toBe(45);
     });
   });
 
@@ -132,9 +137,8 @@ describe('AI Edge Case Tests', () => {
 
     it('should handle "1h" format', () => {
       const result = parseNaturalLanguage('Task 1h');
-      // The regex is /(\d+)\s*(min|minutes?|hrs?|hours?)/i
-      // "1h" won't match because it needs "min", "minute", "hrs", or "hours"
-      expect(result.estimate).toBeUndefined();
+      // Updated regex now supports "h" format
+      expect(result.estimate).toBe('01:00');
     });
 
     it('should handle "45min" without space', () => {
@@ -249,13 +253,15 @@ describe('AI Edge Case Tests', () => {
       expect(result.priority).toBe('high');
       expect(result.estimate).toBe('02:00');
       expect(result.labelIds).toContain('lbl-work');
+      // "by Friday" should create a deadline
+      expect(result.deadline).toBeInstanceOf(Date);
     });
 
-    it('should parse time + priority', () => {
+    it('should parse time + priority as scheduled date', () => {
       const result = parseNaturalLanguage('Meeting at 3pm high priority');
       expect(result.priority).toBe('high');
-      expect(result.deadline).toBeInstanceOf(Date);
-      expect(result.deadline!.getHours()).toBe(15);
+      expect(result.date).toBeInstanceOf(Date);
+      expect(result.date!.getHours()).toBe(15);
     });
 
     it('should parse estimate + label + priority', () => {
@@ -282,6 +288,8 @@ describe('AI Edge Case Tests', () => {
       expect(result.labelIds).toContain('lbl-urgent');
       expect(result.priority).toBe('high');
       expect(result.estimate).toBe('02:00');
+      // "by next monday" should create a deadline
+      expect(result.deadline).toBeInstanceOf(Date);
     });
   });
 
