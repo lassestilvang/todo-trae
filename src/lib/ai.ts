@@ -121,7 +121,12 @@ const DATE_PATTERNS: { regex: RegExp; getValue: (match: RegExpMatchArray) => num
     regex: /by\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i,
     getValue: (m) => getNextWeekdayOffset(m[1]),
   },
-  { regex: /in (\d+)\s*hour/i, getValue: (m) => -parseInt(m[1], 10) / 24 }, // Special: time-only, not date offset
+  // Bare weekday names (e.g., "friday" from "by friday")
+  {
+    regex: /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i,
+    getValue: (m) => getNextWeekdayOffset(m[1]),
+  },
+  // Note: "in N hours" is handled separately as relative deadline
 ];
 
 const WEEKDAY_OFFSETS: Record<string, number> = {
@@ -144,8 +149,8 @@ function getNextWeekdayOffset(weekday: string): number {
   return offset;
 }
 
-// Time pattern: "at 3pm", "at 14:30", "at 3:30pm"
-const TIME_REGEX = /at\s+(\d{1,2}):?(\d{2})?\s*(am|pm)?\s*(tomorrow|today|in\s+\d+\s*day)?/i;
+// Time pattern: "at 3pm", "at 14:30", "at 3:30pm" (without date words)
+const TIME_REGEX = /at\s+(\d{1,2}):?(\d{2})?\s*(am|pm)?/i;
 
 // Priority keywords
 const PRIORITY_KEYWORDS: { regex: RegExp; priority: Priority }[] = [
@@ -156,15 +161,16 @@ const PRIORITY_KEYWORDS: { regex: RegExp; priority: Priority }[] = [
   { regex: /\blow\s+priority\b/i, priority: 'low' },
 ];
 
-// Estimate patterns: "30 min", "2 hours", "1h 30m"
-const ESTIMATE_REGEX = /(\d+)\s*(min|minutes?|hrs?|hours?)\b/i;
+// Estimate patterns: "30 min", "2 hours", "1h 30m", "1h30m", "90m"
+// Must have at least one number with a unit
+const ESTIMATE_REGEX = /(\d+)\s*(?:h|hr|hrs|hour|hours)\b|\b(\d+)\s*(?:m|min|mins|minute|minutes)\b/gi;
 
 // Label pattern: #label-name
 const LABEL_REGEX = /#([\w-]+)/g;
 
 // Deadline indicator: "by", "due", "deadline"
-// Only captures up to 2 words after the keyword to avoid consuming other parsed entities
-const DEADLINE_REGEX = /\b(by|due|deadline|ddl)\s+(\w+(?:\s+\w+)?)/i;
+// Only captures date-like words after the keyword (weekdays, dates, relative terms)
+const DEADLINE_REGEX = /\b(by|due|deadline|ddl)\s+((?:today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday|next\s+\w+|this\s+\w+|\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4}|in\s+\d+\s*(?:day|week|hour|minute)s?))(?:\s|$)/i;
 
 /**
  * Parses natural language input into structured task fields.
@@ -222,17 +228,23 @@ export function parseNaturalLanguage(input: string, options: ParseOptions = {}):
     }
   }
 
+  // Handle "in N hours" as relative deadline (e.g., "in 2 hours")
+  const hoursMatch = text.match(/in (\d+)\s*hour/i);
+  if (hoursMatch && !deadline) {
+    const hours = parseInt(hoursMatch[1], 10);
+    deadline = new Date(Date.now() + hours * 60 * 60 * 1000);
+    text = text.replace(hoursMatch[0], '').trim();
+  }
+
   // Extract scheduled date/time
   let date: Date | undefined;
 
   // Check for date expressions
   const dateResult = parseDateExpression(text, parsedTime);
   if (dateResult) {
-    if (deadline) {
-      date = dateResult;
-    } else {
-      deadline = dateResult;
-    }
+    // If user explicitly used "by/due/deadline" keyword, that's a deadline
+    // Otherwise, the parsed date is a scheduled date (when to do the task)
+    date = dateResult;
     // Remove the matched date text from input
     for (const pattern of DATE_PATTERNS) {
       const m = text.match(pattern.regex);
@@ -247,24 +259,29 @@ export function parseNaturalLanguage(input: string, options: ParseOptions = {}):
     }
   }
 
-  // If we extracted a time but no date, set date to today
+  // If we extracted a time but no date, set date to today (scheduled for today at that time)
   if (!date && !deadline && parsedTime) {
-    deadline = setMinutes(setHours(new Date(), parsedTime.hours), parsedTime.minutes);
+    date = setMinutes(setHours(new Date(), parsedTime.hours), parsedTime.minutes);
   }
 
   // Extract estimate
   let estimate: string | undefined;
-  const estMatch = text.match(ESTIMATE_REGEX);
-  if (estMatch) {
-    const value = parseInt(estMatch[1], 10);
-    const unit = estMatch[2].toLowerCase();
-    if (unit.startsWith('min') || unit.startsWith('minute')) {
-      estimate = `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`;
-    } else {
-      const totalMinutes = value * 60;
-      estimate = `${String(Math.floor(totalMinutes / 60)).padStart(2, '0')}:${String(totalMinutes % 60).padStart(2, '0')}`;
+  let totalMinutes = 0;
+  // Find all estimate matches (hours and/or minutes)
+  const estMatches = text.matchAll(ESTIMATE_REGEX);
+  for (const match of estMatches) {
+    if (match[1]) {
+      // Hours match: group 1 = hours
+      totalMinutes += parseInt(match[1], 10) * 60;
+    } else if (match[2]) {
+      // Minutes match: group 2 = minutes
+      totalMinutes += parseInt(match[2], 10);
     }
-    text = text.replace(estMatch[0], '').trim();
+  }
+  if (totalMinutes > 0) {
+    estimate = `${String(Math.floor(totalMinutes / 60)).padStart(2, '0')}:${String(totalMinutes % 60).padStart(2, '0')}`;
+    // Remove all estimate matches from text
+    text = text.replace(ESTIMATE_REGEX, '').trim();
   }
 
   // Extract priority
